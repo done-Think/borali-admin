@@ -7,6 +7,8 @@ Painel administrativo da plataforma BoraLí. React 19 + Vite + Material-UI + Tan
 - Node.js 20+
 - A [API](../borali-api/README.md) rodando em `localhost:3000` (ou configure `VITE_API_URL`)
 
+> O admin console não exige nenhuma chave ou cadastro externo. Todas as dependências vêm da API, que é configurada separadamente.
+
 ## Configuração
 
 Crie um arquivo `.env` na raiz do projeto:
