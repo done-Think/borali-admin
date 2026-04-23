@@ -7,18 +7,32 @@ Painel administrativo da plataforma BoraLí. React 19 + Vite + Material-UI + Tan
 - Node.js 20+
 - A [API](../borali-api/README.md) rodando em `localhost:3000` (ou configure `VITE_API_URL`)
 
-> O admin console não exige nenhuma chave ou cadastro externo. Todas as dependências vêm da API, que é configurada separadamente.
+## Chaves necessárias
+
+| Variável | Origem | Obrigatório |
+|---|---|---|
+| `VITE_LOGTO_APP_ID` | Logto Admin em http://localhost:3002 — Application do tipo **Single Page App (React)** | Sim — login não funciona sem isso |
+
+Veja o passo a passo completo de criação em [borali-infra/README.md](../borali-infra/README.md#logto--configuração-inicial).
 
 ## Configuração
 
-Crie um arquivo `.env` na raiz do projeto:
+```bash
+cp .env.example .env
+```
+
+Edite o `.env`:
 
 ```env
 VITE_API_URL=http://localhost:3000
 VITE_SOCKET_URL=http://localhost:3000
+
+# Logto — App ID da Application "Single Page App (React)" criada no Logto Admin
+VITE_LOGTO_ENDPOINT=http://localhost:3001
+VITE_LOGTO_APP_ID=seu_app_id_aqui
 ```
 
-Se a API estiver em outra URL (ex: staging), ajuste as variáveis acima.
+Se a API estiver em outra URL (ex: staging), ajuste `VITE_API_URL` e `VITE_LOGTO_ENDPOINT` de acordo.
 
 ## Instalação e desenvolvimento
 
