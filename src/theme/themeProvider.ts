@@ -16,9 +16,9 @@ const blue = {
     100: "#E5F4FF",
     200: "#99D7FF",
     300: "#66C0FF",
-    400: "#33A8FF",
-    500: "#0090FF",
-    600: "#0072CC",
+    400: "#35D6F6",
+    500: "#0ABEE9",
+    600: "#089FC4",
     700: "#005299",
 };
 
@@ -111,28 +111,28 @@ const theme = createTheme({
             styleOverrides: {
                 root: {
                     "&.Mui-selected": {
-                        backgroundColor: green[500],
+                        backgroundColor: blue[500],
 
                         "& .MuiListItemText-root .MuiTypography-root": {
-                            color: neutral[900] + " !important",
+                            color: "#FFFFFF !important",
                         },
 
                         "& .MuiListItemIcon-root": {
-                            color: neutral[900],
+                            color: "#FFFFFF",
 
                             "& svg": {
-                                color: neutral[900],
-                                fill: neutral[900],
+                                color: "#FFFFFF",
+                                fill: "#FFFFFF",
                             },
                         },
                     },
 
                     "&.Mui-selected:hover": {
-                        backgroundColor: green[600],
+                        backgroundColor: blue[600],
                     },
 
                     "&.Mui-selected .MuiTypography-root": {
-                        color: neutral[900] + " !important",
+                        color: "#FFFFFF !important",
                     },
                 },
             },
@@ -152,7 +152,7 @@ const theme = createTheme({
                     light: green[400],
                     main: green[500],
                     dark: green[600],
-                    contrastText: neutral[900],
+                    contrastText: "#FFFFFF",
                 },
                 secondary: {
                     light: blue[400],
@@ -190,10 +190,10 @@ const theme = createTheme({
         dark: {
             palette: {
                 primary: {
-                    light: green[400],
-                    main: green[500],
-                    dark: green[600],
-                    contrastText: neutral[900],
+                    light: blue[400],
+                    main: blue[500],
+                    dark: blue[600],
+                    contrastText: "#FFFFFF",
                 },
                 secondary: {
                     light: blue[400],
