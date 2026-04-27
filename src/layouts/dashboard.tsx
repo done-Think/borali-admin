@@ -6,7 +6,7 @@ import { LogoutToolbar } from '@shared/ui'
 export default function Layout() {
   return (
     <DashboardLayout slots={{ toolbarActions: LogoutToolbar }}>
-      <PageContainer slotProps={{ header: { title: '' } }} sx={{ margin: 2 }}>
+      <PageContainer breadcrumbs={[]} slotProps={{ header: { title: '' } }} sx={{ margin: 2 }}>
         <Outlet />
       </PageContainer>
     </DashboardLayout>
