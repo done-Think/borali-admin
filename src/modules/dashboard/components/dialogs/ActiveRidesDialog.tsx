@@ -4,6 +4,7 @@ import { MapContainer, Marker, Polyline, TileLayer } from 'react-leaflet'
 import { activeRides } from '../../data/mockDashboardData'
 import type { ActiveRide } from '../../types'
 import { currencyFormatter } from '../../utils/formatters'
+import { darkTileLayer } from '../../utils/mapConfig'
 import { driverIcon, passengerIcon } from '../../utils/mapIcons'
 import { ApplicationDetail } from '../ApplicationDetail'
 
@@ -99,7 +100,7 @@ function ActiveRideMapDialog({ ride, onClose }: { ride: ActiveRide | null; onClo
           </Box>
           <Box sx={{ height: { xs: 360, md: 520 }, overflow: 'hidden', borderRadius: 2, border: `1px solid ${theme.palette.divider}` }}>
             <MapContainer center={ride.driverPosition} zoom={13} scrollWheelZoom={false} style={{ width: '100%', height: '100%' }}>
-              <TileLayer attribution='&copy; OpenStreetMap &copy; CARTO' url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png" />
+              <TileLayer attribution={darkTileLayer.attribution} url={darkTileLayer.url} />
               <Polyline positions={ride.path} pathOptions={{ color: '#0ABEE9', weight: 5, opacity: 0.9 }} />
               <Marker position={ride.driverPosition} icon={driverIcon} title={`Motorista ${ride.driver}`} />
               <Marker position={ride.passengerPosition} icon={passengerIcon} title={`Destino de ${ride.passenger}`} />

@@ -1,6 +1,7 @@
 import { Box, Card, CardContent, Stack, Typography, useTheme } from '@mui/material'
 import { MapContainer, Marker, Polyline, TileLayer } from 'react-leaflet'
 import { mapMarkers, rideLine, secondRideLine } from '../data/mockDashboardData'
+import { darkTileLayer } from '../utils/mapConfig'
 import { driverIcon, passengerIcon } from '../utils/mapIcons'
 import { MapLegend } from './MapLegend'
 
@@ -25,7 +26,7 @@ export function DashboardLiveMap() {
 
         <Box sx={{ height: { xs: 340, md: 460 }, overflow: 'hidden', borderRadius: 2, border: `1px solid ${theme.palette.divider}` }}>
           <MapContainer center={[-23.5573, -46.6412]} zoom={13} scrollWheelZoom={false} style={{ width: '100%', height: '100%' }}>
-            <TileLayer attribution='&copy; OpenStreetMap &copy; CARTO' url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png" />
+            <TileLayer attribution={darkTileLayer.attribution} url={darkTileLayer.url} />
             <Polyline positions={rideLine} pathOptions={{ color: '#0ABEE9', weight: 5, opacity: 0.88 }} />
             <Polyline positions={secondRideLine} pathOptions={{ color: '#2DD4A0', weight: 4, opacity: 0.76, dashArray: '8 10' }} />
             {mapMarkers.map((marker) => (
