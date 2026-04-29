@@ -1,13 +1,10 @@
 import { useState } from 'react'
-import { Box, Chip, Dialog, DialogContent, DialogTitle, Stack, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography, useTheme } from '@mui/material'
-import { MapContainer, Marker, Polyline, TileLayer } from 'react-leaflet'
+import { Box, Chip, Dialog, DialogContent, DialogTitle, Stack, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography } from '@mui/material'
 import { activeRides } from '../../data/mockDashboardData'
 import type { ActiveRide } from '../../types'
 import { currencyFormatter } from '../../utils/formatters'
-import { getMapTileLayer } from '../../utils/mapConfig'
-import { driverIcon, passengerIcon } from '../../utils/mapIcons'
-import { useActivePaletteMode } from '../../utils/useActivePaletteMode'
 import { ApplicationDetail } from '../ApplicationDetail'
+import { RideRouteMap } from '../RideRouteMap'
 
 export function ActiveRidesDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
   const [selectedRide, setSelectedRide] = useState<ActiveRide | null>(null)
@@ -73,10 +70,6 @@ export function ActiveRidesDialog({ open, onClose }: { open: boolean; onClose: (
 }
 
 function ActiveRideMapDialog({ ride, onClose }: { ride: ActiveRide | null; onClose: () => void }) {
-  const theme = useTheme()
-  const activeMode = useActivePaletteMode()
-  const tileLayer = getMapTileLayer(activeMode)
-
   if (!ride) {
     return null
   }
@@ -101,14 +94,13 @@ function ActiveRideMapDialog({ ride, onClose }: { ride: ActiveRide | null; onClo
             <ApplicationDetail label="Passageiro" value={ride.passenger} />
             <ApplicationDetail label="Status" value="Em andamento" />
           </Box>
-          <Box sx={{ height: { xs: 360, md: 520 }, overflow: 'hidden', borderRadius: 2, border: `1px solid ${theme.palette.divider}` }}>
-            <MapContainer center={ride.driverPosition} zoom={13} scrollWheelZoom={false} style={{ width: '100%', height: '100%' }}>
-              <TileLayer key={activeMode} attribution={tileLayer.attribution} url={tileLayer.url} />
-              <Polyline positions={ride.path} pathOptions={{ color: '#0ABEE9', weight: 5, opacity: 0.9 }} />
-              <Marker position={ride.driverPosition} icon={driverIcon} title={`Motorista ${ride.driver}`} />
-              <Marker position={ride.passengerPosition} icon={passengerIcon} title={`Destino de ${ride.passenger}`} />
-            </MapContainer>
-          </Box>
+          <RideRouteMap
+            path={ride.path}
+            driverPosition={ride.driverPosition}
+            passengerPosition={ride.passengerPosition}
+            driverLabel={`Motorista ${ride.driver}`}
+            passengerLabel={`Destino de ${ride.passenger}`}
+          />
           <Box sx={{ display: 'grid', gap: 2, gridTemplateColumns: { xs: '1fr', md: 'repeat(2, minmax(0, 1fr))' } }}>
             <ApplicationDetail label="Partida" value={ride.origin} />
             <ApplicationDetail label="Destino" value={ride.destination} />

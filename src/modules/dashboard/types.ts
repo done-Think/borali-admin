@@ -45,8 +45,15 @@ export type RecentRide = {
   passenger: string
   driver: string
   route: string
+  origin: string
+  destination: string
   value: number
   status: RideStatus
+  duration: string
+  requestedAt: string
+  path: [number, number][]
+  driverPosition: [number, number]
+  passengerPosition: [number, number]
 }
 
 export type ActiveRide = {
