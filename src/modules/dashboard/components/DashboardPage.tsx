@@ -22,6 +22,7 @@ import {
   Typography,
   useTheme,
 } from '@mui/material'
+import { alpha } from '@mui/material/styles'
 import L from 'leaflet'
 import { Bar, BarChart, CartesianGrid, Cell, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import { MapContainer, Marker, Polyline, TileLayer } from 'react-leaflet'
@@ -340,7 +341,7 @@ export default function DashboardPage() {
           gap: 2,
           gridTemplateColumns: {
             xs: '1fr',
-            xl: 'minmax(0, 0.95fr) minmax(540px, 1.05fr)',
+            lg: 'minmax(0, 0.9fr) minmax(520px, 1.1fr)',
           },
           alignItems: 'stretch',
         }}
@@ -371,7 +372,7 @@ export default function DashboardPage() {
                       boxShadow: theme.shadows[6],
                     }}
                   />
-                  <Bar dataKey="rides" radius={[6, 6, 0, 0]}>
+                  <Bar dataKey="rides" radius={[6, 6, 0, 0]} isAnimationActive={false}>
                     {ridesPerHour.map((entry) => (
                       <Cell key={entry.hour} fill={entry.rides === peakRides ? '#22D3EE' : '#2563EB'} />
                     ))}
@@ -390,12 +391,19 @@ export default function DashboardPage() {
             </Typography>
 
             <TableContainer>
-              <Table size="small" sx={{ minWidth: 680 }}>
+              <Table size="small" sx={{ width: '100%', tableLayout: 'fixed' }}>
                 <TableHead>
                   <TableRow>
-                    {['#', 'Passageiro', 'Motorista', 'Rota', 'Valor', 'Status'].map((header) => (
-                      <TableCell key={header} sx={{ color: 'text.secondary', fontWeight: 800 }}>
-                        {header}
+                    {[
+                      { label: '#', width: '13%' },
+                      { label: 'Passageiro', width: '16%' },
+                      { label: 'Motorista', width: '16%' },
+                      { label: 'Rota', width: '21%' },
+                      { label: 'Valor', width: '13%' },
+                      { label: 'Status', width: '21%' },
+                    ].map((header) => (
+                      <TableCell key={header.label} sx={{ width: header.width, color: 'text.secondary', fontWeight: 800, px: 1 }}>
+                        {header.label}
                       </TableCell>
                     ))}
                   </TableRow>
@@ -403,12 +411,12 @@ export default function DashboardPage() {
                 <TableBody>
                   {recentRides.map((ride) => (
                     <TableRow key={ride.id} hover>
-                      <TableCell sx={{ fontWeight: 800 }}>{ride.id}</TableCell>
-                      <TableCell>{ride.passenger}</TableCell>
-                      <TableCell>{ride.driver}</TableCell>
-                      <TableCell>{ride.route}</TableCell>
-                      <TableCell sx={{ fontWeight: 800 }}>{currencyFormatter.format(ride.value)}</TableCell>
-                      <TableCell>
+                      <TableCell sx={rideTableCellSx}>{ride.id}</TableCell>
+                      <TableCell sx={rideTableCellSx}>{ride.passenger}</TableCell>
+                      <TableCell sx={rideTableCellSx}>{ride.driver}</TableCell>
+                      <TableCell sx={rideTableCellSx}>{ride.route}</TableCell>
+                      <TableCell sx={{ ...rideTableCellSx, fontWeight: 800 }}>{currencyFormatter.format(ride.value)}</TableCell>
+                      <TableCell sx={{ ...rideTableCellSx, pr: 0 }}>
                         <RideStatusBadge status={ride.status} />
                       </TableCell>
                     </TableRow>
@@ -474,12 +482,26 @@ function MapLegend({ color, label }: { color: string; label: string }) {
   )
 }
 
+const rideTableCellSx = {
+  px: 1,
+  fontSize: 12,
+  fontWeight: 700,
+  overflowWrap: 'anywhere',
+  verticalAlign: 'middle',
+}
+
 function ActivityList({ items, compact = false }: { items: Activity[]; compact?: boolean }) {
+  const theme = useTheme()
+  const isDark = theme.palette.mode === 'dark'
+  const containerBg = isDark ? alpha(theme.palette.common.black, 0.22) : alpha(theme.palette.secondary.main, 0.06)
+  const itemBg = isDark ? alpha(theme.palette.background.default, 0.5) : theme.palette.background.paper
+  const descriptionColor = isDark ? theme.palette.secondary.light : theme.palette.secondary.dark
+
   return (
     <Stack
       spacing={1.25}
       sx={{
-        bgcolor: '#111827',
+        bgcolor: containerBg,
         borderRadius: 2,
         p: compact ? 1 : 1.25,
       }}
@@ -496,8 +518,9 @@ function ActivityList({ items, compact = false }: { items: Activity[]; compact?:
             sx={{
               minHeight: compact ? 56 : 66,
               borderRadius: 1.5,
-              border: '1px solid rgba(148, 163, 184, 0.12)',
-              bgcolor: '#0F172A',
+              border: '1px solid',
+              borderColor: 'divider',
+              bgcolor: itemBg,
               px: 1.25,
               py: 1,
             }}
@@ -519,12 +542,12 @@ function ActivityList({ items, compact = false }: { items: Activity[]; compact?:
 
             <Box sx={{ minWidth: 0, flex: 1 }}>
               <Stack direction="row" spacing={1} alignItems="flex-start" justifyContent="space-between">
-                <Typography sx={{ color: '#FFFFFF', fontSize: 13, fontWeight: 800, lineHeight: 1.25 }}>
+                <Typography sx={{ color: 'text.primary', fontSize: 13, fontWeight: 800, lineHeight: 1.25 }}>
                   {item.title}
                 </Typography>
-                <Typography sx={{ color: '#7EA1D1', fontSize: 11, flex: '0 0 auto', pt: 0.15 }}>{item.timestamp}</Typography>
+                <Typography sx={{ color: 'text.secondary', fontSize: 11, flex: '0 0 auto', pt: 0.15 }}>{item.timestamp}</Typography>
               </Stack>
-              <Typography noWrap sx={{ color: '#9CC8F5', fontSize: 12, mt: 0.35 }}>
+              <Typography noWrap sx={{ color: descriptionColor, fontSize: 12, mt: 0.35 }}>
                 {item.description}
               </Typography>
             </Box>
@@ -546,6 +569,8 @@ function RideStatusBadge({ status }: { status: RideStatus }) {
         color: style.color,
         bgcolor: style.background,
         border: `1px solid ${style.border}`,
+        maxWidth: '100%',
+        fontSize: 11,
         fontWeight: 800,
       }}
     />
