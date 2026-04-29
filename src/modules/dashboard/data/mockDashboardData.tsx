@@ -14,6 +14,7 @@ import type {
   AlertRide,
   DriverApplication,
   DriverAvailability,
+  HeatZone,
   KpiCard,
   MapMarker,
   RecentRide,
@@ -165,6 +166,14 @@ export const mapMarkers: MapMarker[] = [
   { id: 'passenger-1', type: 'passenger', label: 'Marina Lopes - passageira', position: [-23.5446, -46.6271] },
   { id: 'passenger-2', type: 'passenger', label: 'Joao Lima - passageiro', position: [-23.5586, -46.628] },
   { id: 'passenger-3', type: 'passenger', label: 'Ana Beatriz - passageira', position: [-23.5569, -46.6482] },
+]
+
+export const heatZones: HeatZone[] = [
+  { id: 'heat-paulista', label: 'Av. Paulista', position: [-23.5614, -46.6562], calls: 42, intensity: 0.95 },
+  { id: 'heat-pinheiros', label: 'Pinheiros', position: [-23.5662, -46.7019], calls: 34, intensity: 0.78 },
+  { id: 'heat-moema', label: 'Moema', position: [-23.6033, -46.6658], calls: 29, intensity: 0.68 },
+  { id: 'heat-centro', label: 'Centro', position: [-23.5505, -46.6333], calls: 37, intensity: 0.86 },
+  { id: 'heat-vila-olimpia', label: 'Vila Olimpia', position: [-23.594, -46.6847], calls: 24, intensity: 0.58 },
 ]
 
 export const ridesPerHour = [

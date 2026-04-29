@@ -18,6 +18,14 @@ export type MapMarker = {
   position: [number, number]
 }
 
+export type HeatZone = {
+  id: string
+  label: string
+  position: [number, number]
+  calls: number
+  intensity: number
+}
+
 export type ActivityType = 'ride' | 'payment' | 'driver' | 'alert' | 'done'
 
 export type Activity = {
