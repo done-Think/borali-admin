@@ -150,11 +150,11 @@ const ridesPerHour = [
 ]
 
 const activities: Activity[] = [
-  { id: 'act-1', type: 'ride', title: 'Corrida iniciada', description: 'BRL-84211 saiu da Av. Paulista', timestamp: 'agora' },
-  { id: 'act-2', type: 'payment', title: 'Pagamento aprovado', description: 'R$ 48,90 via cartao', timestamp: 'ha 3 min' },
-  { id: 'act-3', type: 'driver', title: 'Motorista online', description: 'Carla Teixeira entrou na zona Centro', timestamp: 'ha 7 min' },
-  { id: 'act-4', type: 'alert', title: 'Cancelamento acima da media', description: 'Pinheiros teve 4 cancelamentos', timestamp: 'ha 12 min' },
-  { id: 'act-5', type: 'done', title: 'Corrida concluida', description: 'BRL-84203 finalizada em 22 min', timestamp: 'ha 18 min' },
+  { id: 'act-1', type: 'ride', title: 'Corridas ativas no momento', description: '38 corridas em andamento na operacao', timestamp: 'agora' },
+  { id: 'act-2', type: 'payment', title: 'Valor Medio Arrecadado', description: 'Ticket medio atual de R$ 42,80', timestamp: 'ha 3 min' },
+  { id: 'act-3', type: 'driver', title: 'Motoristas online', description: '214 motoristas disponiveis na plataforma', timestamp: 'ha 7 min' },
+  { id: 'act-4', type: 'alert', title: 'Cancelamento medio', description: 'Media operacional em 4,2% nas ultimas horas', timestamp: 'ha 12 min' },
+  { id: 'act-5', type: 'done', title: 'Corridas concluida', description: '126 corridas finalizadas hoje', timestamp: 'ha 18 min' },
 ]
 
 const recentRides: RecentRide[] = [
@@ -327,7 +327,7 @@ export default function DashboardPage() {
         <Card variant="outlined">
           <CardContent sx={{ p: 2.25 }}>
             <Stack direction="row" alignItems="center" justifyContent="space-between" spacing={2} sx={{ mb: 2 }}>
-              <Typography variant="h4">Resumo ao vivo</Typography>
+              <Typography variant="h4">Feed de Atividade em tempo real</Typography>
               <Chip label="tempo real" size="small" sx={{ fontWeight: 800 }} />
             </Stack>
             <ActivityList items={activities} compact />
@@ -492,18 +492,17 @@ const rideTableCellSx = {
 
 function ActivityList({ items, compact = false }: { items: Activity[]; compact?: boolean }) {
   const theme = useTheme()
-  const isDark = theme.palette.mode === 'dark'
-  const containerBg = isDark ? alpha(theme.palette.common.black, 0.22) : alpha(theme.palette.secondary.main, 0.06)
-  const itemBg = isDark ? alpha(theme.palette.background.default, 0.5) : theme.palette.background.paper
-  const descriptionColor = isDark ? theme.palette.secondary.light : theme.palette.secondary.dark
 
   return (
     <Stack
       spacing={1.25}
       sx={{
-        bgcolor: containerBg,
+        bgcolor: alpha(theme.palette.secondary.main, 0.06),
         borderRadius: 2,
         p: compact ? 1 : 1.25,
+        '[data-toolpad-color-scheme="dark"] &': {
+          bgcolor: alpha(theme.palette.common.black, 0.22),
+        },
       }}
     >
       {items.map((item) => {
@@ -520,9 +519,12 @@ function ActivityList({ items, compact = false }: { items: Activity[]; compact?:
               borderRadius: 1.5,
               border: '1px solid',
               borderColor: 'divider',
-              bgcolor: itemBg,
+              bgcolor: 'background.paper',
               px: 1.25,
               py: 1,
+              '[data-toolpad-color-scheme="dark"] &': {
+                bgcolor: alpha(theme.palette.background.default, 0.5),
+              },
             }}
           >
             <Box
@@ -547,7 +549,17 @@ function ActivityList({ items, compact = false }: { items: Activity[]; compact?:
                 </Typography>
                 <Typography sx={{ color: 'text.secondary', fontSize: 11, flex: '0 0 auto', pt: 0.15 }}>{item.timestamp}</Typography>
               </Stack>
-              <Typography noWrap sx={{ color: descriptionColor, fontSize: 12, mt: 0.35 }}>
+              <Typography
+                noWrap
+                sx={{
+                  color: 'secondary.dark',
+                  fontSize: 12,
+                  mt: 0.35,
+                  '[data-toolpad-color-scheme="dark"] &': {
+                    color: 'secondary.light',
+                  },
+                }}
+              >
                 {item.description}
               </Typography>
             </Box>
