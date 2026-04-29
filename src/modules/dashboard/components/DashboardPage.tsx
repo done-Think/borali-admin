@@ -212,16 +212,16 @@ const alertRides: AlertRide[] = [
 ]
 
 const driversAcceptingRides: DriverAvailability[] = [
-  { id: 'DRV-1001', name: 'Rafael Souza', phone: '(11) 98210-4401', city: 'Sao Paulo, SP', vehicle: 'Honda City 2022', lastSeen: 'aceitando agora' },
-  { id: 'DRV-1002', name: 'Bianca Costa', phone: '(11) 99320-1180', city: 'Sao Paulo, SP', vehicle: 'Hyundai HB20 2023', lastSeen: 'aceitando ha 2 min' },
-  { id: 'DRV-1003', name: 'Luis Prado', phone: '(11) 98144-7710', city: 'Sao Paulo, SP', vehicle: 'Toyota Corolla 2021', lastSeen: 'aceitando ha 4 min' },
-  { id: 'DRV-1004', name: 'Clara Alves', phone: '(11) 99722-8841', city: 'Sao Paulo, SP', vehicle: 'Chevrolet Onix 2022', lastSeen: 'aceitando ha 6 min' },
+  { id: 'DRV-1001', name: 'Renato Almeida', phone: '(21) 99218-4402', city: 'Rio de Janeiro, RJ', vehicle: 'Toyota Corolla 2022', lastSeen: 'aceitando agora' },
+  { id: 'DRV-1002', name: 'Patricia Nogueira', phone: '(41) 99731-6508', city: 'Curitiba, PR', vehicle: 'Honda City 2021', lastSeen: 'aceitando ha 2 min' },
+  { id: 'DRV-1006', name: 'Fernanda Lima', phone: '(85) 99810-1247', city: 'Sao Paulo, SP', vehicle: 'Jeep Compass 2022', lastSeen: 'aceitando ha 4 min' },
+  { id: 'DRV-1009', name: 'Igor Santana', phone: '(71) 98720-4410', city: 'Sao Paulo, SP', vehicle: 'Toyota Corolla 2021', lastSeen: 'aceitando ha 6 min' },
 ]
 
 const driversAppOpenOnly: DriverAvailability[] = [
-  { id: 'DRV-1011', name: 'Andre Mota', phone: '(11) 98610-2204', city: 'Sao Paulo, SP', vehicle: 'Nissan Versa 2020', lastSeen: 'app aberto ha 3 min' },
-  { id: 'DRV-1012', name: 'Helena Duarte', phone: '(19) 99341-8821', city: 'Campinas, SP', vehicle: 'Jeep Renegade 2021', lastSeen: 'app aberto ha 8 min' },
-  { id: 'DRV-1013', name: 'Igor Santana', phone: '(71) 98720-4410', city: 'Sao Paulo, SP', vehicle: 'Volkswagen Virtus 2022', lastSeen: 'app aberto ha 11 min' },
+  { id: 'DRV-1003', name: 'Bruno Martins', phone: '(11) 98140-2208', city: 'Sao Paulo, SP', vehicle: 'Veiculo cadastrado', lastSeen: 'app aberto ha 3 min' },
+  { id: 'DRV-1007', name: 'Gustavo Moreira', phone: '(62) 98845-9012', city: 'Sao Paulo, SP', vehicle: 'Veiculo cadastrado', lastSeen: 'app aberto ha 8 min' },
+  { id: 'DRV-1010', name: 'Juliana Freitas', phone: '(48) 99670-1123', city: 'Sao Paulo, SP', vehicle: 'Veiculo cadastrado', lastSeen: 'app aberto ha 11 min' },
 ]
 
 const driverApplications: DriverApplication[] = [
@@ -863,6 +863,17 @@ function AlertRidesDialog({ open, onClose }: { open: boolean; onClose: () => voi
 }
 
 function OnlineDriversDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const navigate = useNavigate()
+
+  function openDriverDetails(driverId: string) {
+    navigate('/drivers', {
+      state: {
+        selectedDriverId: driverId,
+        selectedDriverTab: 0,
+      },
+    })
+  }
+
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="lg">
       <DialogTitle>
@@ -891,12 +902,14 @@ function OnlineDriversDialog({ open, onClose }: { open: boolean; onClose: () => 
             subtitle="Motoristas online, ativos e disponiveis para receber chamadas."
             color="#2DD4A0"
             drivers={driversAcceptingRides}
+            onSelectDriver={openDriverDetails}
           />
           <DriverAvailabilitySection
             title="App aberto, não ativos"
             subtitle="Motoristas com aplicativo aberto, mas sem aceitar chamadas no momento."
             color="#F59E0B"
             drivers={driversAppOpenOnly}
+            onSelectDriver={openDriverDetails}
           />
         </Box>
       </DialogContent>
@@ -909,11 +922,13 @@ function DriverAvailabilitySection({
   subtitle,
   color,
   drivers,
+  onSelectDriver,
 }: {
   title: string
   subtitle: string
   color: string
   drivers: DriverAvailability[]
+  onSelectDriver: (driverId: string) => void
 }) {
   return (
     <Card variant="outlined">
@@ -932,11 +947,26 @@ function DriverAvailabilitySection({
           {drivers.map((driver) => (
             <Box
               key={driver.id}
+              role="button"
+              tabIndex={0}
+              onClick={() => onSelectDriver(driver.id)}
+              onKeyDown={(event) => {
+                if (event.key === 'Enter' || event.key === ' ') {
+                  event.preventDefault()
+                  onSelectDriver(driver.id)
+                }
+              }}
               sx={{
                 border: '1px solid',
                 borderColor: 'divider',
                 borderRadius: 1.5,
                 p: 1.5,
+                cursor: 'pointer',
+                transition: '160ms ease',
+                '&:hover': {
+                  borderColor: color,
+                  boxShadow: 2,
+                },
               }}
             >
               <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} alignItems={{ xs: 'flex-start', sm: 'center' }} justifyContent="space-between">

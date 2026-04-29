@@ -60,6 +60,8 @@ type SortDirection = 'asc' | 'desc'
 type DriversLocationState = {
   openNewDriverDialog?: boolean
   expandedRequestId?: string
+  selectedDriverId?: string
+  selectedDriverTab?: number
 }
 
 type Driver = {
@@ -601,6 +603,19 @@ export default function DriversPage() {
       setShowNewDriverDialog(true)
     }
   }, [locationState?.openNewDriverDialog])
+
+  useEffect(() => {
+    if (!locationState?.selectedDriverId) {
+      return
+    }
+
+    const targetDriver = driverRows.find((driver) => driver.id === locationState.selectedDriverId)
+
+    if (targetDriver) {
+      setSelectedDriver(targetDriver)
+      setDriverDetailsTab(locationState.selectedDriverTab ?? 0)
+    }
+  }, [driverRows, locationState?.selectedDriverId, locationState?.selectedDriverTab])
 
   const filteredDrivers = useMemo(() => {
     const normalizedSearch = normalizeSearch(search).trim()
