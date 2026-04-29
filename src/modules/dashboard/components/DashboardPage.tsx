@@ -7,6 +7,7 @@ import MonetizationOnIcon from '@mui/icons-material/MonetizationOn'
 import PendingActionsIcon from '@mui/icons-material/PendingActions'
 import ReportProblemIcon from '@mui/icons-material/ReportProblem'
 import TimelineIcon from '@mui/icons-material/Timeline'
+import WarningAmberIcon from '@mui/icons-material/WarningAmber'
 import {
   Box,
   ButtonBase,
@@ -37,7 +38,7 @@ import { MapContainer, Marker, Polyline, TileLayer } from 'react-leaflet'
 import 'leaflet/dist/leaflet.css'
 
 type KpiCard = {
-  id: 'active-rides' | 'online-drivers' | 'daily-revenue' | 'pending-approvals'
+  id: 'active-rides' | 'online-drivers' | 'daily-revenue' | 'pending-approvals' | 'alert-rides'
   title: string
   value: string
   subtitle: string
@@ -80,6 +81,13 @@ type ActiveRide = {
   origin: string
   destination: string
   value: number
+}
+
+type AlertRide = ActiveRide & {
+  alertedBy: 'Motorista' | 'Passageiro'
+  threatenedPerson: string
+  alertReason: string
+  alertTime: string
 }
 
 type DriverApplication = {
@@ -136,6 +144,14 @@ const kpiCards: KpiCard[] = [
     icon: <PendingActionsIcon />,
     color: '#8B5CF6',
   },
+  {
+    id: 'alert-rides',
+    title: 'Corrida em Alerta',
+    value: '3',
+    subtitle: '1 alerta critico agora',
+    icon: <WarningAmberIcon />,
+    color: '#EF4444',
+  },
 ]
 
 const activeRides: ActiveRide[] = [
@@ -144,6 +160,45 @@ const activeRides: ActiveRide[] = [
   { id: 'BRL-84213', driver: 'Luis Prado', passenger: 'Ana Beatriz', origin: 'Pinheiros', destination: 'Itaim Bibi', value: 29.8 },
   { id: 'BRL-84214', driver: 'Clara Alves', passenger: 'Pedro Rocha', origin: 'Vila Madalena', destination: 'Se', value: 42.2 },
   { id: 'BRL-84215', driver: 'Andre Mota', passenger: 'Luiza Martins', origin: 'Tatuape', destination: 'Jardins', value: 64.7 },
+]
+
+const alertRides: AlertRide[] = [
+  {
+    id: 'BRL-84216',
+    driver: 'Helena Duarte',
+    passenger: 'Roberto Maia',
+    origin: 'Rua Augusta, 900',
+    destination: 'Barra Funda',
+    value: 52.4,
+    alertedBy: 'Passageiro',
+    threatenedPerson: 'Roberto Maia',
+    alertReason: 'Passageiro relatou desvio de rota e comportamento agressivo',
+    alertTime: 'agora',
+  },
+  {
+    id: 'BRL-84217',
+    driver: 'Igor Santana',
+    passenger: 'Patricia Nogueira',
+    origin: 'Vila Olimpia',
+    destination: 'Liberdade',
+    value: 44.8,
+    alertedBy: 'Motorista',
+    threatenedPerson: 'Igor Santana',
+    alertReason: 'Motorista acionou alerta por ameaça verbal durante a corrida',
+    alertTime: 'ha 4 min',
+  },
+  {
+    id: 'BRL-84218',
+    driver: 'Diego Ramos',
+    passenger: 'Fernanda Lima',
+    origin: 'Santana',
+    destination: 'Pinheiros',
+    value: 71.2,
+    alertedBy: 'Passageiro',
+    threatenedPerson: 'Fernanda Lima',
+    alertReason: 'Passageira se sentiu ameaçada no embarque',
+    alertTime: 'ha 9 min',
+  },
 ]
 
 const driverApplications: DriverApplication[] = [
@@ -361,6 +416,7 @@ export default function DashboardPage() {
   const [activeRidesOpen, setActiveRidesOpen] = useState(false)
   const [revenueOpen, setRevenueOpen] = useState(false)
   const [approvalsOpen, setApprovalsOpen] = useState(false)
+  const [alertRidesOpen, setAlertRidesOpen] = useState(false)
 
   function handleKpiClick(card: KpiCard) {
     if (card.id === 'active-rides') {
@@ -373,6 +429,10 @@ export default function DashboardPage() {
 
     if (card.id === 'pending-approvals') {
       setApprovalsOpen(true)
+    }
+
+    if (card.id === 'alert-rides') {
+      setAlertRidesOpen(true)
     }
   }
 
@@ -409,7 +469,7 @@ export default function DashboardPage() {
           gridTemplateColumns: {
             xs: '1fr',
             sm: 'repeat(2, minmax(0, 1fr))',
-            lg: 'repeat(4, minmax(0, 1fr))',
+            lg: 'repeat(5, minmax(0, 1fr))',
           },
         }}
       >
@@ -585,6 +645,7 @@ export default function DashboardPage() {
       <ActiveRidesDialog open={activeRidesOpen} onClose={() => setActiveRidesOpen(false)} />
       <RevenueDialog open={revenueOpen} onClose={() => setRevenueOpen(false)} />
       <PendingApprovalsDialog open={approvalsOpen} onClose={() => setApprovalsOpen(false)} />
+      <AlertRidesDialog open={alertRidesOpen} onClose={() => setAlertRidesOpen(false)} />
     </Box>
   )
 }
@@ -681,6 +742,82 @@ function ActiveRidesDialog({ open, onClose }: { open: boolean; onClose: () => vo
               {activeRides.map((ride) => (
                 <TableRow key={ride.id} hover>
                   <TableCell sx={{ fontWeight: 800 }}>{ride.id}</TableCell>
+                  <TableCell>{ride.driver}</TableCell>
+                  <TableCell>{ride.passenger}</TableCell>
+                  <TableCell>{ride.origin}</TableCell>
+                  <TableCell>{ride.destination}</TableCell>
+                  <TableCell sx={{ fontWeight: 800 }}>{currencyFormatter.format(ride.value)}</TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </TableContainer>
+      </DialogContent>
+    </Dialog>
+  )
+}
+
+function AlertRidesDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
+  return (
+    <Dialog open={open} onClose={onClose} fullWidth maxWidth="lg">
+      <DialogTitle>
+        <Stack direction="row" alignItems="center" justifyContent="space-between" spacing={2}>
+          <Box>
+            <Typography variant="h4">Corridas em alerta</Typography>
+            <Typography color="text.secondary" sx={{ mt: 0.5 }}>
+              Alertas acionados durante corridas em andamento.
+            </Typography>
+          </Box>
+          <Chip label={`${alertRides.length} alertas ativos`} color="error" variant="outlined" sx={{ fontWeight: 800 }} />
+        </Stack>
+      </DialogTitle>
+
+      <DialogContent dividers>
+        <TableContainer>
+          <Table size="small" sx={{ minWidth: 960 }}>
+            <TableHead>
+              <TableRow>
+                {['#', 'Alerta', 'Quem se sentiu ameacado', 'Motorista', 'Passageiro', 'Partida', 'Destino', 'Valor'].map((header) => (
+                  <TableCell key={header} sx={{ color: 'text.secondary', fontWeight: 800 }}>
+                    {header}
+                  </TableCell>
+                ))}
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {alertRides.map((ride) => (
+                <TableRow key={ride.id} hover>
+                  <TableCell sx={{ fontWeight: 800 }}>{ride.id}</TableCell>
+                  <TableCell>
+                    <Stack direction="row" spacing={1} alignItems="center">
+                      <Box
+                        sx={{
+                          width: 34,
+                          height: 34,
+                          borderRadius: '50%',
+                          display: 'grid',
+                          placeItems: 'center',
+                          color: '#EF4444',
+                          bgcolor: 'rgba(239, 68, 68, 0.14)',
+                          flex: '0 0 auto',
+                        }}
+                      >
+                        <WarningAmberIcon fontSize="small" />
+                      </Box>
+                      <Box sx={{ minWidth: 0 }}>
+                        <Typography sx={{ fontWeight: 800, fontSize: 13 }}>{ride.alertedBy}</Typography>
+                        <Typography color="text.secondary" sx={{ fontSize: 12 }}>
+                          {ride.alertTime}
+                        </Typography>
+                      </Box>
+                    </Stack>
+                  </TableCell>
+                  <TableCell>
+                    <Typography sx={{ fontWeight: 900 }}>{ride.threatenedPerson}</Typography>
+                    <Typography color="error.main" sx={{ fontSize: 12, fontWeight: 700 }}>
+                      {ride.alertReason}
+                    </Typography>
+                  </TableCell>
                   <TableCell>{ride.driver}</TableCell>
                   <TableCell>{ride.passenger}</TableCell>
                   <TableCell>{ride.origin}</TableCell>
