@@ -1,6 +1,7 @@
 import { useState, type ReactElement } from 'react'
 import CheckCircleIcon from '@mui/icons-material/CheckCircle'
 import DirectionsCarIcon from '@mui/icons-material/DirectionsCar'
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
 import LocalTaxiIcon from '@mui/icons-material/LocalTaxi'
 import MonetizationOnIcon from '@mui/icons-material/MonetizationOn'
 import PendingActionsIcon from '@mui/icons-material/PendingActions'
@@ -12,6 +13,7 @@ import {
   Card,
   CardContent,
   Chip,
+  Collapse,
   Dialog,
   DialogContent,
   DialogTitle,
@@ -23,12 +25,14 @@ import {
   TableContainer,
   TableHead,
   TableRow,
+  ToggleButton,
+  ToggleButtonGroup,
   Typography,
   useTheme,
 } from '@mui/material'
 import { alpha } from '@mui/material/styles'
 import L from 'leaflet'
-import { Bar, BarChart, CartesianGrid, Cell, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
+import { Bar, BarChart, CartesianGrid, Cell, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import { MapContainer, Marker, Polyline, TileLayer } from 'react-leaflet'
 import 'leaflet/dist/leaflet.css'
 
@@ -78,6 +82,22 @@ type ActiveRide = {
   value: number
 }
 
+type DriverApplication = {
+  id: string
+  name: string
+  cpf: string
+  phone: string
+  email: string
+  city: string
+  vehicle: string
+  plate: string
+  category: string
+  requestedAt: string
+  expiresIn: string
+}
+
+type RevenuePeriod = 'day' | 'week' | 'month'
+
 const currencyFormatter = new Intl.NumberFormat('pt-BR', {
   style: 'currency',
   currency: 'BRL',
@@ -125,6 +145,97 @@ const activeRides: ActiveRide[] = [
   { id: 'BRL-84214', driver: 'Clara Alves', passenger: 'Pedro Rocha', origin: 'Vila Madalena', destination: 'Se', value: 42.2 },
   { id: 'BRL-84215', driver: 'Andre Mota', passenger: 'Luiza Martins', origin: 'Tatuape', destination: 'Jardins', value: 64.7 },
 ]
+
+const driverApplications: DriverApplication[] = [
+  {
+    id: 'REQ-2026-0429-01',
+    name: 'Samuel Andrade',
+    cpf: '840.217.390-12',
+    phone: '(11) 98244-1188',
+    email: 'samuel.andrade@email.com',
+    city: 'Sao Paulo, SP',
+    vehicle: 'Hyundai HB20 2023',
+    plate: 'SMA-2D18',
+    category: 'Conforto',
+    requestedAt: 'Hoje as 10:12',
+    expiresIn: 'expira em 2h',
+  },
+  {
+    id: 'REQ-2026-0429-02',
+    name: 'Taina Ribeiro',
+    cpf: '219.684.730-55',
+    phone: '(21) 99830-7741',
+    email: 'taina.ribeiro@email.com',
+    city: 'Rio de Janeiro, RJ',
+    vehicle: 'Jeep Compass 2022',
+    plate: 'TRB-9A42',
+    category: 'Executivo',
+    requestedAt: 'Hoje as 11:03',
+    expiresIn: 'expira em 4h',
+  },
+  {
+    id: 'REQ-2026-0429-03',
+    name: 'Carla Teixeira',
+    cpf: '501.738.920-44',
+    phone: '(31) 98418-5530',
+    email: 'carla.teixeira@email.com',
+    city: 'Belo Horizonte, MG',
+    vehicle: 'Toyota Corolla 2021',
+    plate: 'CTE-7H21',
+    category: 'Economico',
+    requestedAt: 'Ontem as 18:40',
+    expiresIn: 'expira em 8h',
+  },
+]
+
+const revenueComparisons: Record<
+  RevenuePeriod,
+  {
+    label: string
+    currentLabel: string
+    previousLabel: string
+    data: Array<{ label: string; atual: number; anterior: number }>
+  }
+> = {
+  day: {
+    label: 'Hoje vs ontem',
+    currentLabel: 'Hoje',
+    previousLabel: 'Ontem',
+    data: [
+      { label: '00h', atual: 420, anterior: 380 },
+      { label: '04h', atual: 610, anterior: 520 },
+      { label: '08h', atual: 2480, anterior: 2210 },
+      { label: '12h', atual: 3890, anterior: 3420 },
+      { label: '16h', atual: 5220, anterior: 4660 },
+      { label: '20h', atual: 5800, anterior: 5010 },
+    ],
+  },
+  week: {
+    label: 'Semana vs semana atras',
+    currentLabel: 'Esta semana',
+    previousLabel: 'Semana anterior',
+    data: [
+      { label: 'Seg', atual: 12800, anterior: 11300 },
+      { label: 'Ter', atual: 14200, anterior: 13050 },
+      { label: 'Qua', atual: 18420, anterior: 16980 },
+      { label: 'Qui', atual: 17600, anterior: 15840 },
+      { label: 'Sex', atual: 21300, anterior: 19620 },
+      { label: 'Sab', atual: 23800, anterior: 21550 },
+      { label: 'Dom', atual: 20100, anterior: 18430 },
+    ],
+  },
+  month: {
+    label: 'Mes vs mes atras',
+    currentLabel: 'Mes atual',
+    previousLabel: 'Mes anterior',
+    data: [
+      { label: 'Sem 1', atual: 84200, anterior: 79100 },
+      { label: 'Sem 2', atual: 92600, anterior: 86100 },
+      { label: 'Sem 3', atual: 101400, anterior: 94400 },
+      { label: 'Sem 4', atual: 110800, anterior: 103200 },
+    ],
+  },
+}
 
 const rideLine: [number, number][] = [
   [-23.5617, -46.6559],
@@ -248,10 +359,20 @@ const peakRides = Math.max(...ridesPerHour.map((item) => item.rides))
 export default function DashboardPage() {
   const theme = useTheme()
   const [activeRidesOpen, setActiveRidesOpen] = useState(false)
+  const [revenueOpen, setRevenueOpen] = useState(false)
+  const [approvalsOpen, setApprovalsOpen] = useState(false)
 
   function handleKpiClick(card: KpiCard) {
     if (card.id === 'active-rides') {
       setActiveRidesOpen(true)
+    }
+
+    if (card.id === 'daily-revenue') {
+      setRevenueOpen(true)
+    }
+
+    if (card.id === 'pending-approvals') {
+      setApprovalsOpen(true)
     }
   }
 
@@ -462,6 +583,8 @@ export default function DashboardPage() {
       </Box>
 
       <ActiveRidesDialog open={activeRidesOpen} onClose={() => setActiveRidesOpen(false)} />
+      <RevenueDialog open={revenueOpen} onClose={() => setRevenueOpen(false)} />
+      <PendingApprovalsDialog open={approvalsOpen} onClose={() => setApprovalsOpen(false)} />
     </Box>
   )
 }
@@ -570,6 +693,238 @@ function ActiveRidesDialog({ open, onClose }: { open: boolean; onClose: () => vo
         </TableContainer>
       </DialogContent>
     </Dialog>
+  )
+}
+
+function RevenueDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const theme = useTheme()
+  const [period, setPeriod] = useState<RevenuePeriod>('day')
+  const comparison = revenueComparisons[period]
+  const currentTotal = comparison.data.reduce((total, item) => total + item.atual, 0)
+  const previousTotal = comparison.data.reduce((total, item) => total + item.anterior, 0)
+  const variation = previousTotal > 0 ? ((currentTotal - previousTotal) / previousTotal) * 100 : 0
+
+  function handlePeriodChange(_: React.MouseEvent<HTMLElement>, value: RevenuePeriod | null) {
+    if (value) {
+      setPeriod(value)
+    }
+  }
+
+  return (
+    <Dialog open={open} onClose={onClose} fullWidth maxWidth="lg">
+      <DialogTitle>
+        <Stack direction={{ xs: 'column', md: 'row' }} alignItems={{ xs: 'stretch', md: 'center' }} justifyContent="space-between" spacing={2}>
+          <Box>
+            <Typography variant="h4">Receita do dia</Typography>
+            <Typography color="text.secondary" sx={{ mt: 0.5 }}>
+              Comparativo de receita por periodo.
+            </Typography>
+          </Box>
+
+          <ToggleButtonGroup exclusive size="small" value={period} onChange={handlePeriodChange} aria-label="Periodo de comparacao">
+            <ToggleButton value="day">Hoje vs ontem</ToggleButton>
+            <ToggleButton value="week">Semana</ToggleButton>
+            <ToggleButton value="month">Mes</ToggleButton>
+          </ToggleButtonGroup>
+        </Stack>
+      </DialogTitle>
+
+      <DialogContent dividers>
+        <Stack spacing={3}>
+          <Box
+            sx={{
+              display: 'grid',
+              gap: 2,
+              gridTemplateColumns: { xs: '1fr', md: 'repeat(3, minmax(0, 1fr))' },
+            }}
+          >
+            <RevenueMetric label={comparison.currentLabel} value={currencyFormatter.format(currentTotal)} color="secondary.main" />
+            <RevenueMetric label={comparison.previousLabel} value={currencyFormatter.format(previousTotal)} color="text.secondary" />
+            <RevenueMetric label="Variacao" value={`${variation >= 0 ? '+' : ''}${variation.toFixed(1)}%`} color={variation >= 0 ? 'success.main' : 'error.main'} />
+          </Box>
+
+          <Card variant="outlined">
+            <CardContent>
+              <Stack direction="row" alignItems="center" justifyContent="space-between" spacing={2} sx={{ mb: 2 }}>
+                <Box>
+                  <Typography fontWeight={800}>{comparison.label}</Typography>
+                  <Typography color="text.secondary" sx={{ mt: 0.25 }}>
+                    Valores acumulados em {comparison.data.length} pontos do periodo.
+                  </Typography>
+                </Box>
+              </Stack>
+
+              <Box sx={{ height: 360 }}>
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={comparison.data} margin={{ top: 12, right: 16, bottom: 0, left: 4 }}>
+                    <CartesianGrid stroke={theme.palette.divider} vertical={false} />
+                    <XAxis dataKey="label" tick={{ fill: theme.palette.text.secondary, fontSize: 12 }} axisLine={false} tickLine={false} />
+                    <YAxis
+                      tick={{ fill: theme.palette.text.secondary, fontSize: 12 }}
+                      axisLine={false}
+                      tickLine={false}
+                      tickFormatter={(value) => currencyFormatter.format(Number(value)).replace(',00', '')}
+                    />
+                    <Tooltip
+                      cursor={{ fill: 'rgba(10, 190, 233, 0.08)' }}
+                      formatter={(value, name) => [currencyFormatter.format(Number(value)), name === 'atual' ? comparison.currentLabel : comparison.previousLabel]}
+                      contentStyle={{
+                        borderRadius: 8,
+                        border: `1px solid ${theme.palette.divider}`,
+                        boxShadow: theme.shadows[6],
+                      }}
+                    />
+                    <Legend />
+                    <Bar dataKey="anterior" name={comparison.previousLabel} fill={alpha(theme.palette.text.secondary, 0.45)} radius={[6, 6, 0, 0]} isAnimationActive={false} />
+                    <Bar dataKey="atual" name={comparison.currentLabel} fill={theme.palette.secondary.main} radius={[6, 6, 0, 0]} isAnimationActive={false} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </Box>
+            </CardContent>
+          </Card>
+        </Stack>
+      </DialogContent>
+    </Dialog>
+  )
+}
+
+function RevenueMetric({ label, value, color }: { label: string; value: string; color: string }) {
+  return (
+    <Box sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 2, p: 2 }}>
+      <Typography color="text.secondary" fontWeight={700}>
+        {label}
+      </Typography>
+      <Typography variant="h4" sx={{ color, mt: 0.75 }}>
+        {value}
+      </Typography>
+    </Box>
+  )
+}
+
+function PendingApprovalsDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const [expandedId, setExpandedId] = useState<string | null>(null)
+
+  return (
+    <Dialog open={open} onClose={onClose} fullWidth maxWidth="lg">
+      <DialogTitle>
+        <Stack direction={{ xs: 'column', md: 'row' }} alignItems={{ xs: 'stretch', md: 'center' }} justifyContent="space-between" spacing={2}>
+          <Box>
+            <Typography variant="h4">Aprovacoes pendentes</Typography>
+            <Typography color="text.secondary" sx={{ mt: 0.5 }}>
+              Novos possiveis motoristas aguardando analise cadastral.
+            </Typography>
+          </Box>
+          <Chip label={`${driverApplications.length} cadastros`} color="secondary" variant="outlined" sx={{ fontWeight: 800 }} />
+        </Stack>
+      </DialogTitle>
+
+      <DialogContent dividers>
+        <Stack spacing={1.5}>
+          {driverApplications.map((application) => {
+            const expanded = expandedId === application.id
+
+            return (
+              <Card key={application.id} variant="outlined">
+                <CardContent sx={{ p: 1.5, '&:last-child': { pb: 1.5 } }}>
+                  <Stack
+                    direction={{ xs: 'column', md: 'row' }}
+                    spacing={1.5}
+                    alignItems={{ xs: 'stretch', md: 'center' }}
+                    justifyContent="space-between"
+                  >
+                    <Box
+                      sx={{
+                        display: 'grid',
+                        gap: 1.5,
+                        gridTemplateColumns: { xs: '1fr', md: '1.2fr 1fr 1fr' },
+                        flex: 1,
+                        minWidth: 0,
+                      }}
+                    >
+                      <CompactApplicationField label="Nome" value={application.name} />
+                      <CompactApplicationField label="CPF" value={application.cpf} />
+                      <CompactApplicationField label="Telefone" value={application.phone} />
+                    </Box>
+
+                    <ButtonBase
+                      onClick={() => setExpandedId(expanded ? null : application.id)}
+                      sx={{
+                        border: '1px solid',
+                        borderColor: 'divider',
+                        borderRadius: 1.5,
+                        px: 1.5,
+                        py: 1,
+                        fontWeight: 800,
+                        color: 'text.primary',
+                        minWidth: 118,
+                      }}
+                    >
+                      <Stack direction="row" spacing={0.75} alignItems="center">
+                        <span>{expanded ? 'Recolher' : 'Expandir'}</span>
+                        <ExpandMoreIcon
+                          fontSize="small"
+                          sx={{
+                            transform: expanded ? 'rotate(180deg)' : 'rotate(0deg)',
+                            transition: 'transform 160ms ease',
+                          }}
+                        />
+                      </Stack>
+                    </ButtonBase>
+                  </Stack>
+
+                  <Collapse in={expanded} timeout="auto" unmountOnExit>
+                    <Box
+                      sx={{
+                        mt: 2,
+                        pt: 2,
+                        borderTop: '1px solid',
+                        borderColor: 'divider',
+                        display: 'grid',
+                        gap: 1.5,
+                        gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, minmax(0, 1fr))', md: 'repeat(4, minmax(0, 1fr))' },
+                      }}
+                    >
+                      <ApplicationDetail label="E-mail" value={application.email} />
+                      <ApplicationDetail label="Cidade" value={application.city} />
+                      <ApplicationDetail label="Veiculo" value={application.vehicle} />
+                      <ApplicationDetail label="Placa" value={application.plate} />
+                      <ApplicationDetail label="Categoria" value={application.category} />
+                      <ApplicationDetail label="Solicitado em" value={application.requestedAt} />
+                      <ApplicationDetail label="Prazo" value={application.expiresIn} />
+                      <ApplicationDetail label="Protocolo" value={application.id} />
+                    </Box>
+                  </Collapse>
+                </CardContent>
+              </Card>
+            )
+          })}
+        </Stack>
+      </DialogContent>
+    </Dialog>
+  )
+}
+
+function CompactApplicationField({ label, value }: { label: string; value: string }) {
+  return (
+    <Stack direction="row" spacing={1} alignItems="baseline" sx={{ minWidth: 0 }}>
+      <Typography color="text.secondary" sx={{ fontSize: 12, fontWeight: 800, flex: '0 0 auto' }}>
+        {label}
+      </Typography>
+      <Typography noWrap sx={{ fontWeight: 800, minWidth: 0 }}>
+        {value}
+      </Typography>
+    </Stack>
+  )
+}
+
+function ApplicationDetail({ label, value }: { label: string; value: string }) {
+  return (
+    <Box sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 1.5, p: 1.5 }}>
+      <Typography color="text.secondary" sx={{ fontSize: 12, fontWeight: 800 }}>
+        {label}
+      </Typography>
+      <Typography sx={{ mt: 0.5, fontWeight: 800 }}>{value}</Typography>
+    </Box>
   )
 }
 
