@@ -35,6 +35,7 @@ import { alpha } from '@mui/material/styles'
 import L from 'leaflet'
 import { Bar, BarChart, CartesianGrid, Cell, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import { MapContainer, Marker, Polyline, TileLayer } from 'react-leaflet'
+import { useNavigate } from 'react-router'
 import 'leaflet/dist/leaflet.css'
 
 type KpiCard = {
@@ -203,7 +204,7 @@ const alertRides: AlertRide[] = [
 
 const driverApplications: DriverApplication[] = [
   {
-    id: 'REQ-2026-0429-01',
+    id: 'REQ-2026-0428-01',
     name: 'Samuel Andrade',
     cpf: '840.217.390-12',
     phone: '(11) 98244-1188',
@@ -216,7 +217,7 @@ const driverApplications: DriverApplication[] = [
     expiresIn: 'expira em 2h',
   },
   {
-    id: 'REQ-2026-0429-02',
+    id: 'REQ-2026-0428-02',
     name: 'Taina Ribeiro',
     cpf: '219.684.730-55',
     phone: '(21) 99830-7741',
@@ -229,7 +230,7 @@ const driverApplications: DriverApplication[] = [
     expiresIn: 'expira em 4h',
   },
   {
-    id: 'REQ-2026-0429-03',
+    id: 'REQ-2026-0428-03',
     name: 'Carla Teixeira',
     cpf: '501.738.920-44',
     phone: '(31) 98418-5530',
@@ -940,6 +941,16 @@ function RevenueMetric({ label, value, color }: { label: string; value: string; 
 
 function PendingApprovalsDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
   const [expandedId, setExpandedId] = useState<string | null>(null)
+  const navigate = useNavigate()
+
+  function openDriverRequest(requestId: string) {
+    navigate('/drivers', {
+      state: {
+        openNewDriverDialog: true,
+        expandedRequestId: requestId,
+      },
+    })
+  }
 
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="lg">
@@ -1029,6 +1040,29 @@ function PendingApprovalsDialog({ open, onClose }: { open: boolean; onClose: () 
                       <ApplicationDetail label="Solicitado em" value={application.requestedAt} />
                       <ApplicationDetail label="Prazo" value={application.expiresIn} />
                       <ApplicationDetail label="Protocolo" value={application.id} />
+                      <Box
+                        sx={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'flex-end',
+                          gridColumn: { xs: 'auto', md: 'span 4' },
+                        }}
+                      >
+                        <ButtonBase
+                          onClick={() => openDriverRequest(application.id)}
+                          sx={{
+                            border: '1px solid',
+                            borderColor: 'secondary.main',
+                            borderRadius: 1.5,
+                            color: 'secondary.main',
+                            px: 2,
+                            py: 1,
+                            fontWeight: 800,
+                          }}
+                        >
+                          Ver cadastro completo em Motoristas
+                        </ButtonBase>
+                      </Box>
                     </Box>
                   </Collapse>
                 </CardContent>

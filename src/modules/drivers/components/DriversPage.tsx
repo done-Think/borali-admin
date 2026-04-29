@@ -47,7 +47,7 @@ import {
   useTheme,
 } from '@mui/material'
 import { supportTickets } from '@shared/mocks/supportTickets'
-import { useNavigate } from 'react-router'
+import { useLocation, useNavigate } from 'react-router'
 
 type DriverFilter = 'all' | 'online' | 'approved' | 'pending' | 'blocked'
 type DriverCategory = 'Conforto' | 'Econômico' | 'Executivo'
@@ -56,6 +56,11 @@ type DriverStatus = 'Online' | 'Offline' | 'Pendente' | 'Bloqueado'
 type DriverSubscription = 'Pro' | 'Básico' | 'Premium' | 'Trial'
 type DriverSortKey = 'category' | 'status' | 'rides' | 'rating' | 'subscription' | 'monthlyEarnings'
 type SortDirection = 'asc' | 'desc'
+
+type DriversLocationState = {
+  openNewDriverDialog?: boolean
+  expandedRequestId?: string
+}
 
 type Driver = {
   id: string
@@ -295,6 +300,32 @@ const driverRequests: DriverRequest[] = [
     attachments: [
       { name: 'cnh-taina.jpg', type: 'CNH' },
       { name: 'comprovante-residencia.png', type: 'Comprovante' },
+    ],
+  },
+  {
+    requestId: 'REQ-2026-0428-03',
+    id: 'DRV-1013',
+    name: 'Carla Teixeira',
+    initials: 'CT',
+    phone: '(31) 98418-5530',
+    category: 'Econômico',
+    status: 'Pendente',
+    rides: 0,
+    rating: 0,
+    subscription: 'Trial',
+    monthlyEarnings: 0,
+    cpf: '501.738.920-44',
+    email: 'carla.teixeira@email.com',
+    city: 'Belo Horizonte, MG',
+    vehicle: 'Toyota Corolla 2021',
+    plate: 'CTE-7H21',
+    joinedAt: '29/04/2026',
+    lastOnline: 'Ainda nÃ£o aprovado',
+    requestedAt: 'Ontem Ã s 18:40',
+    attachments: [
+      { name: 'cnh-carla.pdf', type: 'CNH' },
+      { name: 'crlv-corolla.pdf', type: 'Documento' },
+      { name: 'selfie-carla.jpg', type: 'Foto' },
     ],
   },
 ]
@@ -547,6 +578,8 @@ function getInitials(name: string) {
 
 export default function DriversPage() {
   const theme = useTheme()
+  const location = useLocation()
+  const locationState = location.state as DriversLocationState | null
   const [driverRows, setDriverRows] = useState(drivers)
   const [driverDetailsOverrides, setDriverDetailsOverrides] = useState<Record<string, Partial<DriverDetails>>>({})
   const [search, setSearch] = useState('')
@@ -562,6 +595,12 @@ export default function DriversPage() {
   const [pendingDriverRequests, setPendingDriverRequests] = useState(driverRequests)
   const [driverDetailsTab, setDriverDetailsTab] = useState(0)
   const rowsPerPage = 5
+
+  useEffect(() => {
+    if (locationState?.openNewDriverDialog) {
+      setShowNewDriverDialog(true)
+    }
+  }, [locationState?.openNewDriverDialog])
 
   const filteredDrivers = useMemo(() => {
     const normalizedSearch = normalizeSearch(search).trim()
@@ -1051,6 +1090,7 @@ export default function DriversPage() {
       <NewDriverDialog
         open={showNewDriverDialog}
         requests={pendingDriverRequests}
+        initialExpandedRequestId={locationState?.expandedRequestId}
         onClose={() => setShowNewDriverDialog(false)}
         onCreateManual={createManualDriverDraft}
         onApprove={approveDriverRequest}
@@ -1649,12 +1689,14 @@ function SortableHeader({
 function NewDriverDialog({
   open,
   requests,
+  initialExpandedRequestId,
   onClose,
   onCreateManual,
   onApprove,
 }: {
   open: boolean
   requests: DriverRequest[]
+  initialExpandedRequestId?: string
   onClose: () => void
   onCreateManual: () => void
   onApprove: (request: DriverRequest) => void
@@ -1664,9 +1706,9 @@ function NewDriverDialog({
 
   useEffect(() => {
     if (open) {
-      setExpandedRequest(null)
+      setExpandedRequest(initialExpandedRequestId ?? null)
     }
-  }, [open])
+  }, [initialExpandedRequestId, open])
 
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="lg">
