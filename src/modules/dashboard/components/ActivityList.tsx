@@ -1,9 +1,15 @@
-import { Box, Stack, Typography, useTheme } from '@mui/material'
+import { Box, ButtonBase, Stack, Typography, useTheme } from '@mui/material'
 import { alpha } from '@mui/material/styles'
 import { activityStyles } from '../data/mockDashboardData'
 import type { Activity } from '../types'
 
-export function ActivityList({ items, compact = false }: { items: Activity[]; compact?: boolean }) {
+type ActivityListProps = {
+  items: Activity[]
+  compact?: boolean
+  onItemClick?: (item: Activity) => void
+}
+
+export function ActivityList({ items, compact = false, onItemClick }: ActivityListProps) {
   const theme = useTheme()
 
   return (
@@ -20,14 +26,14 @@ export function ActivityList({ items, compact = false }: { items: Activity[]; co
     >
       {items.map((item) => {
         const style = activityStyles[item.type]
+        const clickable = Boolean(onItemClick)
 
         return (
-          <Stack
+          <ButtonBase
             key={item.id}
-            direction="row"
-            spacing={1.25}
-            alignItems="center"
+            onClick={clickable ? () => onItemClick?.(item) : undefined}
             sx={{
+              width: '100%',
               minHeight: compact ? 56 : 66,
               borderRadius: 1.5,
               border: '1px solid',
@@ -35,6 +41,19 @@ export function ActivityList({ items, compact = false }: { items: Activity[]; co
               bgcolor: 'background.paper',
               px: 1.25,
               py: 1,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 1.25,
+              textAlign: 'left',
+              cursor: clickable ? 'pointer' : 'default',
+              transition: 'border-color 160ms ease, box-shadow 160ms ease, transform 160ms ease',
+              '&:hover': clickable
+                ? {
+                    borderColor: style.color,
+                    boxShadow: `0 12px 28px ${alpha(style.color, 0.14)}`,
+                    transform: 'translateY(-1px)',
+                  }
+                : undefined,
               '[data-toolpad-color-scheme="dark"] &': {
                 bgcolor: alpha(theme.palette.background.default, 0.5),
               },
@@ -52,8 +71,8 @@ export function ActivityList({ items, compact = false }: { items: Activity[]; co
                 bgcolor: `${style.color}22`,
               }}
             >
-              {style.icon}
-            </Box>
+                {style.icon}
+              </Box>
 
             <Box sx={{ minWidth: 0, flex: 1 }}>
               <Stack direction="row" spacing={1} alignItems="flex-start" justifyContent="space-between">
@@ -76,7 +95,7 @@ export function ActivityList({ items, compact = false }: { items: Activity[]; co
                 {item.description}
               </Typography>
             </Box>
-          </Stack>
+          </ButtonBase>
         )
       })}
     </Stack>

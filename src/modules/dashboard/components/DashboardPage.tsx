@@ -11,10 +11,12 @@ import { RecentRidesTable } from './RecentRidesTable'
 import { RidesPerHourChart } from './RidesPerHourChart'
 import { ActiveRidesDialog } from './dialogs/ActiveRidesDialog'
 import { AlertRidesDialog } from './dialogs/AlertRidesDialog'
+import { ActivitySummaryDialog } from './dialogs/ActivitySummaryDialog'
 import { OnlineDriversDialog } from './dialogs/OnlineDriversDialog'
 import { PendingApprovalsDialog } from './dialogs/PendingApprovalsDialog'
 import { RevenueDialog } from './dialogs/RevenueDialog'
 import { useActivePaletteMode } from '../utils/useActivePaletteMode'
+import type { Activity } from '../types'
 
 export default function DashboardPage() {
   const theme = useTheme()
@@ -24,6 +26,7 @@ export default function DashboardPage() {
   const [approvalsOpen, setApprovalsOpen] = useState(false)
   const [alertRidesOpen, setAlertRidesOpen] = useState(false)
   const [onlineDriversOpen, setOnlineDriversOpen] = useState(false)
+  const [selectedActivity, setSelectedActivity] = useState<Activity | null>(null)
 
   function handleKpiClick(card: KpiCard) {
     if (card.id === 'active-rides') setActiveRidesOpen(true)
@@ -90,7 +93,7 @@ export default function DashboardPage() {
               <Typography variant="h4">Feed de Atividade em tempo real</Typography>
               <Chip label="tempo real" size="small" sx={{ fontWeight: 800 }} />
             </Stack>
-            <ActivityList items={activities} compact />
+            <ActivityList items={activities} compact onItemClick={setSelectedActivity} />
           </CardContent>
         </Card>
       </Box>
@@ -112,6 +115,12 @@ export default function DashboardPage() {
       <PendingApprovalsDialog open={approvalsOpen} onClose={() => setApprovalsOpen(false)} />
       <AlertRidesDialog open={alertRidesOpen} onClose={() => setAlertRidesOpen(false)} />
       <OnlineDriversDialog open={onlineDriversOpen} onClose={() => setOnlineDriversOpen(false)} />
+      <ActivitySummaryDialog
+        open={Boolean(selectedActivity)}
+        activities={activities}
+        selectedActivityId={selectedActivity?.id ?? null}
+        onClose={() => setSelectedActivity(null)}
+      />
     </Box>
   )
 }
