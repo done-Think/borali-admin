@@ -204,11 +204,76 @@ export const ridesPerHour = [
 ]
 
 export const activities: Activity[] = [
-  { id: 'act-1', type: 'ride', title: 'Corridas ativas no momento', description: '38 corridas em andamento na operacao', timestamp: 'agora' },
-  { id: 'act-2', type: 'payment', title: 'Valor Medio Arrecadado', description: 'Ticket medio atual de R$ 42,80', timestamp: 'ha 3 min' },
-  { id: 'act-3', type: 'driver', title: 'Motoristas online', description: '214 motoristas disponiveis na plataforma', timestamp: 'ha 7 min' },
-  { id: 'act-4', type: 'alert', title: 'Cancelamento medio', description: 'Media operacional em 4,2% nas ultimas horas', timestamp: 'ha 12 min' },
-  { id: 'act-5', type: 'done', title: 'Corridas concluida', description: '126 corridas finalizadas hoje', timestamp: 'ha 18 min' },
+  {
+    id: 'act-1',
+    type: 'ride',
+    title: 'Corridas ativas no momento',
+    description: '38 corridas em andamento na operacao',
+    timestamp: 'agora',
+    summary: 'A operacao esta com maior concentracao nas regioes Paulista, Centro e Pinheiros, com demanda acima do normal nos ultimos minutos.',
+    details: [
+      { label: 'Em andamento', value: '38 corridas' },
+      { label: 'Entrando agora', value: '+14%' },
+      { label: 'Zona mais ativa', value: 'Av. Paulista' },
+      { label: 'Tempo medio', value: '22 min' },
+    ],
+  },
+  {
+    id: 'act-2',
+    type: 'payment',
+    title: 'Valor Medio Arrecadado',
+    description: 'Ticket medio atual de R$ 42,80',
+    timestamp: 'ha 3 min',
+    summary: 'O ticket medio segue acima da base das ultimas horas, puxado por corridas de maior distancia e maior uso da categoria conforto.',
+    details: [
+      { label: 'Ticket medio', value: 'R$ 42,80' },
+      { label: 'Receita do dia', value: 'R$ 18.420,00' },
+      { label: 'Comparativo', value: '+8,4% vs ontem' },
+      { label: 'Categoria destaque', value: 'Conforto' },
+    ],
+  },
+  {
+    id: 'act-3',
+    type: 'driver',
+    title: 'Motoristas online',
+    description: '214 motoristas disponiveis na plataforma',
+    timestamp: 'ha 7 min',
+    summary: 'A oferta de motoristas esta saudavel, mas ha diferenca entre motoristas aceitando chamadas e motoristas apenas com o app aberto.',
+    details: [
+      { label: 'Disponiveis', value: '214 motoristas' },
+      { label: 'Novos hoje', value: '+18' },
+      { label: 'Aceitando corrida', value: '156' },
+      { label: 'App aberto', value: '58' },
+    ],
+  },
+  {
+    id: 'act-4',
+    type: 'alert',
+    title: 'Cancelamento medio',
+    description: 'Media operacional em 4,2% nas ultimas horas',
+    timestamp: 'ha 12 min',
+    summary: 'O cancelamento esta dentro do limite operacional, mas algumas regioes precisam de acompanhamento por aumento de recusas.',
+    details: [
+      { label: 'Media atual', value: '4,2%' },
+      { label: 'Limite interno', value: '5,0%' },
+      { label: 'Maior causa', value: 'Tempo de espera' },
+      { label: 'Regiao em atencao', value: 'Pinheiros' },
+    ],
+  },
+  {
+    id: 'act-5',
+    type: 'done',
+    title: 'Corridas concluida',
+    description: '126 corridas finalizadas hoje',
+    timestamp: 'ha 18 min',
+    summary: 'As conclusoes do dia estao evoluindo bem, com pico entre 17h e 19h e bom volume de corridas sem ocorrencia.',
+    details: [
+      { label: 'Finalizadas hoje', value: '126' },
+      { label: 'Sem ocorrencia', value: '119' },
+      { label: 'Pico do dia', value: '18h' },
+      { label: 'Tempo medio', value: '24 min' },
+    ],
+  },
 ]
 
 export const recentRides: RecentRide[] = [

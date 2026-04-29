@@ -1,4 +1,5 @@
-import { Box, Chip, Dialog, DialogContent, DialogTitle, Stack, Typography, useTheme } from '@mui/material'
+import { useEffect, useState } from 'react'
+import { Box, ButtonBase, Chip, Dialog, DialogContent, DialogTitle, Stack, Typography, useTheme } from '@mui/material'
 import { alpha } from '@mui/material/styles'
 import { activityStyles } from '../../data/mockDashboardData'
 import type { Activity } from '../../types'
@@ -14,7 +15,15 @@ export function ActivitySummaryDialog({
   selectedActivityId: string | null
   onClose: () => void
 }) {
-  const theme = useTheme()
+  const [currentActivityId, setCurrentActivityId] = useState<string | null>(selectedActivityId)
+  const currentActivity = activities.find((activity) => activity.id === currentActivityId) ?? activities[0]
+  const secondaryActivities = activities.filter((activity) => activity.id !== currentActivity?.id)
+
+  useEffect(() => {
+    if (open) {
+      setCurrentActivityId(selectedActivityId)
+    }
+  }, [open, selectedActivityId])
 
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="lg">
@@ -30,67 +39,150 @@ export function ActivitySummaryDialog({
         </Stack>
       </DialogTitle>
       <DialogContent dividers>
-        <Box
-          sx={{
-            display: 'grid',
-            gap: 1.5,
-            gridTemplateColumns: { xs: '1fr', md: 'repeat(2, minmax(0, 1fr))', xl: 'repeat(3, minmax(0, 1fr))' },
-          }}
-        >
-          {activities.map((activity) => {
-            const style = activityStyles[activity.type]
-            const selected = selectedActivityId === activity.id
-
-            return (
-              <Box
-                key={activity.id}
-                sx={{
-                  minHeight: 158,
-                  border: '1px solid',
-                  borderColor: selected ? style.color : 'divider',
-                  borderRadius: 2,
-                  bgcolor: selected ? alpha(style.color, theme.palette.mode === 'dark' ? 0.16 : 0.1) : 'background.paper',
-                  p: 2,
-                  boxShadow: selected ? `0 16px 34px ${alpha(style.color, 0.18)}` : 'none',
-                }}
-              >
-                <Stack spacing={1.5} sx={{ height: '100%' }}>
-                  <Stack direction="row" alignItems="center" justifyContent="space-between" spacing={1.5}>
-                    <Box
-                      sx={{
-                        width: 42,
-                        height: 42,
-                        borderRadius: '50%',
-                        display: 'grid',
-                        placeItems: 'center',
-                        color: style.color,
-                        bgcolor: `${style.color}22`,
-                        flex: '0 0 auto',
-                      }}
-                    >
-                      {style.icon}
-                    </Box>
-                    <Chip label={activity.timestamp} size="small" sx={{ fontWeight: 800 }} />
-                  </Stack>
-
-                  <Box>
-                    <Typography sx={{ fontSize: 15, fontWeight: 900, color: 'text.primary' }}>{activity.title}</Typography>
-                    <Typography color="text.secondary" sx={{ mt: 0.75, lineHeight: 1.55 }}>
-                      {activity.description}
-                    </Typography>
-                  </Box>
-
-                  <Box sx={{ mt: 'auto', pt: 1, borderTop: '1px solid', borderColor: 'divider' }}>
-                    <Typography sx={{ color: style.color, fontSize: 12, fontWeight: 900 }}>
-                      {selected ? 'Indicador selecionado' : 'Atualizacao operacional'}
-                    </Typography>
-                  </Box>
-                </Stack>
-              </Box>
-            )
-          })}
-        </Box>
+        {currentActivity ? (
+          <Box
+            sx={{
+              display: 'grid',
+              gap: 2,
+              gridTemplateColumns: { xs: '1fr', lg: 'minmax(280px, 0.65fr) minmax(0, 1.35fr)' },
+              alignItems: 'stretch',
+            }}
+          >
+            <Stack spacing={1.25}>
+              {secondaryActivities.map((activity) => (
+                <ActivitySummaryCard key={activity.id} activity={activity} selected={false} compact onClick={() => setCurrentActivityId(activity.id)} />
+              ))}
+            </Stack>
+            <SelectedActivityPanel activity={currentActivity} />
+          </Box>
+        ) : null}
       </DialogContent>
     </Dialog>
+  )
+}
+
+function SelectedActivityPanel({ activity }: { activity: Activity }) {
+  const theme = useTheme()
+  const style = activityStyles[activity.type]
+
+  return (
+    <Box
+      sx={{
+        minHeight: { xs: 420, md: 500 },
+        border: '1px solid',
+        borderColor: style.color,
+        borderRadius: 2,
+        bgcolor: alpha(style.color, theme.palette.mode === 'dark' ? 0.16 : 0.08),
+        p: { xs: 2, md: 2.5 },
+        boxShadow: `0 18px 42px ${alpha(style.color, 0.16)}`,
+      }}
+    >
+      <Stack spacing={2.25} sx={{ height: '100%' }}>
+        <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} alignItems={{ xs: 'flex-start', sm: 'center' }} justifyContent="space-between">
+          <Stack direction="row" spacing={1.5} alignItems="center">
+            <ActivityIcon color={style.color} icon={style.icon} size={54} />
+            <Box>
+              <Typography sx={{ fontSize: 22, fontWeight: 900, color: 'text.primary', lineHeight: 1.15 }}>{activity.title}</Typography>
+              <Typography color="text.secondary" sx={{ mt: 0.5 }}>
+                {activity.description}
+              </Typography>
+            </Box>
+          </Stack>
+          <Chip label={activity.timestamp} size="small" sx={{ fontWeight: 900 }} />
+        </Stack>
+
+        <Typography color="text.secondary" sx={{ fontSize: 15, lineHeight: 1.7 }}>
+          {activity.summary}
+        </Typography>
+
+        <Box sx={{ display: 'grid', gap: 1.5, gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, minmax(0, 1fr))' } }}>
+          {activity.details.map((detail) => (
+            <Box key={detail.label} sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 1.5, bgcolor: 'background.paper', p: 1.5 }}>
+              <Typography color="text.secondary" sx={{ fontSize: 12, fontWeight: 800 }}>
+                {detail.label}
+              </Typography>
+              <Typography sx={{ mt: 0.5, fontSize: 18, fontWeight: 900, color: style.color }}>{detail.value}</Typography>
+            </Box>
+          ))}
+        </Box>
+
+        <Box sx={{ mt: 'auto', pt: 2, borderTop: '1px solid', borderColor: alpha(style.color, 0.35) }}>
+          <Typography sx={{ color: style.color, fontSize: 12, fontWeight: 900 }}>Indicador selecionado para analise detalhada</Typography>
+        </Box>
+      </Stack>
+    </Box>
+  )
+}
+
+function ActivitySummaryCard({
+  activity,
+  selected,
+  compact = false,
+  onClick,
+}: {
+  activity: Activity
+  selected: boolean
+  compact?: boolean
+  onClick: () => void
+}) {
+  const theme = useTheme()
+  const style = activityStyles[activity.type]
+
+  return (
+    <ButtonBase
+      onClick={onClick}
+      sx={{
+        width: '100%',
+        minHeight: compact ? 94 : 158,
+        border: '1px solid',
+        borderColor: selected ? style.color : 'divider',
+        borderRadius: 2,
+        bgcolor: selected ? alpha(style.color, theme.palette.mode === 'dark' ? 0.16 : 0.1) : 'background.paper',
+        p: compact ? 1.5 : 2,
+        textAlign: 'left',
+        justifyContent: 'stretch',
+        boxShadow: selected ? `0 16px 34px ${alpha(style.color, 0.18)}` : 'none',
+        transition: 'border-color 160ms ease, box-shadow 160ms ease, transform 160ms ease',
+        '&:hover': {
+          borderColor: style.color,
+          boxShadow: `0 14px 30px ${alpha(style.color, 0.14)}`,
+          transform: 'translateX(-2px)',
+        },
+      }}
+    >
+      <Stack direction="row" spacing={1.25} alignItems="center" sx={{ width: '100%' }}>
+        <ActivityIcon color={style.color} icon={style.icon} size={40} />
+        <Box sx={{ minWidth: 0, flex: 1 }}>
+          <Stack direction="row" spacing={1} alignItems="flex-start" justifyContent="space-between">
+            <Typography noWrap sx={{ fontSize: 13, fontWeight: 900, color: 'text.primary' }}>
+              {activity.title}
+            </Typography>
+            <Typography sx={{ color: 'text.secondary', fontSize: 11, flex: '0 0 auto' }}>{activity.timestamp}</Typography>
+          </Stack>
+          <Typography noWrap color="text.secondary" sx={{ mt: 0.5, fontSize: 12 }}>
+            {activity.description}
+          </Typography>
+        </Box>
+      </Stack>
+    </ButtonBase>
+  )
+}
+
+function ActivityIcon({ color, icon, size }: { color: string; icon: React.ReactNode; size: number }) {
+  return (
+    <Box
+      sx={{
+        width: size,
+        height: size,
+        borderRadius: '50%',
+        display: 'grid',
+        placeItems: 'center',
+        color,
+        bgcolor: `${color}22`,
+        flex: '0 0 auto',
+      }}
+    >
+      {icon}
+    </Box>
   )
 }

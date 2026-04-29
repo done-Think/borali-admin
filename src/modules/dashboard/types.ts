@@ -34,6 +34,8 @@ export type Activity = {
   title: string
   description: string
   timestamp: string
+  details: Array<{ label: string; value: string }>
+  summary: string
 }
 
 export type RideStatus = 'Concluida' | 'Cancelada' | 'Em andamento'
