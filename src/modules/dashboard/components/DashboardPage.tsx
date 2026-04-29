@@ -1,4 +1,4 @@
-import type { ReactElement } from 'react'
+import { useState, type ReactElement } from 'react'
 import CheckCircleIcon from '@mui/icons-material/CheckCircle'
 import DirectionsCarIcon from '@mui/icons-material/DirectionsCar'
 import LocalTaxiIcon from '@mui/icons-material/LocalTaxi'
@@ -8,9 +8,13 @@ import ReportProblemIcon from '@mui/icons-material/ReportProblem'
 import TimelineIcon from '@mui/icons-material/Timeline'
 import {
   Box,
+  ButtonBase,
   Card,
   CardContent,
   Chip,
+  Dialog,
+  DialogContent,
+  DialogTitle,
   GlobalStyles,
   Stack,
   Table,
@@ -29,6 +33,7 @@ import { MapContainer, Marker, Polyline, TileLayer } from 'react-leaflet'
 import 'leaflet/dist/leaflet.css'
 
 type KpiCard = {
+  id: 'active-rides' | 'online-drivers' | 'daily-revenue' | 'pending-approvals'
   title: string
   value: string
   subtitle: string
@@ -64,6 +69,15 @@ type RecentRide = {
   status: RideStatus
 }
 
+type ActiveRide = {
+  id: string
+  driver: string
+  passenger: string
+  origin: string
+  destination: string
+  value: number
+}
+
 const currencyFormatter = new Intl.NumberFormat('pt-BR', {
   style: 'currency',
   currency: 'BRL',
@@ -71,6 +85,7 @@ const currencyFormatter = new Intl.NumberFormat('pt-BR', {
 
 const kpiCards: KpiCard[] = [
   {
+    id: 'active-rides',
     title: 'Corridas ativas',
     value: '38',
     subtitle: '+14% entrando agora',
@@ -78,6 +93,7 @@ const kpiCards: KpiCard[] = [
     color: '#0ABEE9',
   },
   {
+    id: 'online-drivers',
     title: 'Motoristas online',
     value: '214',
     subtitle: '+18 novos hoje',
@@ -85,6 +101,7 @@ const kpiCards: KpiCard[] = [
     color: '#2DD4A0',
   },
   {
+    id: 'daily-revenue',
     title: 'Receita do dia',
     value: currencyFormatter.format(18420),
     subtitle: '+8,4% vs. ontem',
@@ -92,12 +109,21 @@ const kpiCards: KpiCard[] = [
     color: '#F59E0B',
   },
   {
+    id: 'pending-approvals',
     title: 'Aprovacoes pend.',
     value: '17',
     subtitle: '5 expiram em 2h',
     icon: <PendingActionsIcon />,
     color: '#8B5CF6',
   },
+]
+
+const activeRides: ActiveRide[] = [
+  { id: 'BRL-84211', driver: 'Rafael Souza', passenger: 'Marina Lopes', origin: 'Av. Paulista, 1578', destination: 'Centro Historico', value: 48.9 },
+  { id: 'BRL-84212', driver: 'Bianca Costa', passenger: 'Joao Lima', origin: 'Moema', destination: 'Aeroporto de Congonhas', value: 36.5 },
+  { id: 'BRL-84213', driver: 'Luis Prado', passenger: 'Ana Beatriz', origin: 'Pinheiros', destination: 'Itaim Bibi', value: 29.8 },
+  { id: 'BRL-84214', driver: 'Clara Alves', passenger: 'Pedro Rocha', origin: 'Vila Madalena', destination: 'Se', value: 42.2 },
+  { id: 'BRL-84215', driver: 'Andre Mota', passenger: 'Luiza Martins', origin: 'Tatuape', destination: 'Jardins', value: 64.7 },
 ]
 
 const rideLine: [number, number][] = [
@@ -221,6 +247,13 @@ const peakRides = Math.max(...ridesPerHour.map((item) => item.rides))
 
 export default function DashboardPage() {
   const theme = useTheme()
+  const [activeRidesOpen, setActiveRidesOpen] = useState(false)
+
+  function handleKpiClick(card: KpiCard) {
+    if (card.id === 'active-rides') {
+      setActiveRidesOpen(true)
+    }
+  }
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
@@ -260,7 +293,7 @@ export default function DashboardPage() {
         }}
       >
         {kpiCards.map((card) => (
-          <MetricCard key={card.title} card={card} />
+          <MetricCard key={card.id} card={card} onClick={() => handleKpiClick(card)} />
         ))}
       </Box>
 
@@ -427,47 +460,116 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
       </Box>
+
+      <ActiveRidesDialog open={activeRidesOpen} onClose={() => setActiveRidesOpen(false)} />
     </Box>
   )
 }
 
-function MetricCard({ card }: { card: KpiCard }) {
+function MetricCard({ card, onClick }: { card: KpiCard; onClick: () => void }) {
   return (
-    <Card variant="outlined" sx={{ height: '100%' }}>
-      <CardContent>
-        <Stack direction="row" spacing={1.5} alignItems="flex-start">
-          <Box
-            sx={{
-              width: 44,
-              height: 44,
-              borderRadius: 2,
-              display: 'grid',
-              placeItems: 'center',
-              flex: '0 0 auto',
-              color: card.color,
-              bgcolor: `${card.color}1F`,
-              '& svg': {
-                fontSize: 24,
-              },
-            }}
-          >
-            {card.icon}
-          </Box>
+    <Card
+      variant="outlined"
+      sx={{
+        height: '100%',
+        transition: '160ms ease',
+        '&:hover': {
+          borderColor: card.color,
+          boxShadow: 3,
+        },
+      }}
+    >
+      <ButtonBase
+        onClick={onClick}
+        sx={{
+          width: '100%',
+          height: '100%',
+          display: 'block',
+          textAlign: 'left',
+          borderRadius: 'inherit',
+        }}
+      >
+        <CardContent>
+          <Stack direction="row" spacing={1.5} alignItems="flex-start">
+            <Box
+              sx={{
+                width: 44,
+                height: 44,
+                borderRadius: 2,
+                display: 'grid',
+                placeItems: 'center',
+                flex: '0 0 auto',
+                color: card.color,
+                bgcolor: `${card.color}1F`,
+                '& svg': {
+                  fontSize: 24,
+                },
+              }}
+            >
+              {card.icon}
+            </Box>
 
-          <Box sx={{ minWidth: 0 }}>
-            <Typography color="text.secondary" fontWeight={700}>
-              {card.title}
-            </Typography>
-            <Typography variant="h3" sx={{ mt: 0.5, lineHeight: 1.1 }}>
-              {card.value}
-            </Typography>
-            <Typography color="text.secondary" sx={{ mt: 0.75 }}>
-              {card.subtitle}
+            <Box sx={{ minWidth: 0 }}>
+              <Typography color="text.secondary" fontWeight={700}>
+                {card.title}
+              </Typography>
+              <Typography variant="h3" sx={{ mt: 0.5, lineHeight: 1.1 }}>
+                {card.value}
+              </Typography>
+              <Typography color="text.secondary" sx={{ mt: 0.75 }}>
+                {card.subtitle}
+              </Typography>
+            </Box>
+          </Stack>
+        </CardContent>
+      </ButtonBase>
+    </Card>
+  )
+}
+
+function ActiveRidesDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
+  return (
+    <Dialog open={open} onClose={onClose} fullWidth maxWidth="lg">
+      <DialogTitle>
+        <Stack direction="row" alignItems="center" justifyContent="space-between" spacing={2}>
+          <Box>
+            <Typography variant="h4">Corridas ativas</Typography>
+            <Typography color="text.secondary" sx={{ mt: 0.5 }}>
+              Motoristas em corrida, passageiro, rota e valor atual.
             </Typography>
           </Box>
+          <Chip label={`${activeRides.length} em andamento`} color="secondary" variant="outlined" sx={{ fontWeight: 800 }} />
         </Stack>
-      </CardContent>
-    </Card>
+      </DialogTitle>
+
+      <DialogContent dividers>
+        <TableContainer>
+          <Table size="small" sx={{ minWidth: 760 }}>
+            <TableHead>
+              <TableRow>
+                {['#', 'Motorista', 'Passageiro', 'Partida', 'Destino', 'Valor'].map((header) => (
+                  <TableCell key={header} sx={{ color: 'text.secondary', fontWeight: 800 }}>
+                    {header}
+                  </TableCell>
+                ))}
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {activeRides.map((ride) => (
+                <TableRow key={ride.id} hover>
+                  <TableCell sx={{ fontWeight: 800 }}>{ride.id}</TableCell>
+                  <TableCell>{ride.driver}</TableCell>
+                  <TableCell>{ride.passenger}</TableCell>
+                  <TableCell>{ride.origin}</TableCell>
+                  <TableCell>{ride.destination}</TableCell>
+                  <TableCell sx={{ fontWeight: 800 }}>{currencyFormatter.format(ride.value)}</TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </TableContainer>
+      </DialogContent>
+    </Dialog>
   )
 }
 
