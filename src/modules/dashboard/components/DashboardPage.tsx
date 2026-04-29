@@ -91,6 +91,15 @@ type AlertRide = ActiveRide & {
   alertTime: string
 }
 
+type DriverAvailability = {
+  id: string
+  name: string
+  phone: string
+  city: string
+  vehicle: string
+  lastSeen: string
+}
+
 type DriverApplication = {
   id: string
   name: string
@@ -200,6 +209,19 @@ const alertRides: AlertRide[] = [
     alertReason: 'Passageira se sentiu ameaçada no embarque',
     alertTime: 'ha 9 min',
   },
+]
+
+const driversAcceptingRides: DriverAvailability[] = [
+  { id: 'DRV-1001', name: 'Rafael Souza', phone: '(11) 98210-4401', city: 'Sao Paulo, SP', vehicle: 'Honda City 2022', lastSeen: 'aceitando agora' },
+  { id: 'DRV-1002', name: 'Bianca Costa', phone: '(11) 99320-1180', city: 'Sao Paulo, SP', vehicle: 'Hyundai HB20 2023', lastSeen: 'aceitando ha 2 min' },
+  { id: 'DRV-1003', name: 'Luis Prado', phone: '(11) 98144-7710', city: 'Sao Paulo, SP', vehicle: 'Toyota Corolla 2021', lastSeen: 'aceitando ha 4 min' },
+  { id: 'DRV-1004', name: 'Clara Alves', phone: '(11) 99722-8841', city: 'Sao Paulo, SP', vehicle: 'Chevrolet Onix 2022', lastSeen: 'aceitando ha 6 min' },
+]
+
+const driversAppOpenOnly: DriverAvailability[] = [
+  { id: 'DRV-1011', name: 'Andre Mota', phone: '(11) 98610-2204', city: 'Sao Paulo, SP', vehicle: 'Nissan Versa 2020', lastSeen: 'app aberto ha 3 min' },
+  { id: 'DRV-1012', name: 'Helena Duarte', phone: '(19) 99341-8821', city: 'Campinas, SP', vehicle: 'Jeep Renegade 2021', lastSeen: 'app aberto ha 8 min' },
+  { id: 'DRV-1013', name: 'Igor Santana', phone: '(71) 98720-4410', city: 'Sao Paulo, SP', vehicle: 'Volkswagen Virtus 2022', lastSeen: 'app aberto ha 11 min' },
 ]
 
 const driverApplications: DriverApplication[] = [
@@ -418,6 +440,7 @@ export default function DashboardPage() {
   const [revenueOpen, setRevenueOpen] = useState(false)
   const [approvalsOpen, setApprovalsOpen] = useState(false)
   const [alertRidesOpen, setAlertRidesOpen] = useState(false)
+  const [onlineDriversOpen, setOnlineDriversOpen] = useState(false)
 
   function handleKpiClick(card: KpiCard) {
     if (card.id === 'active-rides') {
@@ -426,6 +449,10 @@ export default function DashboardPage() {
 
     if (card.id === 'daily-revenue') {
       setRevenueOpen(true)
+    }
+
+    if (card.id === 'online-drivers') {
+      setOnlineDriversOpen(true)
     }
 
     if (card.id === 'pending-approvals') {
@@ -647,6 +674,7 @@ export default function DashboardPage() {
       <RevenueDialog open={revenueOpen} onClose={() => setRevenueOpen(false)} />
       <PendingApprovalsDialog open={approvalsOpen} onClose={() => setApprovalsOpen(false)} />
       <AlertRidesDialog open={alertRidesOpen} onClose={() => setAlertRidesOpen(false)} />
+      <OnlineDriversDialog open={onlineDriversOpen} onClose={() => setOnlineDriversOpen(false)} />
     </Box>
   )
 }
@@ -831,6 +859,108 @@ function AlertRidesDialog({ open, onClose }: { open: boolean; onClose: () => voi
         </TableContainer>
       </DialogContent>
     </Dialog>
+  )
+}
+
+function OnlineDriversDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
+  return (
+    <Dialog open={open} onClose={onClose} fullWidth maxWidth="lg">
+      <DialogTitle>
+        <Stack direction={{ xs: 'column', md: 'row' }} alignItems={{ xs: 'stretch', md: 'center' }} justifyContent="space-between" spacing={2}>
+          <Box>
+            <Typography variant="h4">Motoristas online</Typography>
+            <Typography color="text.secondary" sx={{ mt: 0.5 }}>
+              Motoristas aceitando corrida e motoristas apenas com o app aberto.
+            </Typography>
+          </Box>
+          <Chip label={`${driversAcceptingRides.length + driversAppOpenOnly.length} com app ativo`} color="secondary" variant="outlined" sx={{ fontWeight: 800 }} />
+        </Stack>
+      </DialogTitle>
+
+      <DialogContent dividers>
+        <Box
+          sx={{
+            display: 'grid',
+            gap: 2,
+            gridTemplateColumns: { xs: '1fr', lg: 'repeat(2, minmax(0, 1fr))' },
+            alignItems: 'start',
+          }}
+        >
+          <DriverAvailabilitySection
+            title="Aceitando corrida"
+            subtitle="Motoristas online, ativos e disponiveis para receber chamadas."
+            color="#2DD4A0"
+            drivers={driversAcceptingRides}
+          />
+          <DriverAvailabilitySection
+            title="App aberto, não ativos"
+            subtitle="Motoristas com aplicativo aberto, mas sem aceitar chamadas no momento."
+            color="#F59E0B"
+            drivers={driversAppOpenOnly}
+          />
+        </Box>
+      </DialogContent>
+    </Dialog>
+  )
+}
+
+function DriverAvailabilitySection({
+  title,
+  subtitle,
+  color,
+  drivers,
+}: {
+  title: string
+  subtitle: string
+  color: string
+  drivers: DriverAvailability[]
+}) {
+  return (
+    <Card variant="outlined">
+      <CardContent>
+        <Stack direction="row" alignItems="flex-start" justifyContent="space-between" spacing={2} sx={{ mb: 2 }}>
+          <Box>
+            <Typography variant="h4">{title}</Typography>
+            <Typography color="text.secondary" sx={{ mt: 0.5 }}>
+              {subtitle}
+            </Typography>
+          </Box>
+          <Chip label={drivers.length} size="small" sx={{ color, borderColor: color, fontWeight: 900 }} variant="outlined" />
+        </Stack>
+
+        <Stack spacing={1.25}>
+          {drivers.map((driver) => (
+            <Box
+              key={driver.id}
+              sx={{
+                border: '1px solid',
+                borderColor: 'divider',
+                borderRadius: 1.5,
+                p: 1.5,
+              }}
+            >
+              <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} alignItems={{ xs: 'flex-start', sm: 'center' }} justifyContent="space-between">
+                <Box sx={{ minWidth: 0 }}>
+                  <Stack direction="row" spacing={1} alignItems="center">
+                    <Box sx={{ width: 10, height: 10, borderRadius: '50%', bgcolor: color, flex: '0 0 auto' }} />
+                    <Typography sx={{ fontWeight: 900 }}>{driver.name}</Typography>
+                  </Stack>
+                  <Typography color="text.secondary" sx={{ mt: 0.35, fontSize: 12 }}>
+                    {driver.phone} | {driver.city}
+                  </Typography>
+                </Box>
+                <Box sx={{ textAlign: { xs: 'left', sm: 'right' } }}>
+                  <Typography sx={{ fontWeight: 800, fontSize: 13 }}>{driver.vehicle}</Typography>
+                  <Typography color="text.secondary" sx={{ fontSize: 12 }}>
+                    {driver.lastSeen}
+                  </Typography>
+                </Box>
+              </Stack>
+            </Box>
+          ))}
+        </Stack>
+      </CardContent>
+    </Card>
   )
 }
 
