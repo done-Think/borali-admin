@@ -1,12 +1,15 @@
 import { Box, Card, CardContent, Stack, Typography, useTheme } from '@mui/material'
 import { MapContainer, Marker, Polyline, TileLayer } from 'react-leaflet'
 import { mapMarkers, rideLine, secondRideLine } from '../data/mockDashboardData'
-import { darkTileLayer } from '../utils/mapConfig'
+import { getMapTileLayer } from '../utils/mapConfig'
 import { driverIcon, passengerIcon } from '../utils/mapIcons'
+import { useActivePaletteMode } from '../utils/useActivePaletteMode'
 import { MapLegend } from './MapLegend'
 
 export function DashboardLiveMap() {
   const theme = useTheme()
+  const activeMode = useActivePaletteMode()
+  const tileLayer = getMapTileLayer(activeMode)
 
   return (
     <Card variant="outlined" sx={{ overflow: 'hidden' }}>
@@ -26,7 +29,7 @@ export function DashboardLiveMap() {
 
         <Box sx={{ height: { xs: 340, md: 460 }, overflow: 'hidden', borderRadius: 2, border: `1px solid ${theme.palette.divider}` }}>
           <MapContainer center={[-23.5573, -46.6412]} zoom={13} scrollWheelZoom={false} style={{ width: '100%', height: '100%' }}>
-            <TileLayer attribution={darkTileLayer.attribution} url={darkTileLayer.url} />
+            <TileLayer key={activeMode} attribution={tileLayer.attribution} url={tileLayer.url} />
             <Polyline positions={rideLine} pathOptions={{ color: '#0ABEE9', weight: 5, opacity: 0.88 }} />
             <Polyline positions={secondRideLine} pathOptions={{ color: '#2DD4A0', weight: 4, opacity: 0.76, dashArray: '8 10' }} />
             {mapMarkers.map((marker) => (

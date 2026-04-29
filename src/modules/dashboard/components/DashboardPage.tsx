@@ -1,5 +1,6 @@
 import { useState } from 'react'
-import { Box, Card, CardContent, Chip, GlobalStyles, Stack, Typography } from '@mui/material'
+import { Box, Card, CardContent, Chip, GlobalStyles, Stack, Typography, useTheme } from '@mui/material'
+import { alpha } from '@mui/material/styles'
 import 'leaflet/dist/leaflet.css'
 import { activities, kpiCards } from '../data/mockDashboardData'
 import type { KpiCard } from '../types'
@@ -13,8 +14,11 @@ import { AlertRidesDialog } from './dialogs/AlertRidesDialog'
 import { OnlineDriversDialog } from './dialogs/OnlineDriversDialog'
 import { PendingApprovalsDialog } from './dialogs/PendingApprovalsDialog'
 import { RevenueDialog } from './dialogs/RevenueDialog'
+import { useActivePaletteMode } from '../utils/useActivePaletteMode'
 
 export default function DashboardPage() {
+  const theme = useTheme()
+  const activeMode = useActivePaletteMode()
   const [activeRidesOpen, setActiveRidesOpen] = useState(false)
   const [revenueOpen, setRevenueOpen] = useState(false)
   const [approvalsOpen, setApprovalsOpen] = useState(false)
@@ -35,15 +39,15 @@ export default function DashboardPage() {
         styles={{
           '.leaflet-container': {
             minHeight: '100%',
-            backgroundColor: '#0A0E1A',
+            backgroundColor: activeMode === 'dark' ? '#0A0E1A' : '#E5E7EB',
             fontFamily: 'inherit',
           },
           '.leaflet-control-attribution': {
-            backgroundColor: 'rgba(10, 14, 26, 0.78) !important',
-            color: '#CBD5E1 !important',
+            backgroundColor: `${alpha(theme.palette.background.paper, 0.82)} !important`,
+            color: `${theme.palette.text.secondary} !important`,
           },
           '.leaflet-control-attribution a': {
-            color: '#67E8F9 !important',
+            color: `${theme.palette.secondary.main} !important`,
           },
         }}
       />

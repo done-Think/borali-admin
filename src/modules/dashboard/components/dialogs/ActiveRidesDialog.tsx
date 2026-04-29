@@ -4,8 +4,9 @@ import { MapContainer, Marker, Polyline, TileLayer } from 'react-leaflet'
 import { activeRides } from '../../data/mockDashboardData'
 import type { ActiveRide } from '../../types'
 import { currencyFormatter } from '../../utils/formatters'
-import { darkTileLayer } from '../../utils/mapConfig'
+import { getMapTileLayer } from '../../utils/mapConfig'
 import { driverIcon, passengerIcon } from '../../utils/mapIcons'
+import { useActivePaletteMode } from '../../utils/useActivePaletteMode'
 import { ApplicationDetail } from '../ApplicationDetail'
 
 export function ActiveRidesDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
@@ -73,6 +74,8 @@ export function ActiveRidesDialog({ open, onClose }: { open: boolean; onClose: (
 
 function ActiveRideMapDialog({ ride, onClose }: { ride: ActiveRide | null; onClose: () => void }) {
   const theme = useTheme()
+  const activeMode = useActivePaletteMode()
+  const tileLayer = getMapTileLayer(activeMode)
 
   if (!ride) {
     return null
@@ -100,7 +103,7 @@ function ActiveRideMapDialog({ ride, onClose }: { ride: ActiveRide | null; onClo
           </Box>
           <Box sx={{ height: { xs: 360, md: 520 }, overflow: 'hidden', borderRadius: 2, border: `1px solid ${theme.palette.divider}` }}>
             <MapContainer center={ride.driverPosition} zoom={13} scrollWheelZoom={false} style={{ width: '100%', height: '100%' }}>
-              <TileLayer attribution={darkTileLayer.attribution} url={darkTileLayer.url} />
+              <TileLayer key={activeMode} attribution={tileLayer.attribution} url={tileLayer.url} />
               <Polyline positions={ride.path} pathOptions={{ color: '#0ABEE9', weight: 5, opacity: 0.9 }} />
               <Marker position={ride.driverPosition} icon={driverIcon} title={`Motorista ${ride.driver}`} />
               <Marker position={ride.passengerPosition} icon={passengerIcon} title={`Destino de ${ride.passenger}`} />
