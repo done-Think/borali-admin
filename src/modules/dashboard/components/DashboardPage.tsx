@@ -1,8 +1,11 @@
 import type { ReactElement } from 'react'
+import CheckCircleIcon from '@mui/icons-material/CheckCircle'
 import DirectionsCarIcon from '@mui/icons-material/DirectionsCar'
 import LocalTaxiIcon from '@mui/icons-material/LocalTaxi'
 import MonetizationOnIcon from '@mui/icons-material/MonetizationOn'
 import PendingActionsIcon from '@mui/icons-material/PendingActions'
+import ReportProblemIcon from '@mui/icons-material/ReportProblem'
+import TimelineIcon from '@mui/icons-material/Timeline'
 import {
   Box,
   Card,
@@ -10,10 +13,17 @@ import {
   Chip,
   GlobalStyles,
   Stack,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
   Typography,
   useTheme,
 } from '@mui/material'
 import L from 'leaflet'
+import { Bar, BarChart, CartesianGrid, Cell, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import { MapContainer, Marker, Polyline, TileLayer } from 'react-leaflet'
 import 'leaflet/dist/leaflet.css'
 
@@ -30,6 +40,27 @@ type MapMarker = {
   type: 'driver' | 'passenger'
   label: string
   position: [number, number]
+}
+
+type ActivityType = 'ride' | 'payment' | 'driver' | 'alert' | 'done'
+
+type Activity = {
+  id: string
+  type: ActivityType
+  title: string
+  description: string
+  timestamp: string
+}
+
+type RideStatus = 'Concluida' | 'Cancelada' | 'Em andamento'
+
+type RecentRide = {
+  id: string
+  passenger: string
+  driver: string
+  route: string
+  value: number
+  status: RideStatus
 }
 
 const currencyFormatter = new Intl.NumberFormat('pt-BR', {
@@ -90,6 +121,78 @@ const mapMarkers: MapMarker[] = [
   { id: 'passenger-3', type: 'passenger', label: 'Ana Beatriz - passageira', position: [-23.5569, -46.6482] },
 ]
 
+const ridesPerHour = [
+  { hour: '00h', rides: 18 },
+  { hour: '01h', rides: 14 },
+  { hour: '02h', rides: 10 },
+  { hour: '03h', rides: 8 },
+  { hour: '04h', rides: 12 },
+  { hour: '05h', rides: 22 },
+  { hour: '06h', rides: 41 },
+  { hour: '07h', rides: 68 },
+  { hour: '08h', rides: 92 },
+  { hour: '09h', rides: 76 },
+  { hour: '10h', rides: 64 },
+  { hour: '11h', rides: 72 },
+  { hour: '12h', rides: 88 },
+  { hour: '13h', rides: 83 },
+  { hour: '14h', rides: 79 },
+  { hour: '15h', rides: 84 },
+  { hour: '16h', rides: 96 },
+  { hour: '17h', rides: 118 },
+  { hour: '18h', rides: 132 },
+  { hour: '19h', rides: 124 },
+  { hour: '20h', rides: 101 },
+  { hour: '21h', rides: 89 },
+  { hour: '22h', rides: 57 },
+  { hour: '23h', rides: 34 },
+]
+
+const activities: Activity[] = [
+  { id: 'act-1', type: 'ride', title: 'Corrida iniciada', description: 'BRL-84211 saiu da Av. Paulista', timestamp: 'agora' },
+  { id: 'act-2', type: 'payment', title: 'Pagamento aprovado', description: 'R$ 48,90 via cartao', timestamp: 'ha 3 min' },
+  { id: 'act-3', type: 'driver', title: 'Motorista online', description: 'Carla Teixeira entrou na zona Centro', timestamp: 'ha 7 min' },
+  { id: 'act-4', type: 'alert', title: 'Cancelamento acima da media', description: 'Pinheiros teve 4 cancelamentos', timestamp: 'ha 12 min' },
+  { id: 'act-5', type: 'done', title: 'Corrida concluida', description: 'BRL-84203 finalizada em 22 min', timestamp: 'ha 18 min' },
+]
+
+const recentRides: RecentRide[] = [
+  { id: 'BRL-84211', passenger: 'Marina Lopes', driver: 'Rafael Souza', route: 'Paulista -> Centro', value: 48.9, status: 'Em andamento' },
+  { id: 'BRL-84210', passenger: 'Joao Lima', driver: 'Bianca Costa', route: 'Moema -> Congonhas', value: 36.5, status: 'Concluida' },
+  { id: 'BRL-84209', passenger: 'Ana Beatriz', driver: 'Luis Prado', route: 'Pinheiros -> Itaim', value: 29.8, status: 'Cancelada' },
+  { id: 'BRL-84208', passenger: 'Pedro Rocha', driver: 'Clara Alves', route: 'Vila Madalena -> Se', value: 42.2, status: 'Concluida' },
+  { id: 'BRL-84207', passenger: 'Luiza Martins', driver: 'Andre Mota', route: 'Tatuape -> Jardins', value: 64.7, status: 'Em andamento' },
+]
+
+const activityStyles: Record<ActivityType, { icon: ReactElement; color: string }> = {
+  ride: { icon: <TimelineIcon fontSize="small" />, color: '#0ABEE9' },
+  payment: { icon: <MonetizationOnIcon fontSize="small" />, color: '#F59E0B' },
+  driver: { icon: <DirectionsCarIcon fontSize="small" />, color: '#2DD4A0' },
+  alert: { icon: <ReportProblemIcon fontSize="small" />, color: '#EF4444' },
+  done: { icon: <CheckCircleIcon fontSize="small" />, color: '#0ABEE9' },
+}
+
+const statusStyles: Record<RideStatus, { label: string; color: string; background: string; border: string }> = {
+  Concluida: {
+    label: 'Concluida',
+    color: '#15803D',
+    background: '#DCFCE7',
+    border: '#86EFAC',
+  },
+  Cancelada: {
+    label: 'Cancelada',
+    color: '#B91C1C',
+    background: '#FEE2E2',
+    border: '#FCA5A5',
+  },
+  'Em andamento': {
+    label: 'Em andamento',
+    color: '#B45309',
+    background: '#FEF3C7',
+    border: '#FCD34D',
+  },
+}
+
 function createMapIcon(type: MapMarker['type']) {
   const isDriver = type === 'driver'
   const color = isDriver ? '#2563EB' : '#22D3EE'
@@ -113,6 +216,7 @@ function createMapIcon(type: MapMarker['type']) {
 
 const driverIcon = createMapIcon('driver')
 const passengerIcon = createMapIcon('passenger')
+const peakRides = Math.max(...ridesPerHour.map((item) => item.rides))
 
 export default function DashboardPage() {
   const theme = useTheme()
@@ -221,16 +325,97 @@ export default function DashboardPage() {
 
         <Card variant="outlined">
           <CardContent sx={{ p: 2.25 }}>
-            <Typography variant="h4">Resumo ao vivo</Typography>
-            <Typography color="text.secondary" sx={{ mt: 0.5 }}>
-              Esta area fica preparada para receber feed, alertas ou detalhe da corrida selecionada.
+            <Stack direction="row" alignItems="center" justifyContent="space-between" spacing={2} sx={{ mb: 2 }}>
+              <Typography variant="h4">Resumo ao vivo</Typography>
+              <Chip label="tempo real" size="small" sx={{ fontWeight: 800 }} />
+            </Stack>
+            <ActivityList items={activities} compact />
+          </CardContent>
+        </Card>
+      </Box>
+
+      <Box
+        sx={{
+          display: 'grid',
+          gap: 2,
+          gridTemplateColumns: {
+            xs: '1fr',
+            xl: 'minmax(0, 0.95fr) minmax(540px, 1.05fr)',
+          },
+          alignItems: 'stretch',
+        }}
+      >
+        <Card variant="outlined">
+          <CardContent sx={{ p: 2.25 }}>
+            <Stack direction="row" alignItems="center" justifyContent="space-between" spacing={2} sx={{ mb: 2 }}>
+              <Box>
+                <Typography variant="h4">Corridas / hora - Ultimas 24h</Typography>
+                <Typography color="text.secondary" sx={{ mt: 0.25 }}>
+                  Volume por faixa horaria com destaque para o pico.
+                </Typography>
+              </Box>
+              <Chip label="pico 18h" size="small" color="secondary" variant="outlined" sx={{ fontWeight: 800 }} />
+            </Stack>
+
+            <Box sx={{ height: 320 }}>
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={ridesPerHour} margin={{ top: 12, right: 8, bottom: 0, left: -24 }}>
+                  <CartesianGrid stroke={theme.palette.divider} vertical={false} />
+                  <XAxis dataKey="hour" tick={{ fill: theme.palette.text.secondary, fontSize: 11 }} axisLine={false} tickLine={false} interval={2} />
+                  <YAxis tick={{ fill: theme.palette.text.secondary, fontSize: 11 }} axisLine={false} tickLine={false} />
+                  <Tooltip
+                    cursor={{ fill: 'rgba(10, 190, 233, 0.08)' }}
+                    contentStyle={{
+                      borderRadius: 8,
+                      border: `1px solid ${theme.palette.divider}`,
+                      boxShadow: theme.shadows[6],
+                    }}
+                  />
+                  <Bar dataKey="rides" radius={[6, 6, 0, 0]}>
+                    {ridesPerHour.map((entry) => (
+                      <Cell key={entry.hour} fill={entry.rides === peakRides ? '#22D3EE' : '#2563EB'} />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </Box>
+          </CardContent>
+        </Card>
+
+        <Card variant="outlined">
+          <CardContent sx={{ p: 2.25 }}>
+            <Typography variant="h4">Ultimas corridas</Typography>
+            <Typography color="text.secondary" sx={{ mt: 0.25, mb: 2 }}>
+              Corridas mais recentes registradas pela operacao.
             </Typography>
 
-            <Stack spacing={1.5} sx={{ mt: 3 }}>
-              <LiveSummary label="Corridas no mapa" value="12" color="#0ABEE9" />
-              <LiveSummary label="Motoristas em rota" value="8" color="#2563EB" />
-              <LiveSummary label="Passageiros aguardando" value="4" color="#22D3EE" />
-            </Stack>
+            <TableContainer>
+              <Table size="small" sx={{ minWidth: 680 }}>
+                <TableHead>
+                  <TableRow>
+                    {['#', 'Passageiro', 'Motorista', 'Rota', 'Valor', 'Status'].map((header) => (
+                      <TableCell key={header} sx={{ color: 'text.secondary', fontWeight: 800 }}>
+                        {header}
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {recentRides.map((ride) => (
+                    <TableRow key={ride.id} hover>
+                      <TableCell sx={{ fontWeight: 800 }}>{ride.id}</TableCell>
+                      <TableCell>{ride.passenger}</TableCell>
+                      <TableCell>{ride.driver}</TableCell>
+                      <TableCell>{ride.route}</TableCell>
+                      <TableCell sx={{ fontWeight: 800 }}>{currencyFormatter.format(ride.value)}</TableCell>
+                      <TableCell>
+                        <RideStatusBadge status={ride.status} />
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </TableContainer>
           </CardContent>
         </Card>
       </Box>
@@ -289,25 +474,80 @@ function MapLegend({ color, label }: { color: string; label: string }) {
   )
 }
 
-function LiveSummary({ label, value, color }: { label: string; value: string; color: string }) {
+function ActivityList({ items, compact = false }: { items: Activity[]; compact?: boolean }) {
   return (
     <Stack
-      direction="row"
-      alignItems="center"
-      justifyContent="space-between"
-      spacing={2}
+      spacing={1.25}
       sx={{
-        border: '1px solid',
-        borderColor: 'divider',
+        bgcolor: '#111827',
         borderRadius: 2,
-        p: 1.5,
+        p: compact ? 1 : 1.25,
       }}
     >
-      <Stack direction="row" spacing={1} alignItems="center">
-        <Box sx={{ width: 10, height: 10, borderRadius: '50%', bgcolor: color }} />
-        <Typography fontWeight={700}>{label}</Typography>
-      </Stack>
-      <Chip label={value} size="small" sx={{ fontWeight: 800 }} />
+      {items.map((item) => {
+        const style = activityStyles[item.type]
+
+        return (
+          <Stack
+            key={item.id}
+            direction="row"
+            spacing={1.25}
+            alignItems="center"
+            sx={{
+              minHeight: compact ? 56 : 66,
+              borderRadius: 1.5,
+              border: '1px solid rgba(148, 163, 184, 0.12)',
+              bgcolor: '#0F172A',
+              px: 1.25,
+              py: 1,
+            }}
+          >
+            <Box
+              sx={{
+                width: 36,
+                height: 36,
+                borderRadius: '50%',
+                display: 'grid',
+                placeItems: 'center',
+                flex: '0 0 auto',
+                color: style.color,
+                bgcolor: `${style.color}22`,
+              }}
+            >
+              {style.icon}
+            </Box>
+
+            <Box sx={{ minWidth: 0, flex: 1 }}>
+              <Stack direction="row" spacing={1} alignItems="flex-start" justifyContent="space-between">
+                <Typography sx={{ color: '#FFFFFF', fontSize: 13, fontWeight: 800, lineHeight: 1.25 }}>
+                  {item.title}
+                </Typography>
+                <Typography sx={{ color: '#7EA1D1', fontSize: 11, flex: '0 0 auto', pt: 0.15 }}>{item.timestamp}</Typography>
+              </Stack>
+              <Typography noWrap sx={{ color: '#9CC8F5', fontSize: 12, mt: 0.35 }}>
+                {item.description}
+              </Typography>
+            </Box>
+          </Stack>
+        )
+      })}
     </Stack>
+  )
+}
+
+function RideStatusBadge({ status }: { status: RideStatus }) {
+  const style = statusStyles[status]
+
+  return (
+    <Chip
+      label={style.label}
+      size="small"
+      sx={{
+        color: style.color,
+        bgcolor: style.background,
+        border: `1px solid ${style.border}`,
+        fontWeight: 800,
+      }}
+    />
   )
 }
