@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import AccessTimeIcon from '@mui/icons-material/AccessTime'
 import LocalTaxiIcon from '@mui/icons-material/LocalTaxi'
 import PersonPinCircleIcon from '@mui/icons-material/PersonPinCircle'
@@ -13,6 +13,7 @@ import { currencyFormatter } from '@modules/dashboard/utils/formatters'
 import { alertColor, statusConfig } from '../data/mockRides'
 import type { ActiveMapLimit, ActiveRideView } from '../types'
 import { createRideStatusIcon, getElapsedMinutes } from '../utils/rides'
+import { ActiveRideDetailsDialog } from './ActiveRideDetailsDialog'
 
 type ActiveRidesPanelProps = {
   activeRides: ActiveRideView[]
@@ -51,6 +52,8 @@ export function ActiveRidesPanel({
   onSearchChange,
   onRideSelect,
 }: ActiveRidesPanelProps) {
+  const [detailsRide, setDetailsRide] = useState<ActiveRideView | null>(null)
+
   function openRideCard(rideId: string) {
     onSearchChange('')
     onRideSelect(rideId)
@@ -168,8 +171,13 @@ export function ActiveRidesPanel({
                 expanded={ride.id === expandedRideId}
                 selected={ride.id === selectedRideId}
                 onSelect={() => {
+                  if (expandedRideId === ride.id) {
+                    setDetailsRide(ride)
+                    return
+                  }
+
                   onRideSelect(ride.id)
-                  onExpandedRideChange(expandedRideId === ride.id ? '' : ride.id)
+                  onExpandedRideChange(ride.id)
                 }}
               />
             ))}
@@ -187,6 +195,8 @@ export function ActiveRidesPanel({
           </Stack>
         </CardContent>
       </Card>
+
+      <ActiveRideDetailsDialog ride={detailsRide} onClose={() => setDetailsRide(null)} />
     </Box>
   )
 }
