@@ -51,6 +51,12 @@ export function ActiveRidesPanel({
   onSearchChange,
   onRideSelect,
 }: ActiveRidesPanelProps) {
+  function openRideCard(rideId: string) {
+    onSearchChange('')
+    onRideSelect(rideId)
+    onExpandedRideChange(rideId)
+  }
+
   return (
     <Box
       sx={{
@@ -115,7 +121,7 @@ export function ActiveRidesPanel({
               <TileLayer key={activeMode} attribution={tileLayer.attribution} url={tileLayer.url} />
               <MapRideFocus ride={selectedRide} />
               {mapRides.map((ride) => (
-                <MapRide key={ride.id} ride={ride} selected={ride.id === selectedRideId} />
+                <MapRide key={ride.id} ride={ride} selected={ride.id === selectedRideId} onSelect={() => openRideCard(ride.id)} />
               ))}
             </MapContainer>
           </Box>
@@ -198,7 +204,7 @@ function MapRideFocus({ ride }: { ride: ActiveRideView | null }) {
   return null
 }
 
-function MapRide({ ride, selected }: { ride: ActiveRideView; selected: boolean }) {
+function MapRide({ ride, selected, onSelect }: { ride: ActiveRideView; selected: boolean; onSelect: () => void }) {
   const status = statusConfig[ride.status]
   const lineColor = ride.alert ? alertColor : status.color
 
@@ -207,7 +213,7 @@ function MapRide({ ride, selected }: { ride: ActiveRideView; selected: boolean }
       {selected && <Polyline positions={ride.path} pathOptions={{ color: '#FFFFFF', weight: 9, opacity: 0.72 }} />}
       {ride.alert && <Polyline positions={ride.path} pathOptions={{ color: alertColor, weight: selected ? 11 : 8, opacity: selected ? 0.42 : 0.3 }} />}
       <Polyline positions={ride.path} pathOptions={{ color: lineColor, weight: selected || ride.alert ? 6 : 4, opacity: selected || ride.alert ? 1 : 0.42 }} />
-      <Marker position={ride.driverPosition} icon={createRideStatusIcon(ride.status, selected, Boolean(ride.alert))} title={`${ride.id} - ${ride.status}`}>
+      <Marker position={ride.driverPosition} icon={createRideStatusIcon(ride.status, selected, Boolean(ride.alert))} title={`${ride.id} - ${ride.status}`} eventHandlers={{ click: onSelect }}>
         <Tooltip direction="top" offset={[0, -8]} opacity={0.95}>
           {ride.alert ? 'ALERTA - ' : ''}
           {ride.id} - {ride.driver}
@@ -217,6 +223,7 @@ function MapRide({ ride, selected }: { ride: ActiveRideView; selected: boolean }
         center={ride.passengerPosition}
         radius={selected || ride.alert ? 10 : 7}
         pathOptions={{ color: '#FFFFFF', weight: selected || ride.alert ? 3 : 2, fillColor: lineColor, fillOpacity: selected || ride.alert ? 1 : 0.78 }}
+        eventHandlers={{ click: onSelect }}
       >
         <Tooltip direction="top" offset={[0, -8]} opacity={0.95}>
           {ride.alert ? 'ALERTA - ' : ''}
