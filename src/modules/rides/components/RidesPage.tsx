@@ -3,23 +3,50 @@ import AccessTimeIcon from '@mui/icons-material/AccessTime'
 import LocalTaxiIcon from '@mui/icons-material/LocalTaxi'
 import PersonPinCircleIcon from '@mui/icons-material/PersonPinCircle'
 import RouteIcon from '@mui/icons-material/Route'
-import { Box, Card, CardContent, Chip, Divider, GlobalStyles, Stack, Tab, Tabs, Typography, useTheme } from '@mui/material'
+import {
+  Box,
+  Card,
+  CardContent,
+  Chip,
+  Divider,
+  GlobalStyles,
+  MenuItem,
+  Stack,
+  Tab,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Tabs,
+  TextField,
+  Typography,
+  useTheme,
+} from '@mui/material'
 import { alpha } from '@mui/material/styles'
+import type { Theme } from '@mui/material/styles'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 import { CircleMarker, MapContainer, Marker, Polyline, TileLayer, Tooltip } from 'react-leaflet'
 import { io } from 'socket.io-client'
-import { activeRides as dashboardActiveRides } from '@modules/dashboard/data/mockDashboardData'
-import type { ActiveRide } from '@modules/dashboard/types'
+import { activeRides as dashboardActiveRides, recentRides, statusStyles } from '@modules/dashboard/data/mockDashboardData'
+import type { ActiveRide, RecentRide, RideStatus } from '@modules/dashboard/types'
 import { currencyFormatter } from '@modules/dashboard/utils/formatters'
 import { getMapTileLayer } from '@modules/dashboard/utils/mapConfig'
 import { useActivePaletteMode } from '@modules/dashboard/utils/useActivePaletteMode'
 
+type RideTab = 'active' | 'history' | 'waiting'
 type ActiveRideStatus = 'A caminho' | 'Em corrida' | 'Chegando' | 'Aguardando embarque'
+type HistoryStatusFilter = 'all' | RideStatus
 
 type ActiveRideView = ActiveRide & {
   status: ActiveRideStatus
   startedAt: string
+}
+
+type HistoryRide = RecentRide & {
+  completedAt: string
 }
 
 const statusConfig: Record<ActiveRideStatus, { color: string; label: string }> = {
@@ -35,11 +62,28 @@ const initialActiveRides: ActiveRideView[] = dashboardActiveRides.map((ride, ind
   startedAt: new Date(Date.now() - (index + 8) * 60_000).toISOString(),
 }))
 
+const historyRides: HistoryRide[] = recentRides.map((ride, index) => ({
+  ...ride,
+  completedAt: new Date(Date.now() - index * 86_400_000 - (index + 1) * 18 * 60_000).toISOString(),
+}))
+
+const rideTableCellSx = {
+  px: 1,
+  fontSize: 12,
+  fontWeight: 700,
+  overflowWrap: 'anywhere',
+  verticalAlign: 'middle',
+}
+
 export default function RidesPage() {
   const theme = useTheme()
   const activeMode = useActivePaletteMode()
   const tileLayer = getMapTileLayer(activeMode)
+  const [selectedTab, setSelectedTab] = useState<RideTab>('active')
   const [activeRides, setActiveRides] = useState<ActiveRideView[]>(initialActiveRides)
+  const [historyStartDate, setHistoryStartDate] = useState('')
+  const [historyEndDate, setHistoryEndDate] = useState('')
+  const [historyStatus, setHistoryStatus] = useState<HistoryStatusFilter>('all')
   const [, setNow] = useState(() => Date.now())
 
   useEffect(() => {
@@ -82,6 +126,15 @@ export default function RidesPage() {
   }, [])
 
   const mapCenter = useMemo<[number, number]>(() => activeRides[0]?.driverPosition ?? [-23.5573, -46.6412], [activeRides])
+  const filteredHistoryRides = useMemo(() => {
+    return historyRides.filter((ride) => {
+      const rideDate = ride.completedAt.slice(0, 10)
+      const matchesStartDate = !historyStartDate || rideDate >= historyStartDate
+      const matchesEndDate = !historyEndDate || rideDate <= historyEndDate
+      const matchesStatus = historyStatus === 'all' || ride.status === historyStatus
+      return matchesStartDate && matchesEndDate && matchesStatus
+    })
+  }, [historyEndDate, historyStartDate, historyStatus])
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
@@ -110,85 +163,122 @@ export default function RidesPage() {
       </Box>
 
       <Card variant="outlined">
-        <Tabs value="active" aria-label="Abas de corridas" sx={{ px: 2, borderBottom: '1px solid', borderColor: 'divider' }}>
+        <Tabs
+          value={selectedTab}
+          onChange={(_, value) => setSelectedTab(value as RideTab)}
+          aria-label="Abas de corridas"
+          sx={{ px: 2, borderBottom: '1px solid', borderColor: 'divider' }}
+        >
           <Tab value="active" label={`Ativas (${activeRides.length})`} />
-          <Tab value="history" label="Historico" disabled />
+          <Tab value="history" label="Historico" />
           <Tab value="waiting" label="Em Espera" disabled />
         </Tabs>
 
         <CardContent sx={{ p: 2.25 }}>
-          <Box
-            sx={{
-              display: 'grid',
-              gap: 2,
-              gridTemplateColumns: { xs: '1fr', lg: 'minmax(0, 3fr) minmax(340px, 2fr)' },
-              alignItems: 'stretch',
-            }}
-          >
-            <Card variant="outlined" sx={{ minHeight: { xs: 420, lg: 620 }, overflow: 'hidden' }}>
-              <CardContent sx={{ height: '100%', p: 2.25, display: 'flex', flexDirection: 'column' }}>
-                <Stack direction="row" spacing={2} justifyContent="space-between" alignItems="flex-start" sx={{ mb: 2 }}>
-                  <Box>
-                    <Typography variant="h4">Mapa — Corridas Ativas</Typography>
-                    <Typography color="text.secondary" sx={{ mt: 0.25 }}>
-                      Marcadores coloridos por status atual da corrida.
-                    </Typography>
-                  </Box>
-                  <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap" justifyContent="flex-end">
-                    {Object.entries(statusConfig).map(([status, config]) => (
-                      <Chip
-                        key={status}
-                        size="small"
-                        label={config.label}
-                        sx={{
-                          bgcolor: alpha(config.color, activeMode === 'dark' ? 0.22 : 0.14),
-                          color: config.color,
-                          fontWeight: 800,
-                        }}
-                      />
-                    ))}
-                  </Stack>
-                </Stack>
+          {selectedTab === 'active' && (
+            <ActiveRidesPanel activeRides={activeRides} activeMode={activeMode} mapCenter={mapCenter} theme={theme} tileLayer={tileLayer} />
+          )}
 
-                <Box sx={{ flex: 1, minHeight: 360, overflow: 'hidden', borderRadius: 2, border: `1px solid ${theme.palette.divider}` }}>
-                  <MapContainer center={mapCenter} zoom={12} scrollWheelZoom={false} style={{ width: '100%', height: '100%' }}>
-                    <TileLayer key={activeMode} attribution={tileLayer.attribution} url={tileLayer.url} />
-                    {activeRides.map((ride) => (
-                      <MapRide key={ride.id} ride={ride} />
-                    ))}
-                  </MapContainer>
-                </Box>
-              </CardContent>
-            </Card>
+          {selectedTab === 'history' && (
+            <HistoryRidesPanel
+              rides={filteredHistoryRides}
+              startDate={historyStartDate}
+              endDate={historyEndDate}
+              status={historyStatus}
+              onStartDateChange={setHistoryStartDate}
+              onEndDateChange={setHistoryEndDate}
+              onStatusChange={setHistoryStatus}
+            />
+          )}
+        </CardContent>
+      </Card>
+    </Box>
+  )
+}
 
-            <Card variant="outlined">
-              <CardContent sx={{ p: 2.25 }}>
-                <Stack direction="row" spacing={2} alignItems="center" justifyContent="space-between" sx={{ mb: 2 }}>
-                  <Box>
-                    <Typography variant="h4">Corridas ativas</Typography>
-                    <Typography color="text.secondary" sx={{ mt: 0.25 }}>
-                      {activeRides.length} em acompanhamento agora
-                    </Typography>
-                  </Box>
-                  <Chip label="tempo real" size="small" sx={{ fontWeight: 800 }} />
-                </Stack>
+function ActiveRidesPanel({
+  activeRides,
+  activeMode,
+  mapCenter,
+  theme,
+  tileLayer,
+}: {
+  activeRides: ActiveRideView[]
+  activeMode: 'light' | 'dark'
+  mapCenter: [number, number]
+  theme: Theme
+  tileLayer: { attribution: string; url: string }
+}) {
+  return (
+    <Box
+      sx={{
+        display: 'grid',
+        gap: 2,
+        gridTemplateColumns: { xs: '1fr', lg: 'minmax(0, 3fr) minmax(340px, 2fr)' },
+        alignItems: 'stretch',
+      }}
+    >
+      <Card variant="outlined" sx={{ minHeight: { xs: 420, lg: 620 }, overflow: 'hidden' }}>
+        <CardContent sx={{ height: '100%', p: 2.25, display: 'flex', flexDirection: 'column' }}>
+          <Stack direction="row" spacing={2} justifyContent="space-between" alignItems="flex-start" sx={{ mb: 2 }}>
+            <Box>
+              <Typography variant="h4">Mapa - Corridas Ativas</Typography>
+              <Typography color="text.secondary" sx={{ mt: 0.25 }}>
+                Marcadores coloridos por status atual da corrida.
+              </Typography>
+            </Box>
+            <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap" justifyContent="flex-end">
+              {Object.entries(statusConfig).map(([status, config]) => (
+                <Chip
+                  key={status}
+                  size="small"
+                  label={config.label}
+                  sx={{
+                    bgcolor: alpha(config.color, activeMode === 'dark' ? 0.22 : 0.14),
+                    color: config.color,
+                    fontWeight: 800,
+                  }}
+                />
+              ))}
+            </Stack>
+          </Stack>
 
-                <Stack spacing={1.5}>
-                  {activeRides.map((ride) => (
-                    <ActiveRideCard key={ride.id} ride={ride} />
-                  ))}
-                  {activeRides.length === 0 && (
-                    <Box sx={{ border: '1px dashed', borderColor: 'divider', borderRadius: 2, p: 3, textAlign: 'center' }}>
-                      <Typography sx={{ fontWeight: 800 }}>Nenhuma corrida ativa agora</Typography>
-                      <Typography color="text.secondary" sx={{ mt: 0.5 }}>
-                        Novas corridas entram aqui assim que forem emitidas pelo socket.
-                      </Typography>
-                    </Box>
-                  )}
-                </Stack>
-              </CardContent>
-            </Card>
+          <Box sx={{ flex: 1, minHeight: 360, overflow: 'hidden', borderRadius: 2, border: `1px solid ${theme.palette.divider}` }}>
+            <MapContainer center={mapCenter} zoom={12} scrollWheelZoom={false} style={{ width: '100%', height: '100%' }}>
+              <TileLayer key={activeMode} attribution={tileLayer.attribution} url={tileLayer.url} />
+              {activeRides.map((ride) => (
+                <MapRide key={ride.id} ride={ride} />
+              ))}
+            </MapContainer>
           </Box>
+        </CardContent>
+      </Card>
+
+      <Card variant="outlined">
+        <CardContent sx={{ p: 2.25 }}>
+          <Stack direction="row" spacing={2} alignItems="center" justifyContent="space-between" sx={{ mb: 2 }}>
+            <Box>
+              <Typography variant="h4">Corridas ativas</Typography>
+              <Typography color="text.secondary" sx={{ mt: 0.25 }}>
+                {activeRides.length} em acompanhamento agora
+              </Typography>
+            </Box>
+            <Chip label="tempo real" size="small" sx={{ fontWeight: 800 }} />
+          </Stack>
+
+          <Stack spacing={1.5}>
+            {activeRides.map((ride) => (
+              <ActiveRideCard key={ride.id} ride={ride} />
+            ))}
+            {activeRides.length === 0 && (
+              <Box sx={{ border: '1px dashed', borderColor: 'divider', borderRadius: 2, p: 3, textAlign: 'center' }}>
+                <Typography sx={{ fontWeight: 800 }}>Nenhuma corrida ativa agora</Typography>
+                <Typography color="text.secondary" sx={{ mt: 0.5 }}>
+                  Novas corridas entram aqui assim que forem emitidas pelo socket.
+                </Typography>
+              </Box>
+            )}
+          </Stack>
         </CardContent>
       </Card>
     </Box>
@@ -273,6 +363,133 @@ function ActiveRideCard({ ride }: { ride: ActiveRideView }) {
   )
 }
 
+function HistoryRidesPanel({
+  rides,
+  startDate,
+  endDate,
+  status,
+  onStartDateChange,
+  onEndDateChange,
+  onStatusChange,
+}: {
+  rides: HistoryRide[]
+  startDate: string
+  endDate: string
+  status: HistoryStatusFilter
+  onStartDateChange: (value: string) => void
+  onEndDateChange: (value: string) => void
+  onStatusChange: (value: HistoryStatusFilter) => void
+}) {
+  return (
+    <Card variant="outlined">
+      <CardContent sx={{ p: 2.25 }}>
+        <Stack direction={{ xs: 'column', md: 'row' }} spacing={2} justifyContent="space-between" alignItems={{ xs: 'stretch', md: 'flex-start' }} sx={{ mb: 2 }}>
+          <Box>
+            <Typography variant="h4">Historico de corridas</Typography>
+            <Typography color="text.secondary" sx={{ mt: 0.25 }}>
+              Consulte corridas registradas por periodo e status operacional.
+            </Typography>
+          </Box>
+
+          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.25} sx={{ minWidth: { md: 520 } }}>
+            <TextField
+              label="Data inicial"
+              type="date"
+              size="small"
+              value={startDate}
+              onChange={(event) => onStartDateChange(event.target.value)}
+              InputLabelProps={{ shrink: true }}
+              fullWidth
+            />
+            <TextField
+              label="Data final"
+              type="date"
+              size="small"
+              value={endDate}
+              onChange={(event) => onEndDateChange(event.target.value)}
+              InputLabelProps={{ shrink: true }}
+              fullWidth
+            />
+            <TextField
+              select
+              label="Status"
+              size="small"
+              value={status}
+              onChange={(event) => onStatusChange(event.target.value as HistoryStatusFilter)}
+              fullWidth
+            >
+              <MenuItem value="all">Todos</MenuItem>
+              <MenuItem value="Em andamento">Em andamento</MenuItem>
+              <MenuItem value="Concluida">Concluida</MenuItem>
+              <MenuItem value="Cancelada">Cancelada</MenuItem>
+            </TextField>
+          </Stack>
+        </Stack>
+
+        <TableContainer>
+          <Table size="small" sx={{ minWidth: 920 }}>
+            <TableHead>
+              <TableRow>
+                {[
+                  { label: '#', width: '12%' },
+                  { label: 'Passageiro', width: '15%' },
+                  { label: 'Motorista', width: '15%' },
+                  { label: 'Rota', width: '20%' },
+                  { label: 'Valor', width: '12%' },
+                  { label: 'Duracao', width: '11%' },
+                  { label: 'Data', width: '13%' },
+                  { label: 'Status', width: '12%' },
+                ].map((header) => (
+                  <TableCell key={header.label} sx={{ width: header.width, color: 'text.secondary', fontWeight: 800, px: 1 }}>
+                    {header.label}
+                  </TableCell>
+                ))}
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {rides.map((ride) => (
+                <TableRow key={ride.id} hover>
+                  <TableCell sx={rideTableCellSx}>{ride.id}</TableCell>
+                  <TableCell sx={rideTableCellSx}>{ride.passenger}</TableCell>
+                  <TableCell sx={rideTableCellSx}>{ride.driver}</TableCell>
+                  <TableCell sx={rideTableCellSx}>{ride.route}</TableCell>
+                  <TableCell sx={{ ...rideTableCellSx, fontWeight: 800 }}>{currencyFormatter.format(ride.value)}</TableCell>
+                  <TableCell sx={rideTableCellSx}>{ride.duration}</TableCell>
+                  <TableCell sx={rideTableCellSx}>{formatDateTime(ride.completedAt)}</TableCell>
+                  <TableCell sx={{ ...rideTableCellSx, pr: 0 }}>
+                    <RideStatusBadge status={ride.status} />
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </TableContainer>
+
+        {rides.length === 0 && (
+          <Box sx={{ border: '1px dashed', borderColor: 'divider', borderRadius: 2, p: 3, mt: 2, textAlign: 'center' }}>
+            <Typography sx={{ fontWeight: 800 }}>Nenhuma corrida encontrada</Typography>
+            <Typography color="text.secondary" sx={{ mt: 0.5 }}>
+              Ajuste o periodo ou status para ampliar a busca.
+            </Typography>
+          </Box>
+        )}
+      </CardContent>
+    </Card>
+  )
+}
+
+function RideStatusBadge({ status }: { status: RideStatus }) {
+  const style = statusStyles[status]
+
+  return (
+    <Chip
+      label={style.label}
+      size="small"
+      sx={{ color: style.color, bgcolor: style.background, border: `1px solid ${style.border}`, maxWidth: '100%', fontSize: 11, fontWeight: 800 }}
+    />
+  )
+}
+
 function normalizeRide(ride: ActiveRideView): ActiveRideView {
   return {
     ...ride,
@@ -284,6 +501,15 @@ function normalizeRide(ride: ActiveRideView): ActiveRideView {
 function getElapsedMinutes(startedAt: string) {
   const elapsed = Date.now() - new Date(startedAt).getTime()
   return Math.max(1, Math.round(elapsed / 60_000))
+}
+
+function formatDateTime(value: string) {
+  return new Intl.DateTimeFormat('pt-BR', {
+    day: '2-digit',
+    month: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+  }).format(new Date(value))
 }
 
 function createRideStatusIcon(status: ActiveRideStatus) {
