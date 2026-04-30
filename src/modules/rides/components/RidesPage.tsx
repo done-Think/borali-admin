@@ -39,6 +39,7 @@ import { useActivePaletteMode } from '@modules/dashboard/utils/useActivePaletteM
 type RideTab = 'active' | 'history' | 'waiting'
 type ActiveRideStatus = 'A caminho' | 'Em corrida' | 'Chegando' | 'Aguardando embarque'
 type HistoryStatusFilter = 'all' | RideStatus
+type WaitingRideStatus = 'Buscando motorista' | 'Oferta enviada' | 'Alta demanda'
 
 type ActiveRideView = ActiveRide & {
   status: ActiveRideStatus
@@ -49,11 +50,29 @@ type HistoryRide = RecentRide & {
   completedAt: string
 }
 
+type WaitingRide = {
+  id: string
+  passenger: string
+  origin: string
+  destination: string
+  estimatedValue: number
+  requestedAt: string
+  status: WaitingRideStatus
+  nearbyDrivers: number
+  category: string
+}
+
 const statusConfig: Record<ActiveRideStatus, { color: string; label: string }> = {
   'A caminho': { color: '#2563EB', label: 'A caminho' },
   'Em corrida': { color: '#0ABEE9', label: 'Em corrida' },
   Chegando: { color: '#F59E0B', label: 'Chegando' },
   'Aguardando embarque': { color: '#8B5CF6', label: 'Aguardando embarque' },
+}
+
+const waitingStatusConfig: Record<WaitingRideStatus, { color: string; label: string }> = {
+  'Buscando motorista': { color: '#0ABEE9', label: 'Buscando motorista' },
+  'Oferta enviada': { color: '#F59E0B', label: 'Oferta enviada' },
+  'Alta demanda': { color: '#EF4444', label: 'Alta demanda' },
 }
 
 const initialActiveRides: ActiveRideView[] = dashboardActiveRides.map((ride, index) => ({
@@ -66,6 +85,42 @@ const historyRides: HistoryRide[] = recentRides.map((ride, index) => ({
   ...ride,
   completedAt: new Date(Date.now() - index * 86_400_000 - (index + 1) * 18 * 60_000).toISOString(),
 }))
+
+const initialWaitingRides: WaitingRide[] = [
+  {
+    id: 'BRL-84231',
+    passenger: 'Camila Torres',
+    origin: 'Rua Oscar Freire, 620',
+    destination: 'Shopping Iguatemi',
+    estimatedValue: 31.4,
+    requestedAt: new Date(Date.now() - 4 * 60_000).toISOString(),
+    status: 'Buscando motorista',
+    nearbyDrivers: 6,
+    category: 'Conforto',
+  },
+  {
+    id: 'BRL-84232',
+    passenger: 'Mateus Ferreira',
+    origin: 'Metro Vila Mariana',
+    destination: 'Av. Brigadeiro Faria Lima',
+    estimatedValue: 44.9,
+    requestedAt: new Date(Date.now() - 7 * 60_000).toISOString(),
+    status: 'Oferta enviada',
+    nearbyDrivers: 3,
+    category: 'Economico',
+  },
+  {
+    id: 'BRL-84233',
+    passenger: 'Renata Assis',
+    origin: 'Barra Funda',
+    destination: 'Vila Olimpia',
+    estimatedValue: 58.2,
+    requestedAt: new Date(Date.now() - 11 * 60_000).toISOString(),
+    status: 'Alta demanda',
+    nearbyDrivers: 1,
+    category: 'Executivo',
+  },
+]
 
 const rideTableCellSx = {
   px: 1,
@@ -81,6 +136,7 @@ export default function RidesPage() {
   const tileLayer = getMapTileLayer(activeMode)
   const [selectedTab, setSelectedTab] = useState<RideTab>('active')
   const [activeRides, setActiveRides] = useState<ActiveRideView[]>(initialActiveRides)
+  const [waitingRides, setWaitingRides] = useState<WaitingRide[]>(initialWaitingRides)
   const [historyStartDate, setHistoryStartDate] = useState('')
   const [historyEndDate, setHistoryEndDate] = useState('')
   const [historyStatus, setHistoryStatus] = useState<HistoryStatusFilter>('all')
@@ -112,6 +168,17 @@ export default function RidesPage() {
     const removeRide = (ride: ActiveRideView | { id: string }) => {
       setActiveRides((current) => current.filter((item) => item.id !== ride.id))
     }
+    const replaceWaitingRides = (rides: WaitingRide[]) => setWaitingRides(rides.map(normalizeWaitingRide))
+    const upsertWaitingRide = (ride: WaitingRide) => {
+      setWaitingRides((current) => {
+        const nextRide = normalizeWaitingRide(ride)
+        const exists = current.some((item) => item.id === nextRide.id)
+        return exists ? current.map((item) => (item.id === nextRide.id ? { ...item, ...nextRide } : item)) : [nextRide, ...current]
+      })
+    }
+    const removeWaitingRide = (ride: WaitingRide | { id: string }) => {
+      setWaitingRides((current) => current.filter((item) => item.id !== ride.id))
+    }
 
     socket.on('rides:active', replaceActiveRides)
     socket.on('active-rides', replaceActiveRides)
@@ -119,6 +186,11 @@ export default function RidesPage() {
     socket.on('ride:updated', upsertRide)
     socket.on('ride:completed', removeRide)
     socket.on('ride:cancelled', removeRide)
+    socket.on('rides:waiting', replaceWaitingRides)
+    socket.on('waiting-rides', replaceWaitingRides)
+    socket.on('ride:requested', upsertWaitingRide)
+    socket.on('ride:waiting', upsertWaitingRide)
+    socket.on('ride:accepted', removeWaitingRide)
 
     return () => {
       socket.disconnect()
@@ -171,7 +243,7 @@ export default function RidesPage() {
         >
           <Tab value="active" label={`Ativas (${activeRides.length})`} />
           <Tab value="history" label="Historico" />
-          <Tab value="waiting" label="Em Espera" disabled />
+          <Tab value="waiting" label={`Em Espera (${waitingRides.length})`} />
         </Tabs>
 
         <CardContent sx={{ p: 2.25 }}>
@@ -190,6 +262,8 @@ export default function RidesPage() {
               onStatusChange={setHistoryStatus}
             />
           )}
+
+          {selectedTab === 'waiting' && <WaitingRidesPanel rides={waitingRides} />}
         </CardContent>
       </Card>
     </Box>
@@ -490,11 +564,125 @@ function RideStatusBadge({ status }: { status: RideStatus }) {
   )
 }
 
+function WaitingRidesPanel({ rides }: { rides: WaitingRide[] }) {
+  return (
+    <Card variant="outlined">
+      <CardContent sx={{ p: 2.25 }}>
+        <Stack direction={{ xs: 'column', md: 'row' }} spacing={2} justifyContent="space-between" alignItems={{ xs: 'stretch', md: 'center' }} sx={{ mb: 2 }}>
+          <Box>
+            <Typography variant="h4">Passageiros em espera</Typography>
+            <Typography color="text.secondary" sx={{ mt: 0.25 }}>
+              Chamadas abertas aguardando aceite ou deslocamento de motorista.
+            </Typography>
+          </Box>
+          <Chip label={`${rides.length} aguardando`} size="small" sx={{ fontWeight: 800, alignSelf: { xs: 'flex-start', md: 'center' } }} />
+        </Stack>
+
+        <Box
+          sx={{
+            display: 'grid',
+            gap: 1.5,
+            gridTemplateColumns: { xs: '1fr', md: 'repeat(2, minmax(0, 1fr))', xl: 'repeat(3, minmax(0, 1fr))' },
+          }}
+        >
+          {rides.map((ride) => (
+            <WaitingRideCard key={ride.id} ride={ride} />
+          ))}
+        </Box>
+
+        {rides.length === 0 && (
+          <Box sx={{ border: '1px dashed', borderColor: 'divider', borderRadius: 2, p: 3, textAlign: 'center' }}>
+            <Typography sx={{ fontWeight: 800 }}>Nenhum passageiro em espera</Typography>
+            <Typography color="text.secondary" sx={{ mt: 0.5 }}>
+              Novas chamadas aparecem aqui enquanto aguardam um motorista.
+            </Typography>
+          </Box>
+        )}
+      </CardContent>
+    </Card>
+  )
+}
+
+function WaitingRideCard({ ride }: { ride: WaitingRide }) {
+  const status = waitingStatusConfig[ride.status]
+
+  return (
+    <Card variant="outlined" sx={{ bgcolor: 'background.default' }}>
+      <CardContent sx={{ p: 1.75, '&:last-child': { pb: 1.75 } }}>
+        <Stack spacing={1.25}>
+          <Stack direction="row" spacing={1} alignItems="center" justifyContent="space-between">
+            <Stack direction="row" spacing={1} alignItems="center" sx={{ minWidth: 0 }}>
+              <RouteIcon fontSize="small" sx={{ color: status.color }} />
+              <Typography sx={{ fontWeight: 900 }}>{ride.id}</Typography>
+            </Stack>
+            <Chip
+              size="small"
+              label={status.label}
+              sx={{ bgcolor: alpha(status.color, 0.14), color: status.color, fontWeight: 800 }}
+            />
+          </Stack>
+
+          <Stack direction="row" spacing={1} alignItems="center" sx={{ minWidth: 0 }}>
+            <PersonPinCircleIcon fontSize="small" color="action" />
+            <Typography noWrap sx={{ fontWeight: 800 }}>
+              {ride.passenger}
+            </Typography>
+          </Stack>
+
+          <Stack spacing={0.5}>
+            <Typography color="text.secondary" sx={{ fontSize: 12, fontWeight: 800 }}>
+              Origem
+            </Typography>
+            <Typography noWrap sx={{ fontSize: 13, fontWeight: 700 }}>
+              {ride.origin}
+            </Typography>
+            <Typography color="text.secondary" sx={{ fontSize: 12, fontWeight: 800, mt: 0.5 }}>
+              Destino
+            </Typography>
+            <Typography noWrap sx={{ fontSize: 13, fontWeight: 700 }}>
+              {ride.destination}
+            </Typography>
+          </Stack>
+
+          <Divider />
+
+          <Stack direction="row" spacing={1} alignItems="center" justifyContent="space-between">
+            <Chip size="small" label={ride.category} sx={{ fontWeight: 800 }} />
+            <Typography sx={{ fontWeight: 900 }}>{currencyFormatter.format(ride.estimatedValue)}</Typography>
+          </Stack>
+
+          <Stack direction="row" spacing={1} alignItems="center" justifyContent="space-between">
+            <Typography color="text.secondary" sx={{ fontSize: 12, fontWeight: 800 }}>
+              {ride.nearbyDrivers} motoristas proximos
+            </Typography>
+            <Stack direction="row" spacing={0.5} alignItems="center">
+              <AccessTimeIcon sx={{ fontSize: 16, color: 'text.secondary' }} />
+              <Typography color="text.secondary" sx={{ fontSize: 12, fontWeight: 800 }}>
+                {getElapsedMinutes(ride.requestedAt)} min
+              </Typography>
+            </Stack>
+          </Stack>
+        </Stack>
+      </CardContent>
+    </Card>
+  )
+}
+
 function normalizeRide(ride: ActiveRideView): ActiveRideView {
   return {
     ...ride,
     status: ride.status ?? 'Em corrida',
     startedAt: ride.startedAt ?? new Date().toISOString(),
+  }
+}
+
+function normalizeWaitingRide(ride: WaitingRide): WaitingRide {
+  return {
+    ...ride,
+    status: ride.status ?? 'Buscando motorista',
+    requestedAt: ride.requestedAt ?? new Date().toISOString(),
+    nearbyDrivers: ride.nearbyDrivers ?? 0,
+    category: ride.category ?? 'Economico',
   }
 }
 
