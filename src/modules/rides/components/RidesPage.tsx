@@ -28,7 +28,7 @@ import { alpha } from '@mui/material/styles'
 import type { Theme } from '@mui/material/styles'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
-import { CircleMarker, MapContainer, Marker, Polyline, TileLayer, Tooltip } from 'react-leaflet'
+import { CircleMarker, MapContainer, Marker, Polyline, TileLayer, Tooltip, useMap } from 'react-leaflet'
 import { io } from 'socket.io-client'
 import { activeRides as dashboardActiveRides, recentRides, statusStyles } from '@modules/dashboard/data/mockDashboardData'
 import type { ActiveRide, RecentRide, RideStatus } from '@modules/dashboard/types'
@@ -136,6 +136,7 @@ export default function RidesPage() {
   const tileLayer = getMapTileLayer(activeMode)
   const [selectedTab, setSelectedTab] = useState<RideTab>('active')
   const [activeRides, setActiveRides] = useState<ActiveRideView[]>(initialActiveRides)
+  const [selectedActiveRideId, setSelectedActiveRideId] = useState(initialActiveRides[0]?.id ?? '')
   const [waitingRides, setWaitingRides] = useState<WaitingRide[]>(initialWaitingRides)
   const [historyStartDate, setHistoryStartDate] = useState('')
   const [historyEndDate, setHistoryEndDate] = useState('')
@@ -167,6 +168,7 @@ export default function RidesPage() {
     }
     const removeRide = (ride: ActiveRideView | { id: string }) => {
       setActiveRides((current) => current.filter((item) => item.id !== ride.id))
+      setSelectedActiveRideId((current) => (current === ride.id ? '' : current))
     }
     const replaceWaitingRides = (rides: WaitingRide[]) => setWaitingRides(rides.map(normalizeWaitingRide))
     const upsertWaitingRide = (ride: WaitingRide) => {
@@ -198,6 +200,10 @@ export default function RidesPage() {
   }, [])
 
   const mapCenter = useMemo<[number, number]>(() => activeRides[0]?.driverPosition ?? [-23.5573, -46.6412], [activeRides])
+  const selectedActiveRide = useMemo(
+    () => activeRides.find((ride) => ride.id === selectedActiveRideId) ?? activeRides[0] ?? null,
+    [activeRides, selectedActiveRideId],
+  )
   const filteredHistoryRides = useMemo(() => {
     return historyRides.filter((ride) => {
       const rideDate = ride.completedAt.slice(0, 10)
@@ -248,7 +254,16 @@ export default function RidesPage() {
 
         <CardContent sx={{ p: 2.25 }}>
           {selectedTab === 'active' && (
-            <ActiveRidesPanel activeRides={activeRides} activeMode={activeMode} mapCenter={mapCenter} theme={theme} tileLayer={tileLayer} />
+            <ActiveRidesPanel
+              activeRides={activeRides}
+              activeMode={activeMode}
+              mapCenter={mapCenter}
+              selectedRide={selectedActiveRide}
+              selectedRideId={selectedActiveRide?.id ?? ''}
+              theme={theme}
+              tileLayer={tileLayer}
+              onRideSelect={setSelectedActiveRideId}
+            />
           )}
 
           {selectedTab === 'history' && (
@@ -274,14 +289,20 @@ function ActiveRidesPanel({
   activeRides,
   activeMode,
   mapCenter,
+  selectedRide,
+  selectedRideId,
   theme,
   tileLayer,
+  onRideSelect,
 }: {
   activeRides: ActiveRideView[]
   activeMode: 'light' | 'dark'
   mapCenter: [number, number]
+  selectedRide: ActiveRideView | null
+  selectedRideId: string
   theme: Theme
   tileLayer: { attribution: string; url: string }
+  onRideSelect: (rideId: string) => void
 }) {
   return (
     <Box
@@ -320,8 +341,9 @@ function ActiveRidesPanel({
           <Box sx={{ flex: 1, minHeight: 360, overflow: 'hidden', borderRadius: 2, border: `1px solid ${theme.palette.divider}` }}>
             <MapContainer center={mapCenter} zoom={12} scrollWheelZoom={false} style={{ width: '100%', height: '100%' }}>
               <TileLayer key={activeMode} attribution={tileLayer.attribution} url={tileLayer.url} />
+              <MapRideFocus ride={selectedRide} />
               {activeRides.map((ride) => (
-                <MapRide key={ride.id} ride={ride} />
+                <MapRide key={ride.id} ride={ride} selected={ride.id === selectedRideId} />
               ))}
             </MapContainer>
           </Box>
@@ -342,7 +364,7 @@ function ActiveRidesPanel({
 
           <Stack spacing={1.5}>
             {activeRides.map((ride) => (
-              <ActiveRideCard key={ride.id} ride={ride} />
+              <ActiveRideCard key={ride.id} ride={ride} selected={ride.id === selectedRideId} onSelect={() => onRideSelect(ride.id)} />
             ))}
             {activeRides.length === 0 && (
               <Box sx={{ border: '1px dashed', borderColor: 'divider', borderRadius: 2, p: 3, textAlign: 'center' }}>
@@ -359,21 +381,35 @@ function ActiveRidesPanel({
   )
 }
 
-function MapRide({ ride }: { ride: ActiveRideView }) {
+function MapRideFocus({ ride }: { ride: ActiveRideView | null }) {
+  const map = useMap()
+
+  useEffect(() => {
+    if (!ride) return
+
+    const bounds = L.latLngBounds([...ride.path, ride.driverPosition, ride.passengerPosition])
+    map.fitBounds(bounds, { animate: true, duration: 0.7, padding: [46, 46], maxZoom: 15 })
+  }, [map, ride])
+
+  return null
+}
+
+function MapRide({ ride, selected }: { ride: ActiveRideView; selected: boolean }) {
   const status = statusConfig[ride.status]
 
   return (
     <>
-      <Polyline positions={ride.path} pathOptions={{ color: status.color, weight: 4, opacity: 0.72 }} />
-      <Marker position={ride.driverPosition} icon={createRideStatusIcon(ride.status)} title={`${ride.id} - ${ride.status}`}>
+      {selected && <Polyline positions={ride.path} pathOptions={{ color: '#FFFFFF', weight: 9, opacity: 0.72 }} />}
+      <Polyline positions={ride.path} pathOptions={{ color: status.color, weight: selected ? 6 : 4, opacity: selected ? 1 : 0.42 }} />
+      <Marker position={ride.driverPosition} icon={createRideStatusIcon(ride.status, selected)} title={`${ride.id} - ${ride.status}`}>
         <Tooltip direction="top" offset={[0, -8]} opacity={0.95}>
           {ride.id} - {ride.driver}
         </Tooltip>
       </Marker>
       <CircleMarker
         center={ride.passengerPosition}
-        radius={7}
-        pathOptions={{ color: '#FFFFFF', weight: 2, fillColor: status.color, fillOpacity: 0.9 }}
+        radius={selected ? 10 : 7}
+        pathOptions={{ color: '#FFFFFF', weight: selected ? 3 : 2, fillColor: status.color, fillOpacity: selected ? 1 : 0.78 }}
       >
         <Tooltip direction="top" offset={[0, -8]} opacity={0.95}>
           {ride.passenger} - passageiro
@@ -383,11 +419,37 @@ function MapRide({ ride }: { ride: ActiveRideView }) {
   )
 }
 
-function ActiveRideCard({ ride }: { ride: ActiveRideView }) {
+function ActiveRideCard({ ride, selected, onSelect }: { ride: ActiveRideView; selected: boolean; onSelect: () => void }) {
   const status = statusConfig[ride.status]
 
   return (
-    <Card variant="outlined" sx={{ bgcolor: 'background.default' }}>
+    <Card
+      variant="outlined"
+      role="button"
+      tabIndex={0}
+      onClick={onSelect}
+      onKeyDown={(event) => {
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault()
+          onSelect()
+        }
+      }}
+      sx={{
+        bgcolor: selected ? alpha(status.color, 0.08) : 'background.default',
+        borderColor: selected ? status.color : 'divider',
+        boxShadow: selected ? `0 0 0 2px ${alpha(status.color, 0.16)}` : 'none',
+        cursor: 'pointer',
+        transition: 'border-color 160ms ease, background-color 160ms ease, box-shadow 160ms ease, transform 160ms ease',
+        '&:hover': {
+          borderColor: status.color,
+          transform: 'translateY(-1px)',
+        },
+        '&:focus-visible': {
+          outline: `3px solid ${alpha(status.color, 0.32)}`,
+          outlineOffset: 2,
+        },
+      }}
+    >
       <CardContent sx={{ p: 1.75, '&:last-child': { pb: 1.75 } }}>
         <Stack spacing={1.25}>
           <Stack direction="row" spacing={1} alignItems="center" justifyContent="space-between">
@@ -700,21 +762,23 @@ function formatDateTime(value: string) {
   }).format(new Date(value))
 }
 
-function createRideStatusIcon(status: ActiveRideStatus) {
+function createRideStatusIcon(status: ActiveRideStatus, selected = false) {
   const color = statusConfig[status].color
+  const size = selected ? 24 : 18
+  const anchor = size / 2
 
   return L.divIcon({
     className: '',
     html: `<span style="
-      width: 18px;
-      height: 18px;
+      width: ${size}px;
+      height: ${size}px;
       display: block;
       border-radius: 999px;
       background: ${color};
       border: 3px solid #ffffff;
-      box-shadow: 0 0 0 6px ${alpha(color, 0.26)}, 0 12px 24px rgba(0, 0, 0, 0.28);
+      box-shadow: 0 0 0 ${selected ? 9 : 6}px ${alpha(color, selected ? 0.34 : 0.26)}, 0 12px 24px rgba(0, 0, 0, 0.28);
     "></span>`,
-    iconSize: [18, 18],
-    iconAnchor: [9, 9],
+    iconSize: [size, size],
+    iconAnchor: [anchor, anchor],
   })
 }
