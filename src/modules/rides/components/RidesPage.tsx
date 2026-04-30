@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import AccessTimeIcon from '@mui/icons-material/AccessTime'
 import LocalTaxiIcon from '@mui/icons-material/LocalTaxi'
 import PersonPinCircleIcon from '@mui/icons-material/PersonPinCircle'
+import ReportProblemIcon from '@mui/icons-material/ReportProblem'
 import RouteIcon from '@mui/icons-material/Route'
 import {
   Box,
@@ -47,6 +48,10 @@ type WaitingRideStatus = 'Buscando motorista' | 'Oferta enviada' | 'Alta demanda
 type ActiveRideView = ActiveRide & {
   status: ActiveRideStatus
   startedAt: string
+  alert?: {
+    activatedBy: 'Motorista' | 'Passageiro'
+    reason: string
+  }
 }
 
 type HistoryRide = RecentRide & {
@@ -78,11 +83,63 @@ const waitingStatusConfig: Record<WaitingRideStatus, { color: string; label: str
   'Alta demanda': { color: '#EF4444', label: 'Alta demanda' },
 }
 
-const initialActiveRides: ActiveRideView[] = dashboardActiveRides.map((ride, index) => ({
-  ...ride,
-  status: (['Em corrida', 'A caminho', 'Chegando', 'Aguardando embarque', 'Em corrida'] as ActiveRideStatus[])[index] ?? 'Em corrida',
-  startedAt: new Date(Date.now() - (index + 8) * 60_000).toISOString(),
-}))
+const initialActiveRides: ActiveRideView[] = [
+  ...dashboardActiveRides.map<ActiveRideView>((ride, index) => ({
+    ...ride,
+    status: (['Em corrida', 'A caminho', 'Chegando', 'Aguardando embarque', 'Em corrida'] as ActiveRideStatus[])[index] ?? 'Em corrida',
+    startedAt: new Date(Date.now() - (index + 8) * 60_000).toISOString(),
+    alert:
+      index === 2
+        ? {
+            activatedBy: 'Passageiro',
+            reason: 'Passageiro acionou alerta durante a corrida',
+          }
+        : undefined,
+  })),
+  {
+    id: 'BRL-84219',
+    driver: 'Marcos Vidal',
+    passenger: 'Sofia Campos',
+    origin: 'Bela Vista',
+    destination: 'Hospital Sirio-Libanes',
+    value: 26.9,
+    path: [[-23.5585, -46.6462], [-23.5568, -46.6502], [-23.555, -46.6538], [-23.5572, -46.6567]],
+    driverPosition: [-23.5568, -46.6502],
+    passengerPosition: [-23.5572, -46.6567],
+    status: 'A caminho',
+    startedAt: new Date(Date.now() - 12 * 60_000).toISOString(),
+  },
+  {
+    id: 'BRL-84220',
+    driver: 'Nicolas Reis',
+    passenger: 'Helena Duarte',
+    origin: 'Republica',
+    destination: 'Barra Funda',
+    value: 39.6,
+    path: [[-23.5443, -46.6427], [-23.5358, -46.6502], [-23.5288, -46.6617], [-23.5256, -46.6671]],
+    driverPosition: [-23.5358, -46.6502],
+    passengerPosition: [-23.5256, -46.6671],
+    status: 'Em corrida',
+    startedAt: new Date(Date.now() - 17 * 60_000).toISOString(),
+    alert: {
+      activatedBy: 'Motorista',
+      reason: 'Motorista acionou alerta por comportamento agressivo',
+    },
+  },
+  {
+    id: 'BRL-84221',
+    driver: 'Priscila Nunes',
+    passenger: 'Eduardo Pires',
+    origin: 'Paraiso',
+    destination: 'Aclimacao',
+    value: 22.4,
+    path: [[-23.5745, -46.6409], [-23.5766, -46.6348], [-23.5722, -46.6296], [-23.5681, -46.6264]],
+    driverPosition: [-23.5766, -46.6348],
+    passengerPosition: [-23.5681, -46.6264],
+    status: 'Chegando',
+    startedAt: new Date(Date.now() - 6 * 60_000).toISOString(),
+  },
+]
 
 const historyRides: HistoryRide[] = recentRides.map((ride, index) => ({
   ...ride,
@@ -141,6 +198,8 @@ export default function RidesPage() {
   const [activeMapLimit, setActiveMapLimit] = useState<ActiveMapLimit>(5)
   const [activeRides, setActiveRides] = useState<ActiveRideView[]>(initialActiveRides)
   const [selectedActiveRideId, setSelectedActiveRideId] = useState(initialActiveRides[0]?.id ?? '')
+  const [expandedActiveRideId, setExpandedActiveRideId] = useState(initialActiveRides[0]?.id ?? '')
+  const [activeRideSearch, setActiveRideSearch] = useState('')
   const [waitingRides, setWaitingRides] = useState<WaitingRide[]>(initialWaitingRides)
   const [historyStartDate, setHistoryStartDate] = useState('')
   const [historyEndDate, setHistoryEndDate] = useState('')
@@ -173,6 +232,7 @@ export default function RidesPage() {
     const removeRide = (ride: ActiveRideView | { id: string }) => {
       setActiveRides((current) => current.filter((item) => item.id !== ride.id))
       setSelectedActiveRideId((current) => (current === ride.id ? '' : current))
+      setExpandedActiveRideId((current) => (current === ride.id ? '' : current))
     }
     const replaceWaitingRides = (rides: WaitingRide[]) => setWaitingRides(rides.map(normalizeWaitingRide))
     const upsertWaitingRide = (ride: WaitingRide) => {
@@ -190,6 +250,7 @@ export default function RidesPage() {
     socket.on('active-rides', replaceActiveRides)
     socket.on('ride:created', upsertRide)
     socket.on('ride:updated', upsertRide)
+    socket.on('ride:alert', upsertRide)
     socket.on('ride:completed', removeRide)
     socket.on('ride:cancelled', removeRide)
     socket.on('rides:waiting', replaceWaitingRides)
@@ -208,11 +269,30 @@ export default function RidesPage() {
     () => activeRides.find((ride) => ride.id === selectedActiveRideId) ?? activeRides[0] ?? null,
     [activeRides, selectedActiveRideId],
   )
+  const filteredActiveRides = useMemo(() => {
+    const normalizedSearch = activeRideSearch.trim().toLocaleLowerCase('pt-BR')
+    if (!normalizedSearch) return activeRides
+
+    return activeRides.filter((ride) => {
+      return (
+        ride.driver.toLocaleLowerCase('pt-BR').includes(normalizedSearch) ||
+        ride.passenger.toLocaleLowerCase('pt-BR').includes(normalizedSearch)
+      )
+    })
+  }, [activeRideSearch, activeRides])
+  const prioritizedActiveRides = useMemo(() => {
+    return [...filteredActiveRides].sort((firstRide, secondRide) => {
+      if (firstRide.id === selectedActiveRideId) return -1
+      if (secondRide.id === selectedActiveRideId) return 1
+      if (Boolean(firstRide.alert) !== Boolean(secondRide.alert)) return firstRide.alert ? -1 : 1
+      return 0
+    })
+  }, [filteredActiveRides, selectedActiveRideId])
   const mapActiveRides = useMemo(() => {
-    const limitedRides = activeMapLimit === 'all' ? activeRides : activeRides.slice(0, activeMapLimit)
+    const limitedRides = activeMapLimit === 'all' ? prioritizedActiveRides : prioritizedActiveRides.slice(0, activeMapLimit)
     if (!selectedActiveRide || limitedRides.some((ride) => ride.id === selectedActiveRide.id)) return limitedRides
     return [...limitedRides, selectedActiveRide]
-  }, [activeMapLimit, activeRides, selectedActiveRide])
+  }, [activeMapLimit, prioritizedActiveRides, selectedActiveRide])
   const filteredHistoryRides = useMemo(() => {
     return historyRides.filter((ride) => {
       const rideDate = ride.completedAt.slice(0, 10)
@@ -266,6 +346,8 @@ export default function RidesPage() {
             <ActiveRidesPanel
               activeRides={activeRides}
               activeMode={activeMode}
+              expandedRideId={expandedActiveRideId}
+              filteredActiveRides={prioritizedActiveRides}
               mapRides={mapActiveRides}
               mapLimit={activeMapLimit}
               mapCenter={mapCenter}
@@ -273,7 +355,10 @@ export default function RidesPage() {
               selectedRideId={selectedActiveRide?.id ?? ''}
               theme={theme}
               tileLayer={tileLayer}
+              search={activeRideSearch}
+              onExpandedRideChange={setExpandedActiveRideId}
               onMapLimitChange={setActiveMapLimit}
+              onSearchChange={setActiveRideSearch}
               onRideSelect={setSelectedActiveRideId}
             />
           )}
@@ -300,6 +385,8 @@ export default function RidesPage() {
 function ActiveRidesPanel({
   activeRides,
   activeMode,
+  expandedRideId,
+  filteredActiveRides,
   mapRides,
   mapLimit,
   mapCenter,
@@ -307,11 +394,16 @@ function ActiveRidesPanel({
   selectedRideId,
   theme,
   tileLayer,
+  search,
+  onExpandedRideChange,
   onMapLimitChange,
+  onSearchChange,
   onRideSelect,
 }: {
   activeRides: ActiveRideView[]
   activeMode: 'light' | 'dark'
+  expandedRideId: string
+  filteredActiveRides: ActiveRideView[]
   mapRides: ActiveRideView[]
   mapLimit: ActiveMapLimit
   mapCenter: [number, number]
@@ -319,7 +411,10 @@ function ActiveRidesPanel({
   selectedRideId: string
   theme: Theme
   tileLayer: { attribution: string; url: string }
+  search: string
+  onExpandedRideChange: (rideId: string) => void
   onMapLimitChange: (limit: ActiveMapLimit) => void
+  onSearchChange: (value: string) => void
   onRideSelect: (rideId: string) => void
 }) {
   return (
@@ -395,25 +490,57 @@ function ActiveRidesPanel({
 
       <Card variant="outlined">
         <CardContent sx={{ p: 2.25 }}>
-          <Stack direction="row" spacing={2} alignItems="center" justifyContent="space-between" sx={{ mb: 2 }}>
+          <Stack direction="row" spacing={2} alignItems="center" justifyContent="space-between" sx={{ mb: 1.5 }}>
             <Box>
               <Typography variant="h4">Corridas ativas</Typography>
               <Typography color="text.secondary" sx={{ mt: 0.25 }}>
-                {activeRides.length} em acompanhamento agora
+                {filteredActiveRides.length} de {activeRides.length} em acompanhamento agora
               </Typography>
             </Box>
             <Chip label="tempo real" size="small" sx={{ fontWeight: 800 }} />
           </Stack>
 
-          <Stack spacing={1.5}>
-            {activeRides.map((ride) => (
-              <ActiveRideCard key={ride.id} ride={ride} selected={ride.id === selectedRideId} onSelect={() => onRideSelect(ride.id)} />
+          <TextField
+            size="small"
+            label="Buscar motorista ou passageiro"
+            value={search}
+            onChange={(event) => onSearchChange(event.target.value)}
+            fullWidth
+            sx={{ mb: 1.5 }}
+          />
+
+          <Box
+            sx={{
+              display: 'grid',
+              gap: 1,
+              gridTemplateColumns: {
+                xs: '1fr',
+                sm: 'repeat(2, minmax(0, 1fr))',
+                xl: 'repeat(3, minmax(0, 1fr))',
+              },
+              alignItems: 'start',
+            }}
+          >
+            {filteredActiveRides.map((ride) => (
+              <ActiveRideCard
+                key={ride.id}
+                ride={ride}
+                expanded={ride.id === expandedRideId}
+                selected={ride.id === selectedRideId}
+                onSelect={() => {
+                  onRideSelect(ride.id)
+                  onExpandedRideChange(expandedRideId === ride.id ? '' : ride.id)
+                }}
+              />
             ))}
-            {activeRides.length === 0 && (
+          </Box>
+
+          <Stack spacing={1} sx={{ mt: filteredActiveRides.length === 0 ? 0 : 1 }}>
+            {filteredActiveRides.length === 0 && (
               <Box sx={{ border: '1px dashed', borderColor: 'divider', borderRadius: 2, p: 3, textAlign: 'center' }}>
-                <Typography sx={{ fontWeight: 800 }}>Nenhuma corrida ativa agora</Typography>
+                <Typography sx={{ fontWeight: 800 }}>{activeRides.length === 0 ? 'Nenhuma corrida ativa agora' : 'Nenhuma corrida encontrada'}</Typography>
                 <Typography color="text.secondary" sx={{ mt: 0.5 }}>
-                  Novas corridas entram aqui assim que forem emitidas pelo socket.
+                  {activeRides.length === 0 ? 'Novas corridas entram aqui assim que forem emitidas pelo socket.' : 'Tente buscar por outro motorista ou passageiro.'}
                 </Typography>
               </Box>
             )}
@@ -439,22 +566,26 @@ function MapRideFocus({ ride }: { ride: ActiveRideView | null }) {
 
 function MapRide({ ride, selected }: { ride: ActiveRideView; selected: boolean }) {
   const status = statusConfig[ride.status]
+  const lineColor = ride.alert ? '#EF4444' : status.color
 
   return (
     <>
       {selected && <Polyline positions={ride.path} pathOptions={{ color: '#FFFFFF', weight: 9, opacity: 0.72 }} />}
-      <Polyline positions={ride.path} pathOptions={{ color: status.color, weight: selected ? 6 : 4, opacity: selected ? 1 : 0.42 }} />
-      <Marker position={ride.driverPosition} icon={createRideStatusIcon(ride.status, selected)} title={`${ride.id} - ${ride.status}`}>
+      {ride.alert && <Polyline positions={ride.path} pathOptions={{ color: '#EF4444', weight: selected ? 11 : 8, opacity: selected ? 0.42 : 0.3 }} />}
+      <Polyline positions={ride.path} pathOptions={{ color: lineColor, weight: selected || ride.alert ? 6 : 4, opacity: selected || ride.alert ? 1 : 0.42 }} />
+      <Marker position={ride.driverPosition} icon={createRideStatusIcon(ride.status, selected, Boolean(ride.alert))} title={`${ride.id} - ${ride.status}`}>
         <Tooltip direction="top" offset={[0, -8]} opacity={0.95}>
+          {ride.alert ? 'ALERTA - ' : ''}
           {ride.id} - {ride.driver}
         </Tooltip>
       </Marker>
       <CircleMarker
         center={ride.passengerPosition}
-        radius={selected ? 10 : 7}
-        pathOptions={{ color: '#FFFFFF', weight: selected ? 3 : 2, fillColor: status.color, fillOpacity: selected ? 1 : 0.78 }}
+        radius={selected || ride.alert ? 10 : 7}
+        pathOptions={{ color: '#FFFFFF', weight: selected || ride.alert ? 3 : 2, fillColor: lineColor, fillOpacity: selected || ride.alert ? 1 : 0.78 }}
       >
         <Tooltip direction="top" offset={[0, -8]} opacity={0.95}>
+          {ride.alert ? 'ALERTA - ' : ''}
           {ride.passenger} - passageiro
         </Tooltip>
       </CircleMarker>
@@ -462,8 +593,19 @@ function MapRide({ ride, selected }: { ride: ActiveRideView; selected: boolean }
   )
 }
 
-function ActiveRideCard({ ride, selected, onSelect }: { ride: ActiveRideView; selected: boolean; onSelect: () => void }) {
+function ActiveRideCard({
+  ride,
+  expanded,
+  selected,
+  onSelect,
+}: {
+  ride: ActiveRideView
+  expanded: boolean
+  selected: boolean
+  onSelect: () => void
+}) {
   const status = statusConfig[ride.status]
+  const accentColor = ride.alert ? '#EF4444' : status.color
 
   return (
     <Card
@@ -478,65 +620,112 @@ function ActiveRideCard({ ride, selected, onSelect }: { ride: ActiveRideView; se
         }
       }}
       sx={{
-        bgcolor: selected ? alpha(status.color, 0.08) : 'background.default',
-        borderColor: selected ? status.color : 'divider',
-        boxShadow: selected ? `0 0 0 2px ${alpha(status.color, 0.16)}` : 'none',
+        bgcolor: selected ? alpha(accentColor, 0.08) : ride.alert ? alpha('#EF4444', 0.045) : 'background.default',
+        borderColor: selected || ride.alert ? accentColor : 'divider',
+        boxShadow: selected ? `0 0 0 2px ${alpha(accentColor, 0.16)}` : ride.alert ? `inset 3px 0 0 ${accentColor}` : 'none',
         cursor: 'pointer',
         transition: 'border-color 160ms ease, background-color 160ms ease, box-shadow 160ms ease, transform 160ms ease',
         '&:hover': {
-          borderColor: status.color,
+          borderColor: accentColor,
           transform: 'translateY(-1px)',
         },
         '&:focus-visible': {
-          outline: `3px solid ${alpha(status.color, 0.32)}`,
+          outline: `3px solid ${alpha(accentColor, 0.32)}`,
           outlineOffset: 2,
+        },
+        gridColumn: {
+          xs: 'span 1',
+          sm: expanded ? 'span 2' : 'span 1',
+          xl: expanded ? 'span 3' : 'span 1',
         },
       }}
     >
-      <CardContent sx={{ p: 1.75, '&:last-child': { pb: 1.75 } }}>
-        <Stack spacing={1.25}>
-          <Stack direction="row" spacing={1} alignItems="center" justifyContent="space-between">
-            <Stack direction="row" spacing={1} alignItems="center" sx={{ minWidth: 0 }}>
-              <RouteIcon fontSize="small" sx={{ color: status.color }} />
-              <Typography sx={{ fontWeight: 900 }}>{ride.id}</Typography>
+      <CardContent sx={{ p: 1, '&:last-child': { pb: 1 } }}>
+        <Box
+          sx={{
+            display: 'grid',
+            gap: 1,
+            gridTemplateColumns: { xs: '1fr', sm: 'minmax(150px, 1.15fr) minmax(130px, 0.95fr) minmax(96px, 0.7fr)' },
+            alignItems: 'center',
+          }}
+        >
+          <Box sx={{ display: 'grid', gridTemplateColumns: '18px 1fr', columnGap: 1, rowGap: 0.32, minWidth: 0 }}>
+            {ride.alert ? <ReportProblemIcon sx={{ fontSize: 17, color: accentColor, mt: 0.1 }} /> : <RouteIcon sx={{ fontSize: 17, color: accentColor, mt: 0.1 }} />}
+            <Stack direction="row" spacing={0.75} alignItems="center" sx={{ minWidth: 0 }}>
+              <Typography noWrap sx={{ fontWeight: 900, lineHeight: 1.25 }}>
+                {ride.id}
+              </Typography>
+              {ride.alert && (
+                <Chip
+                  size="small"
+                  label="Alerta"
+                  sx={{ height: 20, bgcolor: alpha('#EF4444', 0.16), color: '#EF4444', fontSize: 10, fontWeight: 900 }}
+                />
+              )}
             </Stack>
+            <LocalTaxiIcon sx={{ fontSize: 17, color: 'text.secondary', mt: 0.1 }} />
+            <Typography noWrap sx={{ fontSize: 13, fontWeight: 850, lineHeight: 1.25 }}>
+              {ride.driver}
+            </Typography>
+            <PersonPinCircleIcon sx={{ fontSize: 17, color: 'text.secondary', mt: 0.1 }} />
+            <Typography noWrap sx={{ fontSize: 13, fontWeight: 750, lineHeight: 1.25 }}>
+              {ride.passenger}
+            </Typography>
+          </Box>
+
+          <Box sx={{ minWidth: 0 }}>
+            <Typography color="text.secondary" sx={{ fontSize: 11, fontWeight: 800, textTransform: 'uppercase' }}>
+              Destino
+            </Typography>
+            <Typography noWrap sx={{ fontSize: 13, fontWeight: 800 }}>
+              {ride.destination}
+            </Typography>
+            {expanded && (
+              <>
+                <Typography color="text.secondary" sx={{ fontSize: 11, fontWeight: 800, textTransform: 'uppercase', mt: 0.75 }}>
+                  Origem
+                </Typography>
+                <Typography noWrap sx={{ fontSize: 12.5, fontWeight: 700 }}>
+                  {ride.origin}
+                </Typography>
+              </>
+            )}
+          </Box>
+
+          <Stack spacing={0.55} alignItems={{ xs: 'flex-start', sm: 'flex-end' }} sx={{ minWidth: 0 }}>
             <Chip
               size="small"
               label={ride.status}
               sx={{
-                bgcolor: alpha(status.color, 0.14),
-                color: status.color,
+                bgcolor: alpha(accentColor, 0.14),
+                color: accentColor,
                 fontWeight: 800,
+                maxWidth: '100%',
               }}
             />
-          </Stack>
-
-          <Stack direction="row" spacing={1} alignItems="center" sx={{ minWidth: 0 }}>
-            <PersonPinCircleIcon fontSize="small" color="action" />
-            <Typography noWrap sx={{ fontWeight: 800 }}>
-              {ride.passenger}
-            </Typography>
-          </Stack>
-
-          <Stack direction="row" spacing={1} alignItems="center" justifyContent="space-between">
-            <Chip size="small" icon={<LocalTaxiIcon />} label={ride.driver} sx={{ maxWidth: '62%', fontWeight: 800 }} />
-            <Typography sx={{ fontWeight: 900 }}>{currencyFormatter.format(ride.value)}</Typography>
-          </Stack>
-
-          <Divider />
-
-          <Stack direction="row" spacing={1} alignItems="center" justifyContent="space-between">
-            <Typography color="text.secondary" sx={{ fontSize: 12 }} noWrap>
-              {ride.origin} {'->'} {ride.destination}
-            </Typography>
-            <Stack direction="row" spacing={0.5} alignItems="center" sx={{ flexShrink: 0 }}>
-              <AccessTimeIcon sx={{ fontSize: 16, color: 'text.secondary' }} />
+            {expanded && <Typography sx={{ fontSize: 13, fontWeight: 900 }}>{currencyFormatter.format(ride.value)}</Typography>}
+            <Stack direction="row" spacing={0.5} alignItems="center">
+              <AccessTimeIcon sx={{ fontSize: 15, color: 'text.secondary' }} />
               <Typography color="text.secondary" sx={{ fontSize: 12, fontWeight: 800 }}>
                 {getElapsedMinutes(ride.startedAt)} min
               </Typography>
             </Stack>
           </Stack>
-        </Stack>
+        </Box>
+
+        {expanded && (
+          <>
+            <Divider sx={{ my: 1 }} />
+            <Typography color="text.secondary" sx={{ fontSize: 12, fontWeight: 700 }} noWrap>
+              {ride.origin} {'->'} {ride.destination}
+            </Typography>
+            {ride.alert && (
+              <Typography sx={{ color: '#EF4444', fontSize: 12, fontWeight: 900, mt: 0.5 }} noWrap>
+                Alerta acionado por {ride.alert.activatedBy}: {ride.alert.reason}
+              </Typography>
+            )}
+          </>
+        )}
       </CardContent>
     </Card>
   )
@@ -805,9 +994,9 @@ function formatDateTime(value: string) {
   }).format(new Date(value))
 }
 
-function createRideStatusIcon(status: ActiveRideStatus, selected = false) {
-  const color = statusConfig[status].color
-  const size = selected ? 24 : 18
+function createRideStatusIcon(status: ActiveRideStatus, selected = false, alert = false) {
+  const color = alert ? '#EF4444' : statusConfig[status].color
+  const size = selected || alert ? 24 : 18
   const anchor = size / 2
 
   return L.divIcon({
@@ -819,7 +1008,7 @@ function createRideStatusIcon(status: ActiveRideStatus, selected = false) {
       border-radius: 999px;
       background: ${color};
       border: 3px solid #ffffff;
-      box-shadow: 0 0 0 ${selected ? 9 : 6}px ${alpha(color, selected ? 0.34 : 0.26)}, 0 12px 24px rgba(0, 0, 0, 0.28);
+      box-shadow: 0 0 0 ${selected || alert ? 9 : 6}px ${alpha(color, selected || alert ? 0.34 : 0.26)}, 0 12px 24px rgba(0, 0, 0, 0.28);
     "></span>`,
     iconSize: [size, size],
     iconAnchor: [anchor, anchor],
