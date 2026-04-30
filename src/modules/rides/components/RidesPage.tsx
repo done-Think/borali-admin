@@ -5,12 +5,12 @@ import 'leaflet/dist/leaflet.css'
 import { io } from 'socket.io-client'
 import { getMapTileLayer } from '@modules/dashboard/utils/mapConfig'
 import { useActivePaletteMode } from '@modules/dashboard/utils/useActivePaletteMode'
-import { historyRides, initialActiveRides, initialWaitingRides } from '../data/mockRides'
-import type { ActiveMapLimit, ActiveRideView, HistoryStatusFilter, RideTab, WaitingRide } from '../types'
-import { normalizeRide, normalizeWaitingRide, prioritizeActiveRides } from '../utils/rides'
+import { historyRides, initialActiveRides, initialScheduledRides } from '../data/mockRides'
+import type { ActiveMapLimit, ActiveRideView, HistoryStatusFilter, RideTab, ScheduledRide } from '../types'
+import { normalizeRide, prioritizeActiveRides } from '../utils/rides'
 import { ActiveRidesPanel } from './ActiveRidesPanel'
 import { HistoryRidesPanel } from './HistoryRidesPanel'
-import { WaitingRidesPanel } from './WaitingRidesPanel'
+import { ScheduledRidesPanel } from './ScheduledRidesPanel'
 
 export default function RidesPage() {
   const theme = useTheme()
@@ -22,7 +22,7 @@ export default function RidesPage() {
   const [selectedActiveRideId, setSelectedActiveRideId] = useState(initialActiveRides[0]?.id ?? '')
   const [expandedActiveRideId, setExpandedActiveRideId] = useState(initialActiveRides[0]?.id ?? '')
   const [activeRideSearch, setActiveRideSearch] = useState('')
-  const [waitingRides, setWaitingRides] = useState<WaitingRide[]>(initialWaitingRides)
+  const [scheduledRides, setScheduledRides] = useState<ScheduledRide[]>(initialScheduledRides)
   const [historyStartDate, setHistoryStartDate] = useState('')
   const [historyEndDate, setHistoryEndDate] = useState('')
   const [historyStatus, setHistoryStatus] = useState<HistoryStatusFilter>('all')
@@ -56,16 +56,16 @@ export default function RidesPage() {
       setSelectedActiveRideId((current) => (current === ride.id ? '' : current))
       setExpandedActiveRideId((current) => (current === ride.id ? '' : current))
     }
-    const replaceWaitingRides = (rides: WaitingRide[]) => setWaitingRides(rides.map(normalizeWaitingRide))
-    const upsertWaitingRide = (ride: WaitingRide) => {
-      setWaitingRides((current) => {
-        const nextRide = normalizeWaitingRide(ride)
+    const replaceScheduledRides = (rides: ScheduledRide[]) => setScheduledRides(rides)
+    const upsertScheduledRide = (ride: ScheduledRide) => {
+      setScheduledRides((current) => {
+        const nextRide = ride
         const exists = current.some((item) => item.id === nextRide.id)
         return exists ? current.map((item) => (item.id === nextRide.id ? { ...item, ...nextRide } : item)) : [nextRide, ...current]
       })
     }
-    const removeWaitingRide = (ride: WaitingRide | { id: string }) => {
-      setWaitingRides((current) => current.filter((item) => item.id !== ride.id))
+    const removeScheduledRide = (ride: ScheduledRide | { id: string }) => {
+      setScheduledRides((current) => current.filter((item) => item.id !== ride.id))
     }
 
     socket.on('rides:active', replaceActiveRides)
@@ -75,11 +75,11 @@ export default function RidesPage() {
     socket.on('ride:alert', upsertRide)
     socket.on('ride:completed', removeRide)
     socket.on('ride:cancelled', removeRide)
-    socket.on('rides:waiting', replaceWaitingRides)
-    socket.on('waiting-rides', replaceWaitingRides)
-    socket.on('ride:requested', upsertWaitingRide)
-    socket.on('ride:waiting', upsertWaitingRide)
-    socket.on('ride:accepted', removeWaitingRide)
+    socket.on('rides:scheduled', replaceScheduledRides)
+    socket.on('scheduled-rides', replaceScheduledRides)
+    socket.on('ride:scheduled', upsertScheduledRide)
+    socket.on('ride:schedule-updated', upsertScheduledRide)
+    socket.on('ride:schedule-cancelled', removeScheduledRide)
 
     return () => {
       socket.disconnect()
@@ -110,8 +110,8 @@ export default function RidesPage() {
       const rideDate = ride.completedAt.slice(0, 10)
       const matchesStartDate = !historyStartDate || rideDate >= historyStartDate
       const matchesEndDate = !historyEndDate || rideDate <= historyEndDate
-      const matchesStatus = historyStatus === 'all' || ride.status === historyStatus
-      return matchesStartDate && matchesEndDate && matchesStatus
+      const matchesOccurrences = historyStatus === 'all' || (historyStatus === 'with-alert' ? Boolean(ride.alert) : !ride.alert)
+      return matchesStartDate && matchesEndDate && matchesOccurrences
     })
   }, [historyEndDate, historyStartDate, historyStatus])
 
@@ -145,7 +145,7 @@ export default function RidesPage() {
         <Tabs value={selectedTab} onChange={(_, value) => setSelectedTab(value as RideTab)} aria-label="Abas de corridas" sx={{ px: 2, borderBottom: '1px solid', borderColor: 'divider' }}>
           <Tab value="active" label={`Ativas (${activeRides.length})`} />
           <Tab value="history" label="Historico" />
-          <Tab value="waiting" label={`Em Espera (${waitingRides.length})`} />
+          <Tab value="scheduled" label={`Corrida Programada (${scheduledRides.length})`} />
         </Tabs>
 
         <CardContent sx={{ p: 2.25 }}>
@@ -182,7 +182,7 @@ export default function RidesPage() {
             />
           )}
 
-          {selectedTab === 'waiting' && <WaitingRidesPanel rides={waitingRides} />}
+          {selectedTab === 'scheduled' && <ScheduledRidesPanel rides={scheduledRides} />}
         </CardContent>
       </Card>
     </Box>

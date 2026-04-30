@@ -1,23 +1,13 @@
 import L from 'leaflet'
 import { alpha } from '@mui/material/styles'
 import { alertColor, statusConfig } from '../data/mockRides'
-import type { ActiveRideStatus, ActiveRideView, WaitingRide } from '../types'
+import type { ActiveRideStatus, ActiveRideView } from '../types'
 
 export function normalizeRide(ride: ActiveRideView): ActiveRideView {
   return {
     ...ride,
     status: ride.status ?? 'Em corrida',
     startedAt: ride.startedAt ?? new Date().toISOString(),
-  }
-}
-
-export function normalizeWaitingRide(ride: WaitingRide): WaitingRide {
-  return {
-    ...ride,
-    status: ride.status ?? 'Buscando motorista',
-    requestedAt: ride.requestedAt ?? new Date().toISOString(),
-    nearbyDrivers: ride.nearbyDrivers ?? 0,
-    category: ride.category ?? 'Economico',
   }
 }
 
