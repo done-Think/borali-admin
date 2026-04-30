@@ -21,6 +21,8 @@ import {
   TableRow,
   Tabs,
   TextField,
+  ToggleButton,
+  ToggleButtonGroup,
   Typography,
   useTheme,
 } from '@mui/material'
@@ -37,6 +39,7 @@ import { getMapTileLayer } from '@modules/dashboard/utils/mapConfig'
 import { useActivePaletteMode } from '@modules/dashboard/utils/useActivePaletteMode'
 
 type RideTab = 'active' | 'history' | 'waiting'
+type ActiveMapLimit = 5 | 10 | 30 | 'all'
 type ActiveRideStatus = 'A caminho' | 'Em corrida' | 'Chegando' | 'Aguardando embarque'
 type HistoryStatusFilter = 'all' | RideStatus
 type WaitingRideStatus = 'Buscando motorista' | 'Oferta enviada' | 'Alta demanda'
@@ -135,6 +138,7 @@ export default function RidesPage() {
   const activeMode = useActivePaletteMode()
   const tileLayer = getMapTileLayer(activeMode)
   const [selectedTab, setSelectedTab] = useState<RideTab>('active')
+  const [activeMapLimit, setActiveMapLimit] = useState<ActiveMapLimit>(5)
   const [activeRides, setActiveRides] = useState<ActiveRideView[]>(initialActiveRides)
   const [selectedActiveRideId, setSelectedActiveRideId] = useState(initialActiveRides[0]?.id ?? '')
   const [waitingRides, setWaitingRides] = useState<WaitingRide[]>(initialWaitingRides)
@@ -204,6 +208,11 @@ export default function RidesPage() {
     () => activeRides.find((ride) => ride.id === selectedActiveRideId) ?? activeRides[0] ?? null,
     [activeRides, selectedActiveRideId],
   )
+  const mapActiveRides = useMemo(() => {
+    const limitedRides = activeMapLimit === 'all' ? activeRides : activeRides.slice(0, activeMapLimit)
+    if (!selectedActiveRide || limitedRides.some((ride) => ride.id === selectedActiveRide.id)) return limitedRides
+    return [...limitedRides, selectedActiveRide]
+  }, [activeMapLimit, activeRides, selectedActiveRide])
   const filteredHistoryRides = useMemo(() => {
     return historyRides.filter((ride) => {
       const rideDate = ride.completedAt.slice(0, 10)
@@ -257,11 +266,14 @@ export default function RidesPage() {
             <ActiveRidesPanel
               activeRides={activeRides}
               activeMode={activeMode}
+              mapRides={mapActiveRides}
+              mapLimit={activeMapLimit}
               mapCenter={mapCenter}
               selectedRide={selectedActiveRide}
               selectedRideId={selectedActiveRide?.id ?? ''}
               theme={theme}
               tileLayer={tileLayer}
+              onMapLimitChange={setActiveMapLimit}
               onRideSelect={setSelectedActiveRideId}
             />
           )}
@@ -288,20 +300,26 @@ export default function RidesPage() {
 function ActiveRidesPanel({
   activeRides,
   activeMode,
+  mapRides,
+  mapLimit,
   mapCenter,
   selectedRide,
   selectedRideId,
   theme,
   tileLayer,
+  onMapLimitChange,
   onRideSelect,
 }: {
   activeRides: ActiveRideView[]
   activeMode: 'light' | 'dark'
+  mapRides: ActiveRideView[]
+  mapLimit: ActiveMapLimit
   mapCenter: [number, number]
   selectedRide: ActiveRideView | null
   selectedRideId: string
   theme: Theme
   tileLayer: { attribution: string; url: string }
+  onMapLimitChange: (limit: ActiveMapLimit) => void
   onRideSelect: (rideId: string) => void
 }) {
   return (
@@ -319,22 +337,47 @@ function ActiveRidesPanel({
             <Box>
               <Typography variant="h4">Mapa - Corridas Ativas</Typography>
               <Typography color="text.secondary" sx={{ mt: 0.25 }}>
-                Marcadores coloridos por status atual da corrida.
+                {mapRides.length} de {activeRides.length} corridas visiveis no mapa.
               </Typography>
             </Box>
-            <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap" justifyContent="flex-end">
-              {Object.entries(statusConfig).map(([status, config]) => (
-                <Chip
-                  key={status}
-                  size="small"
-                  label={config.label}
-                  sx={{
-                    bgcolor: alpha(config.color, activeMode === 'dark' ? 0.22 : 0.14),
-                    color: config.color,
-                    fontWeight: 800,
-                  }}
-                />
-              ))}
+            <Stack spacing={1} alignItems="flex-end">
+              <ToggleButtonGroup
+                exclusive
+                size="small"
+                value={mapLimit}
+                onChange={(_, value: ActiveMapLimit | null) => {
+                  if (value) onMapLimitChange(value)
+                }}
+                aria-label="Filtro de usuarios no mapa"
+              >
+                <ToggleButton value={5} aria-label="Mostrar 5 usuarios">
+                  5
+                </ToggleButton>
+                <ToggleButton value={10} aria-label="Mostrar 10 usuarios">
+                  10
+                </ToggleButton>
+                <ToggleButton value={30} aria-label="Mostrar 30 usuarios">
+                  30
+                </ToggleButton>
+                <ToggleButton value="all" aria-label="Mostrar todos os usuarios">
+                  Todos
+                </ToggleButton>
+              </ToggleButtonGroup>
+
+              <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap" justifyContent="flex-end">
+                {Object.entries(statusConfig).map(([status, config]) => (
+                  <Chip
+                    key={status}
+                    size="small"
+                    label={config.label}
+                    sx={{
+                      bgcolor: alpha(config.color, activeMode === 'dark' ? 0.22 : 0.14),
+                      color: config.color,
+                      fontWeight: 800,
+                    }}
+                  />
+                ))}
+              </Stack>
             </Stack>
           </Stack>
 
@@ -342,7 +385,7 @@ function ActiveRidesPanel({
             <MapContainer center={mapCenter} zoom={12} scrollWheelZoom={false} style={{ width: '100%', height: '100%' }}>
               <TileLayer key={activeMode} attribution={tileLayer.attribution} url={tileLayer.url} />
               <MapRideFocus ride={selectedRide} />
-              {activeRides.map((ride) => (
+              {mapRides.map((ride) => (
                 <MapRide key={ride.id} ride={ride} selected={ride.id === selectedRideId} />
               ))}
             </MapContainer>
