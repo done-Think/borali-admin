@@ -43,7 +43,7 @@ import {
   Typography,
   useTheme,
 } from '@mui/material'
-import { useNavigate } from 'react-router'
+import { useLocation, useNavigate } from 'react-router'
 import { supportTickets } from '@shared/mocks/supportTickets'
 
 type PassengerFilter = 'all' | 'active' | 'pending' | 'blocked'
@@ -98,6 +98,12 @@ type PassengerDetails = {
 }
 
 type PassengerRide = PassengerDetails['rideHistory'][number]
+
+type PassengersLocationState = {
+  selectedPassengerId?: string
+  selectedPassengerName?: string
+  selectedPassengerTab?: number
+}
 
 type PassengerEditForm = Passenger & {
   cpf: string
@@ -205,6 +211,66 @@ const passengers: Passenger[] = [
     payments: ['Pix', 'Dinheiro'],
     monthlySpend: 70,
   },
+  {
+    id: 'PAS-4211',
+    name: 'Marina Lopes',
+    initials: 'ML',
+    phone: '(11) 98421-1188',
+    tier: 'Ouro',
+    status: 'Ativo',
+    rides: 168,
+    rating: 4.9,
+    payments: ['Cartao', 'Pix'],
+    monthlySpend: 1240,
+  },
+  {
+    id: 'PAS-4210',
+    name: 'Joao Lima',
+    initials: 'JL',
+    phone: '(11) 98420-1188',
+    tier: 'Regular',
+    status: 'Ativo',
+    rides: 74,
+    rating: 4.8,
+    payments: ['Pix', 'Cartao'],
+    monthlySpend: 620,
+  },
+  {
+    id: 'PAS-4209',
+    name: 'Ana Beatriz',
+    initials: 'AB',
+    phone: '(11) 98409-1188',
+    tier: 'VIP',
+    status: 'Ativo',
+    rides: 214,
+    rating: 4.6,
+    payments: ['Carteira', 'Cartao'],
+    monthlySpend: 1830,
+  },
+  {
+    id: 'PAS-4208',
+    name: 'Pedro Rocha',
+    initials: 'PR',
+    phone: '(11) 98408-1188',
+    tier: 'Prata',
+    status: 'Ativo',
+    rides: 96,
+    rating: 4.7,
+    payments: ['Cartao'],
+    monthlySpend: 740,
+  },
+  {
+    id: 'PAS-4207',
+    name: 'Luiza Martins',
+    initials: 'LM',
+    phone: '(11) 98407-1188',
+    tier: 'Ouro',
+    status: 'Ativo',
+    rides: 142,
+    rating: 4.8,
+    payments: ['Pix', 'Cartao', 'Carteira'],
+    monthlySpend: 1180,
+  },
 ]
 
 const passengerDetailsById: Record<string, PassengerDetails> = {
@@ -248,6 +314,81 @@ const passengerDetailsById: Record<string, PassengerDetails> = {
       rating: 4.4,
       cancellationRate: 4.8,
     },
+  },
+  'PAS-4211': {
+    photoLabel: 'Foto da passageira Marina Lopes',
+    cpf: '421.100.118-11',
+    email: 'marina.lopes@email.com',
+    city: 'Sao Paulo, SP',
+    joinedAt: '18/04/2024',
+    lastRide: '01/05/2026',
+    preferredRegion: 'Paulista',
+    rideHistory: [
+      { id: 'BRL-84211', date: '01/05/2026', from: 'Av. Paulista, 1578', to: 'Centro Historico', value: 48.9, status: 'Finalizada' },
+      { id: 'BRL-84172', date: '30/04/2026', from: 'Jardins', to: 'Vila Mariana', value: 34, status: 'Finalizada' },
+    ],
+    complaints: [],
+    monthlyAverage: { rides: 21, spend: 1240, rating: 4.9, cancellationRate: 2.5 },
+  },
+  'PAS-4210': {
+    photoLabel: 'Foto do passageiro Joao Lima',
+    cpf: '421.000.118-10',
+    email: 'joao.lima@email.com',
+    city: 'Sao Paulo, SP',
+    joinedAt: '22/08/2024',
+    lastRide: '01/05/2026',
+    preferredRegion: 'Moema',
+    rideHistory: [
+      { id: 'BRL-84210', date: '01/05/2026', from: 'Moema', to: 'Aeroporto de Congonhas', value: 36.5, status: 'Finalizada' },
+      { id: 'BRL-84163', date: '30/04/2026', from: 'Ibirapuera', to: 'Brooklin', value: 29, status: 'Finalizada' },
+    ],
+    complaints: [],
+    monthlyAverage: { rides: 12, spend: 620, rating: 4.8, cancellationRate: 3.1 },
+  },
+  'PAS-4209': {
+    photoLabel: 'Foto da passageira Ana Beatriz',
+    cpf: '420.900.118-09',
+    email: 'ana.beatriz@email.com',
+    city: 'Sao Paulo, SP',
+    joinedAt: '11/02/2024',
+    lastRide: '01/05/2026',
+    preferredRegion: 'Pinheiros',
+    rideHistory: [
+      { id: 'BRL-84209', date: '01/05/2026', from: 'Pinheiros', to: 'Itaim Bibi', value: 29.8, status: 'Finalizada com alerta' },
+      { id: 'BRL-84158', date: '29/04/2026', from: 'Lapa', to: 'Perdizes', value: 31, status: 'Finalizada' },
+    ],
+    complaints: [{ id: 'OCC-84209-1', date: '01/05/2026', title: 'Desvio de rota reportado', status: 'Em analise' }],
+    monthlyAverage: { rides: 27, spend: 1830, rating: 4.6, cancellationRate: 4.4 },
+  },
+  'PAS-4208': {
+    photoLabel: 'Foto do passageiro Pedro Rocha',
+    cpf: '420.800.118-08',
+    email: 'pedro.rocha@email.com',
+    city: 'Sao Paulo, SP',
+    joinedAt: '02/07/2024',
+    lastRide: '01/05/2026',
+    preferredRegion: 'Vila Madalena',
+    rideHistory: [
+      { id: 'BRL-84208', date: '01/05/2026', from: 'Vila Madalena', to: 'Se', value: 42.2, status: 'Finalizada' },
+      { id: 'BRL-84149', date: '29/04/2026', from: 'Sumare', to: 'Paulista', value: 25, status: 'Finalizada' },
+    ],
+    complaints: [],
+    monthlyAverage: { rides: 14, spend: 740, rating: 4.7, cancellationRate: 2.9 },
+  },
+  'PAS-4207': {
+    photoLabel: 'Foto da passageira Luiza Martins',
+    cpf: '420.700.118-07',
+    email: 'luiza.martins@email.com',
+    city: 'Sao Paulo, SP',
+    joinedAt: '17/01/2024',
+    lastRide: '01/05/2026',
+    preferredRegion: 'Tatuape',
+    rideHistory: [
+      { id: 'BRL-84207', date: '01/05/2026', from: 'Tatuape', to: 'Jardins', value: 64.7, status: 'Finalizada com ocorrencia' },
+      { id: 'BRL-84131', date: '28/04/2026', from: 'Mooca', to: 'Vila Olimpia', value: 52, status: 'Finalizada' },
+    ],
+    complaints: [{ id: 'OCC-84207-1', date: '01/05/2026', title: 'Discussao no desembarque', status: 'Encaminhada' }],
+    monthlyAverage: { rides: 18, spend: 1180, rating: 4.8, cancellationRate: 3.7 },
   },
 }
 
@@ -472,6 +613,7 @@ function getPassengerRideDetails(ride: PassengerRide) {
 
 export default function PassengersPage() {
   const theme = useTheme()
+  const location = useLocation()
   const [passengerRows, setPassengerRows] = useState(passengers)
   const [passengerDetailsOverrides, setPassengerDetailsOverrides] = useState<Record<string, Partial<PassengerDetails>>>({})
   const [search, setSearch] = useState('')
@@ -484,6 +626,31 @@ export default function PassengersPage() {
   const [editingPassenger, setEditingPassenger] = useState<Passenger | null>(null)
   const [passengerDetailsTab, setPassengerDetailsTab] = useState(0)
   const rowsPerPage = 5
+  const locationState = location.state as PassengersLocationState | null
+
+  useEffect(() => {
+    const initialSearch = new URLSearchParams(location.search).get('search')
+
+    if (initialSearch) {
+      setSearch(initialSearch)
+      setPage(1)
+    }
+  }, [location.search])
+
+  useEffect(() => {
+    if (!locationState?.selectedPassengerId && !locationState?.selectedPassengerName) {
+      return
+    }
+
+    const targetPassenger = passengerRows.find((passenger) => {
+      return passenger.id === locationState.selectedPassengerId || passenger.name === locationState.selectedPassengerName
+    })
+
+    if (targetPassenger) {
+      setSelectedPassenger(targetPassenger)
+      setPassengerDetailsTab(locationState.selectedPassengerTab ?? 0)
+    }
+  }, [locationState?.selectedPassengerId, locationState?.selectedPassengerName, locationState?.selectedPassengerTab, passengerRows])
 
   const filteredPassengers = useMemo(() => {
     const normalizedSearch = normalizeSearch(search).trim()

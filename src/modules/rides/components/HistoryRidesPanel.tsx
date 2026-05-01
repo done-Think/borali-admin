@@ -7,11 +7,13 @@ import SupportAgentIcon from '@mui/icons-material/SupportAgent'
 import TaxiAlertIcon from '@mui/icons-material/TaxiAlert'
 import {
   Box,
+  Button,
   Card,
   CardContent,
   Chip,
   Collapse,
   Dialog,
+  DialogActions,
   DialogContent,
   DialogTitle,
   Divider,
@@ -33,6 +35,7 @@ import { CircleMarker, MapContainer, Polyline, TileLayer, Tooltip, useMap } from
 import { currencyFormatter } from '@modules/dashboard/utils/formatters'
 import { getMapTileLayer } from '@modules/dashboard/utils/mapConfig'
 import { useActivePaletteMode } from '@modules/dashboard/utils/useActivePaletteMode'
+import { useNavigate } from 'react-router'
 import { alertColor } from '../data/mockRides'
 import type { HistoryRide, HistoryStatusFilter } from '../types'
 import { formatDateTime } from '../utils/rides'
@@ -318,6 +321,13 @@ function DetailActionCard({ title, icon, accentColor, items, onClick }: { title:
 }
 
 function PassengerDetailsDialog({ ride, profile, open, onClose }: { ride: HistoryRide; profile: ReturnType<typeof buildPassengerProfile>; open: boolean; onClose: () => void }) {
+  const navigate = useNavigate()
+
+  function openPassengerRegistration() {
+    onClose()
+    navigate({ pathname: '/passengers', search: `?search=${encodeURIComponent(ride.passenger)}` }, { state: { selectedPassengerName: ride.passenger } })
+  }
+
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
       <DialogTitle>
@@ -340,11 +350,23 @@ function PassengerDetailsDialog({ ride, profile, open, onClose }: { ride: Histor
           ]}
         />
       </DialogContent>
+      <DialogActions sx={{ px: 3, py: 2 }}>
+        <Button variant="contained" onClick={openPassengerRegistration}>
+          Ir para cadastro do passageiro
+        </Button>
+      </DialogActions>
     </Dialog>
   )
 }
 
 function DriverDetailsDialog({ ride, profile, open, onClose }: { ride: HistoryRide; profile: ReturnType<typeof buildDriverProfile>; open: boolean; onClose: () => void }) {
+  const navigate = useNavigate()
+
+  function openDriverRegistration() {
+    onClose()
+    navigate({ pathname: '/drivers', search: `?search=${encodeURIComponent(ride.driver)}` }, { state: { selectedDriverId: profile.registration, selectedDriverName: ride.driver } })
+  }
+
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
       <DialogTitle>
@@ -367,6 +389,11 @@ function DriverDetailsDialog({ ride, profile, open, onClose }: { ride: HistoryRi
           ]}
         />
       </DialogContent>
+      <DialogActions sx={{ px: 3, py: 2 }}>
+        <Button variant="contained" onClick={openDriverRegistration}>
+          Ir para cadastro do motorista
+        </Button>
+      </DialogActions>
     </Dialog>
   )
 }
