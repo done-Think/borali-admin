@@ -3,6 +3,7 @@ import { Box, Card, CardContent, GlobalStyles, Tab, Tabs, Typography, useTheme }
 import { alpha } from '@mui/material/styles'
 import 'leaflet/dist/leaflet.css'
 import { useSnackbar } from 'notistack'
+import { useLocation } from 'react-router'
 import { io } from 'socket.io-client'
 import { getMapTileLayer } from '@modules/dashboard/utils/mapConfig'
 import { useActivePaletteMode } from '@modules/dashboard/utils/useActivePaletteMode'
@@ -13,9 +14,16 @@ import { ActiveRidesPanel } from './ActiveRidesPanel'
 import { HistoryRidesPanel } from './HistoryRidesPanel'
 import { ScheduledRidesPanel } from './ScheduledRidesPanel'
 
+type RidesNavigationState = {
+  selectedTab?: RideTab
+  selectedRideId?: string
+  highlightAlert?: boolean
+}
+
 export default function RidesPage() {
   const theme = useTheme()
   const { enqueueSnackbar } = useSnackbar()
+  const location = useLocation()
   const activeMode = useActivePaletteMode()
   const tileLayer = getMapTileLayer(activeMode)
   const [selectedTab, setSelectedTab] = useState<RideTab>('active')
@@ -34,6 +42,21 @@ export default function RidesPage() {
     const timer = window.setInterval(() => setNow(Date.now()), 30_000)
     return () => window.clearInterval(timer)
   }, [])
+
+  useEffect(() => {
+    const navigationState = location.state as RidesNavigationState | null
+    if (!navigationState?.selectedRideId) return
+
+    setSelectedTab(navigationState.selectedTab ?? 'active')
+    setSelectedActiveRideId(navigationState.selectedRideId)
+    setExpandedActiveRideId(navigationState.selectedRideId)
+    setActiveRideSearch('')
+    setActiveMapLimit('all')
+
+    if (navigationState.highlightAlert) {
+      enqueueSnackbar(`Corrida ${navigationState.selectedRideId} em alerta destacada.`, { variant: 'warning' })
+    }
+  }, [enqueueSnackbar, location.state])
 
   useEffect(() => {
     const socketUrl = import.meta.env.VITE_SOCKET_URL

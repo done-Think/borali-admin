@@ -7,6 +7,7 @@ import PersonPinCircleIcon from '@mui/icons-material/PersonPinCircle'
 import { Box, Card, CardContent, Chip, Dialog, DialogContent, DialogTitle, IconButton, Stack, Typography } from '@mui/material'
 import { alpha } from '@mui/material/styles'
 import { CircleMarker, MapContainer, TileLayer, Tooltip, useMap } from 'react-leaflet'
+import { useNavigate } from 'react-router'
 import 'leaflet/dist/leaflet.css'
 import { getMapTileLayer } from '@modules/dashboard/utils/mapConfig'
 import { useActivePaletteMode } from '@modules/dashboard/utils/useActivePaletteMode'
@@ -101,9 +102,15 @@ function CityMarker({ marker }: { marker: CityMapMarker }) {
 }
 
 export function CityMapDialog({ city, open, onClose }: CityMapDialogProps) {
+  const navigate = useNavigate()
   const activeMode = useActivePaletteMode()
   const tileLayer = getMapTileLayer(activeMode)
   const stats = city.mapStats
+
+  function openAlertRide() {
+    onClose()
+    navigate('/rides', { state: { selectedTab: 'active', selectedRideId: stats.alert.rideId, highlightAlert: true } })
+  }
 
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="md">
@@ -159,6 +166,21 @@ export function CityMapDialog({ city, open, onClose }: CityMapDialogProps) {
             {stats.markers.map((marker) => (
               <CityMarker key={marker.id} marker={marker} />
             ))}
+            <CircleMarker
+              center={stats.alert.position}
+              radius={14}
+              pathOptions={{ color: '#FFFFFF', fillColor: '#EF4444', fillOpacity: 0.96, opacity: 1, weight: 3 }}
+              eventHandlers={{ click: openAlertRide }}
+            >
+              <Tooltip direction="top" offset={[0, -8]} opacity={1}>
+                <Stack spacing={0.25}>
+                  <Typography variant="caption" sx={{ fontWeight: 900 }}>
+                    {stats.alert.label} - {stats.alert.rideId}
+                  </Typography>
+                  <Typography variant="caption">{stats.alert.reason}</Typography>
+                </Stack>
+              </Tooltip>
+            </CircleMarker>
           </MapContainer>
 
           <Stack
@@ -197,6 +219,16 @@ export function CityMapDialog({ city, open, onClose }: CityMapDialogProps) {
                 }}
               />
             ))}
+            <Chip
+              size="small"
+              label="Alerta"
+              sx={{
+                bgcolor: 'background.paper',
+                color: '#EF4444',
+                fontWeight: 850,
+                boxShadow: 2,
+              }}
+            />
           </Stack>
         </Box>
       </DialogContent>

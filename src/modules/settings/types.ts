@@ -34,6 +34,7 @@ export type CityMapStats = {
   hotspot: string
   center: [number, number]
   markers: CityMapMarker[]
+  alert: CityMapAlert
 }
 
 export type CityMapMarker = {
@@ -41,6 +42,13 @@ export type CityMapMarker = {
   label: string
   type: 'drivers' | 'inRide' | 'waiting' | 'hotspot'
   count: number
+  position: [number, number]
+}
+
+export type CityMapAlert = {
+  rideId: string
+  label: string
+  reason: string
   position: [number, number]
 }
 

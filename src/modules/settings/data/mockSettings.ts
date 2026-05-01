@@ -46,6 +46,12 @@ function createMapStats(center: [number, number], activeDrivers: number, passeng
     waitingPassengers,
     hotspot,
     center,
+    alert: {
+      rideId: 'BRL-84213',
+      label: 'Alerta ativo',
+      reason: 'Passageiro acionou alerta durante a corrida',
+      position: [lat + 0.002, lng + 0.003],
+    },
     markers: [
       {
         id: 'drivers',
