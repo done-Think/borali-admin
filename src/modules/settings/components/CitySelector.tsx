@@ -66,7 +66,7 @@ export function CitySelector({ cities, selectedCityId, onSelectCity }: CitySelec
                       Atualizado em {city.updatedAt}
                     </Typography>
                   </Box>
-                  <Chip size="small" label={city.operations.active ? 'Ativa' : 'Pausada'} color={city.operations.active ? 'success' : 'default'} variant="outlined" sx={{ fontWeight: 800 }} />
+                  <Chip size="small" label={city.operations.active ? 'Ativa' : 'Offline'} color={city.operations.active ? 'success' : 'error'} variant="outlined" sx={{ fontWeight: 800 }} />
                 </Stack>
               </Box>
             )

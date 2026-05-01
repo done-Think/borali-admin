@@ -1,5 +1,5 @@
 import TuneIcon from '@mui/icons-material/Tune'
-import { Box, Card, CardContent, Stack, Switch, TextField, Typography } from '@mui/material'
+import { Box, Button, Card, CardContent, Stack, Switch, TextField, Typography } from '@mui/material'
 import type { CityOperationsSettings, CitySettings } from '../types'
 import { sanitizeNumber } from '../utils/settings'
 
@@ -36,12 +36,30 @@ export function CityOperationsPanel({ city, onChangeOperations }: CityOperations
             inputProps={{ min: 0, max: 100, step: 0.1 }}
             fullWidth
           />
-          <OperationToggle label="Operação ativa" helper="Permite novas solicitações nessa cidade." checked={operations.active} onChange={(checked) => onChangeOperations('active', checked)} />
+          <OperationStatusButton checked={operations.active} onChange={(checked) => onChangeOperations('active', checked)} />
           <OperationToggle label="Corridas programadas" helper="Passageiros podem agendar viagens futuras." checked={operations.allowScheduledRides} onChange={(checked) => onChangeOperations('allowScheduledRides', checked)} />
           <OperationToggle label="Pagamento em dinheiro" helper="Disponibiliza dinheiro como forma de pagamento." checked={operations.allowCashPayment} onChange={(checked) => onChangeOperations('allowCashPayment', checked)} />
         </Box>
       </CardContent>
     </Card>
+  )
+}
+
+function OperationStatusButton({ checked, onChange }: { checked: boolean; onChange: (checked: boolean) => void }) {
+  return (
+    <Box sx={{ border: '1px solid', borderColor: checked ? 'success.main' : 'error.main', borderRadius: 2, p: 1.5, bgcolor: checked ? 'rgba(16, 185, 129, 0.08)' : 'rgba(239, 68, 68, 0.08)' }}>
+      <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} alignItems={{ xs: 'stretch', sm: 'center' }} justifyContent="space-between">
+        <Box>
+          <Typography sx={{ fontWeight: 900 }}>{checked ? 'Operação ativa' : 'Fora do ar'}</Typography>
+          <Typography color="text.secondary" sx={{ fontSize: 13, mt: 0.25 }}>
+            {checked ? 'A cidade está recebendo novas solicitações.' : 'Novas solicitações estão bloqueadas nesta cidade.'}
+          </Typography>
+        </Box>
+        <Button variant={checked ? 'outlined' : 'contained'} color={checked ? 'error' : 'success'} onClick={() => onChange(!checked)}>
+          {checked ? 'Colocar fora do ar' : 'Ativar operação'}
+        </Button>
+      </Stack>
+    </Box>
   )
 }
 

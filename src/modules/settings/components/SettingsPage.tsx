@@ -104,7 +104,7 @@ export default function SettingsPage() {
                   </Typography>
                 </Box>
                 <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap">
-                  <Chip label={selectedCity.operations.active ? 'Operação ativa' : 'Operação pausada'} color={selectedCity.operations.active ? 'success' : 'default'} sx={{ fontWeight: 850 }} />
+                  <Chip label={selectedCity.operations.active ? 'Operação ativa' : 'Fora do ar'} color={selectedCity.operations.active ? 'success' : 'error'} sx={{ fontWeight: 850 }} />
                   <Chip label={`${selectedCity.operations.serviceFeePercent}% taxa`} color="secondary" variant="outlined" sx={{ fontWeight: 850 }} />
                 </Stack>
               </Stack>
