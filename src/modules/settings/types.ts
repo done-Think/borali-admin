@@ -23,6 +23,8 @@ export type CityOperationsSettings = {
   allowScheduledRides: boolean
   allowCashPayment: boolean
   active: boolean
+  riskAreasActive: boolean
+  riskAreasAutomatic: boolean
 }
 
 export type CitySettings = {

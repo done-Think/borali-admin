@@ -59,6 +59,8 @@ export const initialCitySettings: CitySettings[] = [
       allowScheduledRides: true,
       allowCashPayment: true,
       active: true,
+      riskAreasActive: false,
+      riskAreasAutomatic: true,
     },
   },
   {
@@ -107,6 +109,8 @@ export const initialCitySettings: CitySettings[] = [
       allowScheduledRides: true,
       allowCashPayment: true,
       active: true,
+      riskAreasActive: false,
+      riskAreasAutomatic: true,
     },
   },
   {
@@ -155,6 +159,8 @@ export const initialCitySettings: CitySettings[] = [
       allowScheduledRides: true,
       allowCashPayment: false,
       active: true,
+      riskAreasActive: false,
+      riskAreasAutomatic: true,
     },
   },
 ]
