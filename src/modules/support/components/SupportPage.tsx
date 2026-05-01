@@ -54,8 +54,15 @@ const numberFormatter = new Intl.NumberFormat('pt-BR')
 
 function normalizeSearch(value: string) {
   return value
+    .replace(/Ã¡|Ã |Ã¢|Ã£|Ã¤/gi, 'a')
+    .replace(/Ã©|Ã¨|Ãª|Ã«/gi, 'e')
+    .replace(/Ã­|Ã¬|Ã®|Ã¯/gi, 'i')
+    .replace(/Ã³|Ã²|Ã´|Ãµ|Ã¶/gi, 'o')
+    .replace(/Ãº|Ã¹|Ã»|Ã¼/gi, 'u')
+    .replace(/Ã§/gi, 'c')
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^\p{L}\p{N}\s@.-]/gu, '')
     .toLowerCase()
 }
 
@@ -76,26 +83,72 @@ function hasUnorderedCharacters(source: string, query: string) {
   })
 }
 
-function getSearchText(ticket: SupportTicket) {
-  return [
-    ticket.user.name,
-    ticket.user.cpf,
-    ticket.user.phone,
-  ticket.user.email,
-  ticket.protocol,
-  ticket.occurrence.rideId,
-  ticket.occurrence.title,
-  ticket.occurrence.category,
-  ticket.occurrence.description,
-  ].join(' ')
+function normalizePlainSearch(value: string) {
+  return value
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^\p{L}\p{N}\s@.-]/gu, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .toLowerCase()
+}
+
+function hasCloseTokenMatch(source: string, query: string) {
+  const sourceTokens = normalizeSearch(source).split(/\s+/).filter(Boolean)
+  const queryTokens = normalizeSearch(query).split(/\s+/).filter(Boolean)
+
+  return queryTokens.every((queryToken) =>
+    sourceTokens.some((sourceToken) => {
+      if (sourceToken.includes(queryToken) || queryToken.includes(sourceToken)) {
+        return true
+      }
+
+      if (queryToken.length < 4 || sourceToken.length < 4) {
+        return false
+      }
+
+      return getEditDistance(sourceToken, queryToken) <= 1
+    }),
+  )
+}
+
+function getEditDistance(source: string, target: string) {
+  const distances = Array.from({ length: source.length + 1 }, (_, sourceIndex) =>
+    Array.from({ length: target.length + 1 }, (_, targetIndex) => (sourceIndex === 0 ? targetIndex : targetIndex === 0 ? sourceIndex : 0)),
+  )
+
+  for (let sourceIndex = 1; sourceIndex <= source.length; sourceIndex += 1) {
+    for (let targetIndex = 1; targetIndex <= target.length; targetIndex += 1) {
+      const substitutionCost = source[sourceIndex - 1] === target[targetIndex - 1] ? 0 : 1
+      distances[sourceIndex][targetIndex] = Math.min(
+        distances[sourceIndex - 1][targetIndex] + 1,
+        distances[sourceIndex][targetIndex - 1] + 1,
+        distances[sourceIndex - 1][targetIndex - 1] + substitutionCost,
+      )
+    }
+  }
+
+  return distances[source.length][target.length]
 }
 
 function matchesTicketSearch(ticket: SupportTicket, query: string) {
-  const normalizedQuery = normalizeSearch(query).trim()
-  const searchableText = getSearchText(ticket)
-  const normalizedText = normalizeSearch(searchableText)
+  const normalizedQuery = normalizePlainSearch(query)
+  const searchValues = [
+    ticket.user.name,
+    ticket.user.cpf,
+    ticket.user.phone,
+    ticket.protocol,
+  ]
+  const searchableText = searchValues.join(' ')
+  const normalizedText = normalizePlainSearch(searchableText)
 
-  return !normalizedQuery || normalizedText.includes(normalizedQuery) || hasUnorderedCharacters(searchableText, normalizedQuery)
+  return (
+    !normalizedQuery ||
+    searchValues.some((value) => normalizePlainSearch(value).includes(normalizedQuery)) ||
+    normalizedQuery.split(/\s+/).every((token) => normalizedText.includes(token)) ||
+    hasCloseTokenMatch(searchableText, normalizedQuery) ||
+    hasUnorderedCharacters(searchableText, normalizedQuery)
+  )
 }
 
 export default function SupportPage() {
@@ -153,15 +206,19 @@ export default function SupportPage() {
   }, [highlightedTicketProtocol, tickets])
 
   const filteredTickets = useMemo(() => {
+    if (searchInput.trim()) {
+      return scopedTickets.filter((ticket) => matchesTicketSearch(ticket, searchInput))
+    }
+
     if (selectedFilter !== 'all' && selectedSubFilter === 'resolved') {
-      return resolvedTickets.filter((ticket) => matchesTicketSearch(ticket, resolvedSearchInput) && matchesTicketSearch(ticket, searchInput))
+      return resolvedTickets.filter((ticket) => matchesTicketSearch(ticket, resolvedSearchInput))
     }
 
     if (selectedFilter !== 'all' && selectedSubFilter === 'pending') {
-      return scopedTickets.filter((ticket) => ticket.status !== 'Resolvido' && matchesTicketSearch(ticket, searchInput))
+      return scopedTickets.filter((ticket) => ticket.status !== 'Resolvido')
     }
 
-    return scopedTickets.filter((ticket) => matchesTicketSearch(ticket, searchInput))
+    return scopedTickets
   }, [resolvedSearchInput, resolvedTickets, scopedTickets, searchInput, selectedFilter, selectedSubFilter])
 
   function handleFilterChange(_: React.MouseEvent<HTMLElement>, value: SupportFilter | null) {
@@ -323,7 +380,7 @@ export default function SupportPage() {
         value={searchInput}
         onChange={(event) => setSearchInput(event.target.value)}
         label="Buscar ocorrência"
-        placeholder="Digite nome, CPF, protocolo, corrida, categoria ou descrição"
+        placeholder="Digite nome, CPF, telefone ou protocolo"
         fullWidth
         InputProps={{
           startAdornment: <SearchIcon color="action" sx={{ mr: 1 }} />,
