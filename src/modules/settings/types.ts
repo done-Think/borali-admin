@@ -32,6 +32,16 @@ export type CityMapStats = {
   passengersInRide: number
   waitingPassengers: number
   hotspot: string
+  center: [number, number]
+  markers: CityMapMarker[]
+}
+
+export type CityMapMarker = {
+  id: string
+  label: string
+  type: 'drivers' | 'inRide' | 'waiting' | 'hotspot'
+  count: number
+  position: [number, number]
 }
 
 export type CitySettings = {

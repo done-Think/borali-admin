@@ -1,12 +1,16 @@
-import type { ReactNode } from 'react'
+import { useEffect, type ReactElement, type ReactNode } from 'react'
 import CloseIcon from '@mui/icons-material/Close'
 import DirectionsCarIcon from '@mui/icons-material/DirectionsCar'
 import HourglassTopIcon from '@mui/icons-material/HourglassTop'
 import MyLocationIcon from '@mui/icons-material/MyLocation'
 import PersonPinCircleIcon from '@mui/icons-material/PersonPinCircle'
-import RouteIcon from '@mui/icons-material/Route'
 import { Box, Card, CardContent, Chip, Dialog, DialogContent, DialogTitle, IconButton, Stack, Typography } from '@mui/material'
-import type { CitySettings } from '../types'
+import { alpha } from '@mui/material/styles'
+import { CircleMarker, MapContainer, TileLayer, Tooltip, useMap } from 'react-leaflet'
+import 'leaflet/dist/leaflet.css'
+import { getMapTileLayer } from '@modules/dashboard/utils/mapConfig'
+import { useActivePaletteMode } from '@modules/dashboard/utils/useActivePaletteMode'
+import type { CityMapMarker, CitySettings } from '../types'
 
 type CityMapDialogProps = {
   city: CitySettings
@@ -14,11 +18,12 @@ type CityMapDialogProps = {
   onClose: () => void
 }
 
-const mapMarkers = [
-  { label: 'Motoristas', icon: <DirectionsCarIcon fontSize="small" />, top: '24%', left: '22%', color: 'success.main' },
-  { label: 'Em corrida', icon: <PersonPinCircleIcon fontSize="small" />, top: '54%', left: '58%', color: 'primary.main' },
-  { label: 'Aguardando', icon: <HourglassTopIcon fontSize="small" />, top: '68%', left: '34%', color: 'warning.main' },
-]
+const markerConfig: Record<CityMapMarker['type'], { color: string; fillColor: string; icon: ReactElement }> = {
+  drivers: { color: '#2563eb', fillColor: '#3b82f6', icon: <DirectionsCarIcon fontSize="small" /> },
+  inRide: { color: '#0891b2', fillColor: '#06b6d4', icon: <PersonPinCircleIcon fontSize="small" /> },
+  waiting: { color: '#d97706', fillColor: '#f59e0b', icon: <HourglassTopIcon fontSize="small" /> },
+  hotspot: { color: '#7c3aed', fillColor: '#8b5cf6', icon: <MyLocationIcon fontSize="small" /> },
+}
 
 function StatCard({ icon, label, value }: { icon: ReactNode; label: string; value: number }) {
   return (
@@ -50,7 +55,54 @@ function StatCard({ icon, label, value }: { icon: ReactNode; label: string; valu
   )
 }
 
+function MapAutoResize({ city, open }: { city: CitySettings; open: boolean }) {
+  const map = useMap()
+
+  useEffect(() => {
+    if (!open) return
+
+    const timeoutId = window.setTimeout(() => {
+      map.invalidateSize()
+      map.setView(city.mapStats.center, 14)
+    }, 180)
+
+    return () => window.clearTimeout(timeoutId)
+  }, [city.id, city.mapStats.center, map, open])
+
+  return null
+}
+
+function CityMarker({ marker }: { marker: CityMapMarker }) {
+  const config = markerConfig[marker.type]
+  const radius = Math.max(10, Math.min(24, 8 + marker.count * 0.35))
+
+  return (
+    <CircleMarker
+      center={marker.position}
+      radius={radius}
+      pathOptions={{
+        color: config.color,
+        fillColor: config.fillColor,
+        fillOpacity: marker.type === 'hotspot' ? 0.28 : 0.72,
+        opacity: 0.95,
+        weight: marker.type === 'hotspot' ? 3 : 2,
+      }}
+    >
+      <Tooltip direction="top" offset={[0, -8]} opacity={1}>
+        <Stack spacing={0.25}>
+          <Typography variant="caption" sx={{ fontWeight: 900 }}>
+            {marker.label}
+          </Typography>
+          <Typography variant="caption">{marker.count} registros</Typography>
+        </Stack>
+      </Tooltip>
+    </CircleMarker>
+  )
+}
+
 export function CityMapDialog({ city, open, onClose }: CityMapDialogProps) {
+  const activeMode = useActivePaletteMode()
+  const tileLayer = getMapTileLayer(activeMode)
   const stats = city.mapStats
 
   return (
@@ -79,108 +131,72 @@ export function CityMapDialog({ city, open, onClose }: CityMapDialogProps) {
 
         <Box
           sx={{
-            position: 'relative',
-            minHeight: { xs: 280, md: 360 },
+            height: { xs: 320, md: 430 },
             overflow: 'hidden',
             border: 1,
             borderColor: 'divider',
             borderRadius: 2,
-            bgcolor: 'background.default',
-            backgroundImage:
-              'linear-gradient(90deg, rgba(148, 163, 184, 0.18) 1px, transparent 1px), linear-gradient(rgba(148, 163, 184, 0.18) 1px, transparent 1px)',
-            backgroundSize: '42px 42px',
+            position: 'relative',
+            '.leaflet-container': {
+              bgcolor: 'background.default',
+              fontFamily: 'inherit',
+            },
+            '.leaflet-control-attribution': {
+              bgcolor: (theme) => alpha(theme.palette.background.paper, 0.78),
+              color: 'text.secondary',
+            },
+            '.leaflet-tooltip': {
+              border: 0,
+              borderRadius: 1.5,
+              boxShadow: 3,
+              color: 'text.primary',
+            },
           }}
         >
-          <Box
-            sx={{
-              position: 'absolute',
-              inset: '22% 10% 18% 12%',
-              borderTop: 4,
-              borderRight: 4,
-              borderColor: 'primary.main',
-              borderRadius: '48% 42% 56% 36%',
-              opacity: 0.35,
-              transform: 'rotate(-8deg)',
-            }}
-          />
-          <Box
-            sx={{
-              position: 'absolute',
-              inset: '34% 18% 26% 20%',
-              borderBottom: 4,
-              borderLeft: 4,
-              borderColor: 'secondary.main',
-              borderRadius: '35% 58% 34% 50%',
-              opacity: 0.28,
-              transform: 'rotate(10deg)',
-            }}
-          />
+          <MapContainer center={stats.center} zoom={14} scrollWheelZoom={false} style={{ width: '100%', height: '100%' }}>
+            <TileLayer key={activeMode} attribution={tileLayer.attribution} url={tileLayer.url} />
+            <MapAutoResize city={city} open={open} />
+            {stats.markers.map((marker) => (
+              <CityMarker key={marker.id} marker={marker} />
+            ))}
+          </MapContainer>
 
           <Stack
             direction="row"
             spacing={1}
-            alignItems="center"
+            useFlexGap
+            flexWrap="wrap"
             sx={{
               position: 'absolute',
-              left: 16,
-              top: 16,
-              px: 1.2,
-              py: 0.8,
-              borderRadius: 1.5,
-              bgcolor: 'background.paper',
-              boxShadow: 2,
+              left: 12,
+              bottom: 12,
+              zIndex: 500,
+              maxWidth: 'calc(100% - 24px)',
             }}
           >
-            <RouteIcon color="primary" fontSize="small" />
-            <Typography variant="body2" sx={{ fontWeight: 850 }}>
-              Visão em tempo real
-            </Typography>
-          </Stack>
-
-          {mapMarkers.map((marker) => (
-            <Stack
-              key={marker.label}
-              direction="row"
-              spacing={0.75}
-              alignItems="center"
-              sx={{
-                position: 'absolute',
-                top: marker.top,
-                left: marker.left,
-                px: 1,
-                py: 0.75,
-                borderRadius: 1.5,
-                bgcolor: 'background.paper',
-                boxShadow: 3,
-                transform: 'translate(-50%, -50%)',
-              }}
-            >
-              <Box sx={{ display: 'grid', placeItems: 'center', color: marker.color }}>{marker.icon}</Box>
-              <Typography variant="caption" sx={{ fontWeight: 900 }}>
-                {marker.label}
-              </Typography>
-            </Stack>
-          ))}
-
-          <Stack
-            direction="row"
-            spacing={1}
-            alignItems="center"
-            sx={{
-              position: 'absolute',
-              right: 16,
-              bottom: 16,
-              px: 1.2,
-              py: 0.8,
-              borderRadius: 1.5,
-              bgcolor: 'background.paper',
-              boxShadow: 2,
-            }}
-          >
-            <MyLocationIcon color="secondary" fontSize="small" />
-            <Typography variant="body2" sx={{ fontWeight: 850 }}>
-              {stats.hotspot}
-            </Typography>
+            {Object.entries(markerConfig).map(([type, config]) => (
+              <Chip
+                key={type}
+                size="small"
+                icon={config.icon}
+                label={
+                  type === 'drivers'
+                    ? 'Motoristas'
+                    : type === 'inRide'
+                      ? 'Em corrida'
+                      : type === 'waiting'
+                        ? 'Aguardando'
+                        : 'Maior movimento'
+                }
+                sx={{
+                  bgcolor: 'background.paper',
+                  color: config.color,
+                  fontWeight: 850,
+                  boxShadow: 2,
+                  '& .MuiChip-icon': { color: config.color },
+                }}
+              />
+            ))}
           </Stack>
         </Box>
       </DialogContent>
