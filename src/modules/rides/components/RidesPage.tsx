@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { Box, Card, CardContent, GlobalStyles, Tab, Tabs, Typography, useTheme } from '@mui/material'
 import { alpha } from '@mui/material/styles'
 import 'leaflet/dist/leaflet.css'
+import { useSnackbar } from 'notistack'
 import { io } from 'socket.io-client'
 import { getMapTileLayer } from '@modules/dashboard/utils/mapConfig'
 import { useActivePaletteMode } from '@modules/dashboard/utils/useActivePaletteMode'
@@ -14,6 +15,7 @@ import { ScheduledRidesPanel } from './ScheduledRidesPanel'
 
 export default function RidesPage() {
   const theme = useTheme()
+  const { enqueueSnackbar } = useSnackbar()
   const activeMode = useActivePaletteMode()
   const tileLayer = getMapTileLayer(activeMode)
   const [selectedTab, setSelectedTab] = useState<RideTab>('active')
@@ -115,6 +117,16 @@ export default function RidesPage() {
     })
   }, [historyEndDate, historyStartDate, historyStatus])
 
+  function cancelScheduledRide(rideId: string) {
+    setScheduledRides((current) => current.filter((ride) => ride.id !== rideId))
+    enqueueSnackbar(`Agendamento ${rideId} cancelado.`, { variant: 'success' })
+  }
+
+  function sendScheduledRideMessage(ride: ScheduledRide, message: string) {
+    void message
+    enqueueSnackbar(`Mensagem enviada para ${ride.passenger.name}.`, { variant: 'success' })
+  }
+
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
       <GlobalStyles
@@ -182,7 +194,7 @@ export default function RidesPage() {
             />
           )}
 
-          {selectedTab === 'scheduled' && <ScheduledRidesPanel rides={scheduledRides} />}
+          {selectedTab === 'scheduled' && <ScheduledRidesPanel rides={scheduledRides} onCancelRide={cancelScheduledRide} onSendMessage={sendScheduledRideMessage} />}
         </CardContent>
       </Card>
     </Box>
