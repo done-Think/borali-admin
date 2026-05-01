@@ -6,6 +6,7 @@ import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
 import ImageOutlinedIcon from '@mui/icons-material/ImageOutlined'
 import PersonOutlineIcon from '@mui/icons-material/PersonOutline'
 import PhoneOutlinedIcon from '@mui/icons-material/PhoneOutlined'
+import SearchIcon from '@mui/icons-material/Search'
 import StarBorderRoundedIcon from '@mui/icons-material/StarBorderRounded'
 import SupportAgentIcon from '@mui/icons-material/SupportAgent'
 import {
@@ -80,9 +81,12 @@ function getSearchText(ticket: SupportTicket) {
     ticket.user.name,
     ticket.user.cpf,
     ticket.user.phone,
-    ticket.user.email,
-    ticket.protocol,
-    ticket.occurrence.rideId,
+  ticket.user.email,
+  ticket.protocol,
+  ticket.occurrence.rideId,
+  ticket.occurrence.title,
+  ticket.occurrence.category,
+  ticket.occurrence.description,
   ].join(' ')
 }
 
@@ -102,6 +106,7 @@ export default function SupportPage() {
   const [previousStatuses, setPreviousStatuses] = useState<Record<string, string>>({})
   const [selectedFilter, setSelectedFilter] = useState<SupportFilter>('all')
   const [selectedSubFilter, setSelectedSubFilter] = useState<SupportSubFilter>('pending')
+  const [searchInput, setSearchInput] = useState('')
   const [resolvedSearchInput, setResolvedSearchInput] = useState('')
   const [selectedUserTicket, setSelectedUserTicket] = useState<SupportTicket | null>(null)
   const [userDialogTab, setUserDialogTab] = useState(0)
@@ -149,15 +154,15 @@ export default function SupportPage() {
 
   const filteredTickets = useMemo(() => {
     if (selectedFilter !== 'all' && selectedSubFilter === 'resolved') {
-      return resolvedTickets.filter((ticket) => matchesTicketSearch(ticket, resolvedSearchInput))
+      return resolvedTickets.filter((ticket) => matchesTicketSearch(ticket, resolvedSearchInput) && matchesTicketSearch(ticket, searchInput))
     }
 
     if (selectedFilter !== 'all' && selectedSubFilter === 'pending') {
-      return scopedTickets.filter((ticket) => ticket.status !== 'Resolvido')
+      return scopedTickets.filter((ticket) => ticket.status !== 'Resolvido' && matchesTicketSearch(ticket, searchInput))
     }
 
-    return scopedTickets
-  }, [resolvedSearchInput, resolvedTickets, scopedTickets, selectedFilter, selectedSubFilter])
+    return scopedTickets.filter((ticket) => matchesTicketSearch(ticket, searchInput))
+  }, [resolvedSearchInput, resolvedTickets, scopedTickets, searchInput, selectedFilter, selectedSubFilter])
 
   function handleFilterChange(_: React.MouseEvent<HTMLElement>, value: SupportFilter | null) {
     if (value) {
@@ -313,6 +318,17 @@ export default function SupportPage() {
           )}
         />
       )}
+
+      <TextField
+        value={searchInput}
+        onChange={(event) => setSearchInput(event.target.value)}
+        label="Buscar ocorrência"
+        placeholder="Digite nome, CPF, protocolo, corrida, categoria ou descrição"
+        fullWidth
+        InputProps={{
+          startAdornment: <SearchIcon color="action" sx={{ mr: 1 }} />,
+        }}
+      />
 
       <Stack spacing={2}>
         {filteredTickets.map((ticket) => (
