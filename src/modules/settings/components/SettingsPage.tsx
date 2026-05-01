@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import MapOutlinedIcon from '@mui/icons-material/MapOutlined'
 import RestartAltIcon from '@mui/icons-material/RestartAlt'
 import SaveIcon from '@mui/icons-material/Save'
 import { Box, Button, Card, CardContent, Chip, Stack, Typography } from '@mui/material'
@@ -6,6 +7,7 @@ import { useSnackbar } from 'notistack'
 import { initialCitySettings } from '../data/mockSettings'
 import type { CategoryFareSettings, CityOperationsSettings, DriverSearchSettings, RideCategory } from '../types'
 import { updateCategoryFare, updateCitySettings, updateDriverSearchField } from '../utils/settings'
+import { CityMapDialog } from './CityMapDialog'
 import { CityOperationsPanel } from './CityOperationsPanel'
 import { CitySelector } from './CitySelector'
 import { DriverSearchSettingsPanel } from './DriverSearchSettingsPanel'
@@ -16,6 +18,7 @@ export default function SettingsPage() {
   const [cities, setCities] = useState(initialCitySettings)
   const [savedCities, setSavedCities] = useState(initialCitySettings)
   const [selectedCityId, setSelectedCityId] = useState(initialCitySettings[0]?.id ?? '')
+  const [isMapOpen, setIsMapOpen] = useState(false)
 
   const selectedCity = useMemo(
     () => cities.find((city) => city.id === selectedCityId) ?? cities[0],
@@ -88,9 +91,7 @@ export default function SettingsPage() {
         </Stack>
       </Stack>
 
-      <Box sx={{ display: 'grid', gap: 2, gridTemplateColumns: { xs: '1fr', lg: '300px minmax(0, 1fr)' }, alignItems: 'start' }}>
-        <CitySelector cities={cities} selectedCityId={selectedCity.id} onSelectCity={setSelectedCityId} />
-
+      <Box sx={{ display: 'grid', gap: 2, gridTemplateColumns: { xs: '1fr', lg: 'minmax(0, 1fr) 300px' }, alignItems: 'start' }}>
         <Stack spacing={2}>
           <Card variant="outlined">
             <CardContent sx={{ p: 2, '&:last-child': { pb: 2 } }}>
@@ -105,6 +106,9 @@ export default function SettingsPage() {
                 </Box>
                 <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap">
                   <Chip label={selectedCity.operations.active ? 'Operação ativa' : 'Fora do ar'} color={selectedCity.operations.active ? 'success' : 'error'} sx={{ fontWeight: 850 }} />
+                  <Button variant="outlined" size="small" startIcon={<MapOutlinedIcon />} onClick={() => setIsMapOpen(true)}>
+                    Mapa
+                  </Button>
                   <Chip label={`${selectedCity.operations.serviceFeePercent}% taxa`} color="secondary" variant="outlined" sx={{ fontWeight: 850 }} />
                 </Stack>
               </Stack>
@@ -115,7 +119,11 @@ export default function SettingsPage() {
           <DriverSearchSettingsPanel city={selectedCity} onChangeSearch={handleDriverSearchChange} />
           <CityOperationsPanel city={selectedCity} onChangeOperations={handleOperationsChange} />
         </Stack>
+
+        <CitySelector cities={cities} selectedCityId={selectedCity.id} onSelectCity={setSelectedCityId} />
       </Box>
+
+      <CityMapDialog city={selectedCity} open={isMapOpen} onClose={() => setIsMapOpen(false)} />
     </Box>
   )
 }

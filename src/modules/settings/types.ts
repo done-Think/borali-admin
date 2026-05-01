@@ -27,6 +27,13 @@ export type CityOperationsSettings = {
   riskAreasAutomatic: boolean
 }
 
+export type CityMapStats = {
+  activeDrivers: number
+  passengersInRide: number
+  waitingPassengers: number
+  hotspot: string
+}
+
 export type CitySettings = {
   id: string
   name: string
@@ -35,4 +42,5 @@ export type CitySettings = {
   fares: Record<RideCategory, CategoryFareSettings>
   driverSearch: DriverSearchSettings
   operations: CityOperationsSettings
+  mapStats: CityMapStats
 }
