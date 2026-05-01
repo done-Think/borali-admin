@@ -1,0 +1,160 @@
+import type { CitySettings, RideCategory } from '../types'
+
+export const rideCategoryLabels: Record<RideCategory, string> = {
+  economic: 'Econômico',
+  comfort: 'Conforto',
+  executive: 'Executivo',
+}
+
+export const rideCategoryDescriptions: Record<RideCategory, string> = {
+  economic: 'Preço mais acessível para maior volume de corridas.',
+  comfort: 'Categoria intermediária com veículos melhor avaliados.',
+  executive: 'Categoria premium para viagens corporativas ou alta exigência.',
+}
+
+export const initialCitySettings: CitySettings[] = [
+  {
+    id: 'piranguinho-mg',
+    name: 'Piranguinho',
+    state: 'MG',
+    updatedAt: '01/05/2026 às 09:20',
+    fares: {
+      economic: {
+        enabled: true,
+        baseFare: 5.9,
+        pricePerKm: 2.15,
+        pricePerMinute: 0.42,
+        minimumFare: 12,
+        cancellationFee: 7,
+        dynamicMultiplier: 1,
+      },
+      comfort: {
+        enabled: true,
+        baseFare: 7.5,
+        pricePerKm: 2.75,
+        pricePerMinute: 0.56,
+        minimumFare: 16,
+        cancellationFee: 9,
+        dynamicMultiplier: 1.08,
+      },
+      executive: {
+        enabled: true,
+        baseFare: 11.9,
+        pricePerKm: 4.2,
+        pricePerMinute: 0.82,
+        minimumFare: 28,
+        cancellationFee: 14,
+        dynamicMultiplier: 1.15,
+      },
+    },
+    driverSearch: {
+      initialRadiusKm: 3,
+      maxRadiusKm: 14,
+      expansionStepKm: 2,
+      retryIntervalSeconds: 25,
+      requestTimeoutSeconds: 90,
+    },
+    operations: {
+      serviceFeePercent: 12,
+      allowScheduledRides: true,
+      allowCashPayment: true,
+      active: true,
+    },
+  },
+  {
+    id: 'itajuba-mg',
+    name: 'Itajubá',
+    state: 'MG',
+    updatedAt: '30/04/2026 às 17:45',
+    fares: {
+      economic: {
+        enabled: true,
+        baseFare: 5.5,
+        pricePerKm: 2.05,
+        pricePerMinute: 0.4,
+        minimumFare: 11,
+        cancellationFee: 7,
+        dynamicMultiplier: 1,
+      },
+      comfort: {
+        enabled: true,
+        baseFare: 7.2,
+        pricePerKm: 2.65,
+        pricePerMinute: 0.54,
+        minimumFare: 15,
+        cancellationFee: 9,
+        dynamicMultiplier: 1.06,
+      },
+      executive: {
+        enabled: true,
+        baseFare: 11.5,
+        pricePerKm: 4,
+        pricePerMinute: 0.78,
+        minimumFare: 26,
+        cancellationFee: 14,
+        dynamicMultiplier: 1.12,
+      },
+    },
+    driverSearch: {
+      initialRadiusKm: 4,
+      maxRadiusKm: 16,
+      expansionStepKm: 2,
+      retryIntervalSeconds: 30,
+      requestTimeoutSeconds: 100,
+    },
+    operations: {
+      serviceFeePercent: 11,
+      allowScheduledRides: true,
+      allowCashPayment: true,
+      active: true,
+    },
+  },
+  {
+    id: 'pirangucu-mg',
+    name: 'Piranguçu',
+    state: 'MG',
+    updatedAt: '29/04/2026 às 11:10',
+    fares: {
+      economic: {
+        enabled: true,
+        baseFare: 4.9,
+        pricePerKm: 1.95,
+        pricePerMinute: 0.36,
+        minimumFare: 10,
+        cancellationFee: 6,
+        dynamicMultiplier: 1,
+      },
+      comfort: {
+        enabled: true,
+        baseFare: 6.8,
+        pricePerKm: 2.45,
+        pricePerMinute: 0.48,
+        minimumFare: 14,
+        cancellationFee: 8,
+        dynamicMultiplier: 1.04,
+      },
+      executive: {
+        enabled: false,
+        baseFare: 10.5,
+        pricePerKm: 3.75,
+        pricePerMinute: 0.72,
+        minimumFare: 24,
+        cancellationFee: 12,
+        dynamicMultiplier: 1.1,
+      },
+    },
+    driverSearch: {
+      initialRadiusKm: 3,
+      maxRadiusKm: 12,
+      expansionStepKm: 1.5,
+      retryIntervalSeconds: 25,
+      requestTimeoutSeconds: 80,
+    },
+    operations: {
+      serviceFeePercent: 10,
+      allowScheduledRides: true,
+      allowCashPayment: false,
+      active: true,
+    },
+  },
+]
