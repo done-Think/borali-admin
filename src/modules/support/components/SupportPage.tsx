@@ -52,38 +52,7 @@ const supportSubFilters: Array<{ value: SupportSubFilter; label: string }> = [
 
 const numberFormatter = new Intl.NumberFormat('pt-BR')
 
-function normalizeSearch(value: string) {
-  return value
-    .replace(/Ã¡|Ã |Ã¢|Ã£|Ã¤/gi, 'a')
-    .replace(/Ã©|Ã¨|Ãª|Ã«/gi, 'e')
-    .replace(/Ã­|Ã¬|Ã®|Ã¯/gi, 'i')
-    .replace(/Ã³|Ã²|Ã´|Ãµ|Ã¶/gi, 'o')
-    .replace(/Ãº|Ã¹|Ã»|Ã¼/gi, 'u')
-    .replace(/Ã§/gi, 'c')
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .replace(/[^\p{L}\p{N}\s@.-]/gu, '')
-    .toLowerCase()
-}
-
-function hasUnorderedCharacters(source: string, query: string) {
-  const sourceCharacters = [...normalizeSearch(source)]
-  return [...normalizeSearch(query)].every((character) => {
-    if (character.trim() === '') {
-      return true
-    }
-
-    const index = sourceCharacters.indexOf(character)
-    if (index === -1) {
-      return false
-    }
-
-    sourceCharacters.splice(index, 1)
-    return true
-  })
-}
-
-function normalizePlainSearch(value: string) {
+function normalizeSupportSearch(value: string) {
   return value
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '')
@@ -93,46 +62,8 @@ function normalizePlainSearch(value: string) {
     .toLowerCase()
 }
 
-function hasCloseTokenMatch(source: string, query: string) {
-  const sourceTokens = normalizeSearch(source).split(/\s+/).filter(Boolean)
-  const queryTokens = normalizeSearch(query).split(/\s+/).filter(Boolean)
-
-  return queryTokens.every((queryToken) =>
-    sourceTokens.some((sourceToken) => {
-      if (sourceToken.includes(queryToken) || queryToken.includes(sourceToken)) {
-        return true
-      }
-
-      if (queryToken.length < 4 || sourceToken.length < 4) {
-        return false
-      }
-
-      return getEditDistance(sourceToken, queryToken) <= 1
-    }),
-  )
-}
-
-function getEditDistance(source: string, target: string) {
-  const distances = Array.from({ length: source.length + 1 }, (_, sourceIndex) =>
-    Array.from({ length: target.length + 1 }, (_, targetIndex) => (sourceIndex === 0 ? targetIndex : targetIndex === 0 ? sourceIndex : 0)),
-  )
-
-  for (let sourceIndex = 1; sourceIndex <= source.length; sourceIndex += 1) {
-    for (let targetIndex = 1; targetIndex <= target.length; targetIndex += 1) {
-      const substitutionCost = source[sourceIndex - 1] === target[targetIndex - 1] ? 0 : 1
-      distances[sourceIndex][targetIndex] = Math.min(
-        distances[sourceIndex - 1][targetIndex] + 1,
-        distances[sourceIndex][targetIndex - 1] + 1,
-        distances[sourceIndex - 1][targetIndex - 1] + substitutionCost,
-      )
-    }
-  }
-
-  return distances[source.length][target.length]
-}
-
 function matchesTicketSearch(ticket: SupportTicket, query: string) {
-  const normalizedQuery = normalizePlainSearch(query)
+  const normalizedQuery = normalizeSupportSearch(query)
   const searchValues = [
     ticket.user.name,
     ticket.user.cpf,
@@ -140,14 +71,12 @@ function matchesTicketSearch(ticket: SupportTicket, query: string) {
     ticket.protocol,
   ]
   const searchableText = searchValues.join(' ')
-  const normalizedText = normalizePlainSearch(searchableText)
+  const normalizedText = normalizeSupportSearch(searchableText)
 
   return (
     !normalizedQuery ||
-    searchValues.some((value) => normalizePlainSearch(value).includes(normalizedQuery)) ||
-    normalizedQuery.split(/\s+/).every((token) => normalizedText.includes(token)) ||
-    hasCloseTokenMatch(searchableText, normalizedQuery) ||
-    hasUnorderedCharacters(searchableText, normalizedQuery)
+    searchValues.some((value) => normalizeSupportSearch(value).includes(normalizedQuery)) ||
+    normalizedQuery.split(/\s+/).every((token) => normalizedText.includes(token))
   )
 }
 
@@ -207,7 +136,7 @@ export default function SupportPage() {
 
   const filteredTickets = useMemo(() => {
     if (searchInput.trim()) {
-      return scopedTickets.filter((ticket) => matchesTicketSearch(ticket, searchInput))
+      return tickets.filter((ticket) => matchesTicketSearch(ticket, searchInput))
     }
 
     if (selectedFilter !== 'all' && selectedSubFilter === 'resolved') {
@@ -219,7 +148,7 @@ export default function SupportPage() {
     }
 
     return scopedTickets
-  }, [resolvedSearchInput, resolvedTickets, scopedTickets, searchInput, selectedFilter, selectedSubFilter])
+  }, [resolvedSearchInput, resolvedTickets, scopedTickets, searchInput, selectedFilter, selectedSubFilter, tickets])
 
   function handleFilterChange(_: React.MouseEvent<HTMLElement>, value: SupportFilter | null) {
     if (value) {
@@ -360,7 +289,7 @@ export default function SupportPage() {
             <TextField
               {...params}
               label="Buscar cadastro resolvido"
-              placeholder="Digite nome, CPF, telefone, protocolo ou corrida"
+              placeholder="Digite nome, CPF, telefone ou protocolo"
             />
           )}
           renderOption={(props, ticket) => (
@@ -392,7 +321,6 @@ export default function SupportPage() {
           <SupportTicketCard
             key={ticket.protocol}
             ticket={ticket}
-            compact={selectedFilter !== 'all' && selectedSubFilter === 'resolved'}
             highlighted={ticket.protocol === highlightedTicketProtocol}
             onToggleStatus={handleToggleTicketStatus}
             onOpenUser={(userTicket) => {
@@ -421,7 +349,6 @@ function SupportTicketCard({
   onOpenUser,
 }: {
   ticket: SupportTicket
-  compact?: boolean
   highlighted?: boolean
   onToggleStatus: (ticket: SupportTicket) => void
   onOpenUser: (ticket: SupportTicket) => void

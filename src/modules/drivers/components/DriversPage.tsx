@@ -383,8 +383,8 @@ const driverRequests: DriverRequest[] = [
     vehicle: 'Toyota Corolla 2021',
     plate: 'CTE-7H21',
     joinedAt: '29/04/2026',
-    lastOnline: 'Ainda nÃ£o aprovado',
-    requestedAt: 'Ontem Ã s 18:40',
+    lastOnline: 'Ainda não aprovado',
+    requestedAt: 'Ontem às 18:40',
     attachments: [
       { name: 'cnh-carla.pdf', type: 'CNH' },
       { name: 'crlv-corolla.pdf', type: 'Documento' },
