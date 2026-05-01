@@ -1,6 +1,10 @@
 import { supportTickets } from '@shared/mocks/supportTickets'
+import { currencyFormatter, numberFormatter } from '@shared/utils/formatters'
+import { formatCpf, getInitials, normalizeSearch } from '@shared/utils/text'
 import { driverDetailsById } from '../data/mockDrivers'
 import type { Driver, DriverCategory, DriverDetails, DriverFilter, DriverRide, DriverSortKey, DriverStatus, DriverSubscription } from '../types'
+
+export { currencyFormatter, formatCpf, getInitials, normalizeSearch, numberFormatter }
 
 export const filters: Array<{ value: DriverFilter; label: string }> = [
   { value: 'all', label: 'Todos' },
@@ -28,42 +32,6 @@ export const subscriptionSortOrder: Record<DriverSubscription, number> = {
   Pro: 2,
   Básico: 3,
   Trial: 4,
-}
-
-export const currencyFormatter = new Intl.NumberFormat('pt-BR', {
-  style: 'currency',
-  currency: 'BRL',
-})
-
-export const numberFormatter = new Intl.NumberFormat('pt-BR')
-
-export function normalizeSearch(value: string) {
-  return value
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .toLowerCase()
-}
-
-export function onlyDigits(value: string) {
-  return value.replace(/\D/g, '')
-}
-
-export function formatCpf(value: string) {
-  const digits = onlyDigits(value).slice(0, 11)
-
-  if (digits.length <= 3) {
-    return digits
-  }
-
-  if (digits.length <= 6) {
-    return `${digits.slice(0, 3)}.${digits.slice(3)}`
-  }
-
-  if (digits.length <= 9) {
-    return `${digits.slice(0, 3)}.${digits.slice(3, 6)}.${digits.slice(6)}`
-  }
-
-  return `${digits.slice(0, 3)}.${digits.slice(3, 6)}.${digits.slice(6, 9)}-${digits.slice(9)}`
 }
 
 export function getDriverSortValue(driver: Driver, key: DriverSortKey) {
@@ -165,7 +133,7 @@ export function getDriverRideDetails(ride: DriverRide) {
     'BRL-83640': {
       duration: '16 min',
       distance: '6,1 km',
-      path: ['Batel', 'Praca do Japao', 'Centro Civico'],
+      path: ['Batel', 'Praça do Japão', 'Centro Cívico'],
     },
     'BRL-83598': {
       duration: '38 min',
@@ -193,11 +161,3 @@ export function getDriverRideDetails(ride: DriverRide) {
   )
 }
 
-export function getInitials(name: string) {
-  return name
-    .split(' ')
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((part) => part[0]?.toUpperCase())
-    .join('')
-}

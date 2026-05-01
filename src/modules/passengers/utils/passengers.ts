@@ -1,6 +1,11 @@
 import { supportTickets } from '@shared/mocks/supportTickets'
+import { currencyFormatter, numberFormatter } from '@shared/utils/formatters'
+import { formatCpf, getInitials, normalizeSearch } from '@shared/utils/text'
+import type { BadgePalette } from '@shared/ui/DataBadge'
 import { passengerDetailsById } from '../data/mockPassengers'
 import type { Passenger, PassengerDetails, PassengerFilter, PassengerPayment, PassengerRide, PassengerSortKey, PassengerStatus, PassengerTier } from '../types'
+
+export { currencyFormatter, formatCpf, getInitials, normalizeSearch, numberFormatter }
 
 export const filters: Array<{ value: PassengerFilter; label: string }> = [
   { value: 'all', label: 'Todos' },
@@ -25,12 +30,12 @@ export const statusSortOrder: Record<PassengerStatus, number> = {
 
 export const paymentSortOrder: Record<PassengerPayment, number> = {
   Carteira: 1,
-  Cartao: 2,
+  Cartão: 2,
   Pix: 3,
   Dinheiro: 4,
 }
 
-export const paymentOptions: PassengerPayment[] = ['Cartao', 'Pix', 'Carteira', 'Dinheiro']
+export const paymentOptions: PassengerPayment[] = ['Cartão', 'Pix', 'Carteira', 'Dinheiro']
 
 export const tierPalette: Record<PassengerTier, BadgePalette> = {
   VIP: { color: '#7C3AED', background: 'rgba(124, 58, 237, 0.14)', border: 'rgba(124, 58, 237, 0.35)' },
@@ -47,62 +52,13 @@ export const statusPalette: Record<PassengerStatus, BadgePalette> = {
 }
 
 export const paymentPalette: Record<PassengerPayment, BadgePalette> = {
-  Cartao: { color: '#2563EB', background: 'rgba(37, 99, 235, 0.12)', border: 'rgba(37, 99, 235, 0.32)' },
+  'Cartão': { color: '#2563EB', background: 'rgba(37, 99, 235, 0.12)', border: 'rgba(37, 99, 235, 0.32)' },
   Pix: { color: '#0F766E', background: 'rgba(20, 184, 166, 0.12)', border: 'rgba(15, 118, 110, 0.32)' },
   Carteira: { color: '#7C3AED', background: 'rgba(124, 58, 237, 0.14)', border: 'rgba(124, 58, 237, 0.35)' },
   Dinheiro: { color: '#4B5563', background: 'rgba(107, 114, 128, 0.12)', border: 'rgba(107, 114, 128, 0.32)' },
 }
 
-export type BadgePalette = {
-  color: string
-  background: string
-  border: string
-}
-
-export const currencyFormatter = new Intl.NumberFormat('pt-BR', {
-  style: 'currency',
-  currency: 'BRL',
-})
-
-export const numberFormatter = new Intl.NumberFormat('pt-BR')
-
-export function normalizeSearch(value: string) {
-  return value
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .toLowerCase()
-}
-
-export function onlyDigits(value: string) {
-  return value.replace(/\D/g, '')
-}
-
-export function formatCpf(value: string) {
-  const digits = onlyDigits(value).slice(0, 11)
-
-  if (digits.length <= 3) {
-    return digits
-  }
-
-  if (digits.length <= 6) {
-    return `${digits.slice(0, 3)}.${digits.slice(3)}`
-  }
-
-  if (digits.length <= 9) {
-    return `${digits.slice(0, 3)}.${digits.slice(3, 6)}.${digits.slice(6)}`
-  }
-
-  return `${digits.slice(0, 3)}.${digits.slice(3, 6)}.${digits.slice(6, 9)}-${digits.slice(9)}`
-}
-
-export function getInitials(name: string) {
-  return name
-    .split(' ')
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((part) => part[0]?.toUpperCase())
-    .join('')
-}
+export type { BadgePalette }
 
 export function getPassengerSortValue(passenger: Passenger, key: PassengerSortKey) {
   if (key === 'tier') {
@@ -126,17 +82,17 @@ export function getPassengerDetailsBase(passenger: Passenger): PassengerDetails 
       photoLabel: `Foto do passageiro ${passenger.name}`,
       cpf: '000.000.000-00',
       email: `${normalizeSearch(passenger.name).replace(/\s+/g, '.')}@email.com`,
-      city: 'Sao Paulo, SP',
+      city: 'São Paulo, SP',
       joinedAt: '10/01/2025',
       lastRide: passenger.status === 'Ativo' ? 'Hoje' : 'Sem corrida recente',
       preferredRegion: 'Centro',
       rideHistory: [
         { id: 'BRL-83110', date: '25/04/2026', from: 'Centro', to: 'Zona Sul', value: 42, status: 'Finalizada' },
-        { id: 'BRL-82984', date: '21/04/2026', from: 'Shopping', to: 'Residencia', value: 31, status: 'Finalizada' },
+        { id: 'BRL-82984', date: '21/04/2026', from: 'Shopping', to: 'Residência', value: 31, status: 'Finalizada' },
       ],
       complaints:
         passenger.status === 'Bloqueado'
-          ? [{ id: 'SUP-1188', date: '18/04/2026', title: 'Conta bloqueada por revisao de conduta', status: 'Aberta' }]
+          ? [{ id: 'SUP-1188', date: '18/04/2026', title: 'Conta bloqueada por revisão de conduta', status: 'Aberta' }]
           : [],
       monthlyAverage: {
         rides: Math.max(2, Math.round(passenger.rides / 8)),

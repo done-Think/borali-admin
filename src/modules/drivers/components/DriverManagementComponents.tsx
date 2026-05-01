@@ -5,11 +5,13 @@ import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
 import ImageOutlinedIcon from '@mui/icons-material/ImageOutlined'
 import ReportProblemOutlinedIcon from '@mui/icons-material/ReportProblemOutlined'
 import RouteOutlinedIcon from '@mui/icons-material/RouteOutlined'
-import { Avatar, Box, Button, Card, CardContent, Chip, Collapse, Dialog, DialogActions, DialogContent, DialogTitle, Divider, FormControl, IconButton, InputLabel, MenuItem, Select, Stack, Tab, TableCell, TableSortLabel, Tabs, TextField, Typography, useTheme } from '@mui/material'
+import { Avatar, Box, Button, Card, CardContent, Chip, Collapse, Dialog, DialogActions, DialogContent, DialogTitle, Divider, FormControl, IconButton, InputLabel, MenuItem, Select, Stack, Tab, Tabs, TextField, Typography, useTheme } from '@mui/material'
 import { useNavigate } from 'react-router'
-import type { Driver, DriverCategory, DriverDetails, DriverEditForm, DriverRequest, DriverRide, DriverStatus, DriverSubscription, SortDirection } from '../types'
+import type { Driver, DriverCategory, DriverDetails, DriverEditForm, DriverRequest, DriverRide, DriverStatus, DriverSubscription } from '../types'
 import { currencyFormatter, formatCpf, getDriverDetails, getDriverRideDetails, numberFormatter } from '../utils/drivers'
 
+import { DataBadge } from '@shared/ui/DataBadge'
+import { SortableHeader } from '@shared/ui/SortableHeader'
 import { categoryPalette, statusPalette, subscriptionPalette, type BadgePalette } from '../utils/driverPalettes'
 
 export function DriverDetailsDialog({
@@ -503,25 +505,7 @@ export function DriverMetric({ title, value }: { title: string; value: string })
   )
 }
 
-export function SortableHeader({
-  active,
-  direction,
-  label,
-  onClick,
-}: {
-  active: boolean
-  direction: SortDirection
-  label: string
-  onClick: () => void
-}) {
-  return (
-    <TableCell>
-      <TableSortLabel active={active} direction={active ? direction : 'asc'} onClick={onClick}>
-        {label}
-      </TableSortLabel>
-    </TableCell>
-  )
-}
+export { SortableHeader }
 
 export function NewDriverDialog({
   open,
@@ -740,17 +724,5 @@ export function NewDriverDialog({
 }
 
 export function DriverBadge({ label, palette }: { label: string; palette: BadgePalette }) {
-  return (
-    <Chip
-      label={label}
-      size="small"
-      variant="outlined"
-      sx={{
-        color: palette.color,
-        borderColor: palette.border,
-        backgroundColor: palette.background,
-        fontWeight: 700,
-      }}
-    />
-  )
+  return <DataBadge label={label} palette={palette} />
 }

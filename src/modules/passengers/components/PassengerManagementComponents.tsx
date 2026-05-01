@@ -2,10 +2,11 @@ import { useEffect, useState } from 'react'
 import CloseIcon from '@mui/icons-material/Close'
 import ReportProblemOutlinedIcon from '@mui/icons-material/ReportProblemOutlined'
 import RouteOutlinedIcon from '@mui/icons-material/RouteOutlined'
-import { Avatar, Box, Button, Checkbox, Chip, Dialog, DialogActions, DialogContent, DialogTitle, FormControl, IconButton, InputLabel, ListItemText, MenuItem, Select, Stack, Tab, TableCell, TableSortLabel, Tabs, TextField, Typography, useTheme } from '@mui/material'
+import { Avatar, Box, Button, Checkbox, Chip, Dialog, DialogActions, DialogContent, DialogTitle, FormControl, IconButton, InputLabel, ListItemText, MenuItem, Select, Stack, Tab, Tabs, TextField, Typography, useTheme } from '@mui/material'
 import { useNavigate } from 'react-router'
-import type { BadgePalette } from '../utils/passengers'
-import type { Passenger, PassengerDetails, PassengerEditForm, PassengerPayment, PassengerRide, PassengerStatus, PassengerTier, SortDirection } from '../types'
+import { DataBadge, type BadgePalette } from '@shared/ui/DataBadge'
+import { SortableHeader } from '@shared/ui/SortableHeader'
+import type { Passenger, PassengerDetails, PassengerEditForm, PassengerPayment, PassengerRide, PassengerStatus, PassengerTier } from '../types'
 import { currencyFormatter, formatCpf, getPassengerDetails, getPassengerRideDetails, numberFormatter, paymentOptions, paymentPalette, statusPalette, tierPalette } from '../utils/passengers'
 
 export function PassengerDetailsDialog({
@@ -68,9 +69,9 @@ export function PassengerDetailsDialog({
       <DialogContent dividers>
         <Tabs value={tab} onChange={(_, value) => onTabChange(value)} variant="scrollable" scrollButtons="auto" sx={{ mb: 3 }}>
           <Tab label="Cadastro" />
-          <Tab label="Historico de corridas" />
+          <Tab label="Histórico de corridas" />
           <Tab label="Reclamacoes" />
-          <Tab label="Media mensal" />
+          <Tab label="Média mensal" />
         </Tabs>
 
         {tab === 0 && (
@@ -219,9 +220,9 @@ export function PassengerDetailsDialog({
               gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, minmax(0, 1fr))', lg: 'repeat(4, minmax(0, 1fr))' },
             }}
           >
-            <PassengerMetric title="Corridas/mes" value={numberFormatter.format(details.monthlyAverage.rides)} />
-            <PassengerMetric title="Gasto/mes" value={currencyFormatter.format(details.monthlyAverage.spend)} />
-            <PassengerMetric title="Avaliacao media" value={details.monthlyAverage.rating.toFixed(1)} />
+            <PassengerMetric title="Corridas/mês" value={numberFormatter.format(details.monthlyAverage.rides)} />
+            <PassengerMetric title="Gasto/mês" value={currencyFormatter.format(details.monthlyAverage.spend)} />
+            <PassengerMetric title="Avaliação média" value={details.monthlyAverage.rating.toFixed(1)} />
             <PassengerMetric title="Cancelamentos" value={`${details.monthlyAverage.cancellationRate.toFixed(1)}%`} />
           </Box>
         )}
@@ -393,14 +394,14 @@ export function PassengerEditDialog({
             onChange={(event) => updateForm('rides', Number(event.target.value))}
           />
           <TextField
-            label="Avaliacao"
+            label="Avaliação"
             type="number"
             value={form.rating}
             onChange={(event) => updateForm('rating', Number(event.target.value))}
             inputProps={{ step: 0.1, min: 0, max: 5 }}
           />
           <TextField
-            label="Gasto no mes"
+            label="Gasto no mês"
             type="number"
             value={form.monthlySpend}
             onChange={(event) => updateForm('monthlySpend', Number(event.target.value))}
@@ -515,38 +516,8 @@ export function PaymentBadges({ payments }: { payments: PassengerPayment[] }) {
   )
 }
 
-export function SortableHeader({
-  active,
-  direction,
-  label,
-  onClick,
-}: {
-  active: boolean
-  direction: SortDirection
-  label: string
-  onClick: () => void
-}) {
-  return (
-    <TableCell>
-      <TableSortLabel active={active} direction={active ? direction : 'asc'} onClick={onClick}>
-        {label}
-      </TableSortLabel>
-    </TableCell>
-  )
-}
+export { SortableHeader }
 
 export function PassengerBadge({ label, palette }: { label: string; palette: BadgePalette }) {
-  return (
-    <Chip
-      label={label}
-      size="small"
-      variant="outlined"
-      sx={{
-        color: palette.color,
-        borderColor: palette.border,
-        backgroundColor: palette.background,
-        fontWeight: 700,
-      }}
-    />
-  )
+  return <DataBadge label={label} palette={palette} />
 }

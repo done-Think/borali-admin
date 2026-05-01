@@ -2,7 +2,7 @@ export type PassengerFilter = 'all' | 'active' | 'pending' | 'blocked'
 export type PassengerStatus = 'Ativo' | 'Inativo' | 'Pendente' | 'Bloqueado'
 export type PassengerTier = 'Regular' | 'Prata' | 'Ouro' | 'VIP'
 export type PassengerTierFilter = 'all' | PassengerTier
-export type PassengerPayment = 'Cartao' | 'Pix' | 'Carteira' | 'Dinheiro'
+export type PassengerPayment = 'Cartão' | 'Pix' | 'Carteira' | 'Dinheiro'
 export type PassengerSortKey = 'tier' | 'status' | 'rides' | 'rating' | 'payment' | 'monthlySpend'
 export type SortDirection = 'asc' | 'desc'
 

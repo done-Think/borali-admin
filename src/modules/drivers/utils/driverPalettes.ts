@@ -1,10 +1,7 @@
 import type { DriverCategory, DriverStatus, DriverSubscription } from '../types'
+import type { BadgePalette } from '@shared/ui/DataBadge'
 
-export type BadgePalette = {
-  color: string
-  background: string
-  border: string
-}
+export type { BadgePalette }
 
 export const categoryPalette: Record<DriverCategory, BadgePalette> = {
   Conforto: {

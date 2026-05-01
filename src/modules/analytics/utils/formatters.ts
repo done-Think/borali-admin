@@ -1,14 +1,8 @@
-export const numberFormatter = new Intl.NumberFormat('pt-BR')
+import { compactCurrencyFormatter, numberFormatter, percentFormatter } from '@shared/utils/formatters'
 
-export const percentFormatter = new Intl.NumberFormat('pt-BR', {
-  maximumFractionDigits: 1,
-})
+export { numberFormatter, percentFormatter }
 
-export const currencyFormatter = new Intl.NumberFormat('pt-BR', {
-  style: 'currency',
-  currency: 'BRL',
-  maximumFractionDigits: 0,
-})
+export const currencyFormatter = compactCurrencyFormatter
 
 export function formatChartValue(value: unknown) {
   return typeof value === 'number' ? numberFormatter.format(value) : String(value ?? '')

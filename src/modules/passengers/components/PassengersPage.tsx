@@ -291,12 +291,12 @@ export default function PassengersPage() {
                     <SortableHeader active={sortKey === 'tier'} direction={sortDirection} label="Categoria" onClick={() => handleSort('tier')} />
                     <SortableHeader active={sortKey === 'status'} direction={sortDirection} label="Status" onClick={() => handleSort('status')} />
                     <SortableHeader active={sortKey === 'rides'} direction={sortDirection} label="Corridas" onClick={() => handleSort('rides')} />
-                    <SortableHeader active={sortKey === 'rating'} direction={sortDirection} label="Avaliacao" onClick={() => handleSort('rating')} />
+                    <SortableHeader active={sortKey === 'rating'} direction={sortDirection} label="Avaliação" onClick={() => handleSort('rating')} />
                     <SortableHeader active={sortKey === 'payment'} direction={sortDirection} label="Pagamento" onClick={() => handleSort('payment')} />
                     <SortableHeader
                       active={sortKey === 'monthlySpend'}
                       direction={sortDirection}
-                      label="Gasto mes"
+                      label="Gasto mês"
                       onClick={() => handleSort('monthlySpend')}
                     />
                     <TableCell align="right" sx={{ width: 96 }}>
