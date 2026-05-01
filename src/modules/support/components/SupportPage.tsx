@@ -343,7 +343,6 @@ export default function SupportPage() {
 
 function SupportTicketCard({
   ticket,
-  compact = false,
   highlighted = false,
   onToggleStatus,
   onOpenUser,
@@ -355,12 +354,14 @@ function SupportTicketCard({
   onOpenUser: (ticket: SupportTicket) => void
 }) {
   const theme = useTheme()
-  const [expanded, setExpanded] = useState(!compact)
-  const showFullCard = !compact || expanded
+  const [expanded, setExpanded] = useState(highlighted)
+  const statusLabel = ticket.status === 'Resolvido' ? 'Aprovado' : ticket.status
 
   useEffect(() => {
-    setExpanded(highlighted || !compact)
-  }, [compact, highlighted, ticket.protocol])
+    if (highlighted) {
+      setExpanded(true)
+    }
+  }, [highlighted, ticket.protocol])
 
   useEffect(() => {
     if (!highlighted) {
@@ -384,111 +385,155 @@ function SupportTicketCard({
         boxShadow: highlighted ? `0 0 0 3px rgba(45, 212, 160, 0.18)` : undefined,
       }}
     >
-      <CardContent>
+      <CardContent sx={{ p: 1.5, '&:last-child': { pb: 1.5 } }}>
         <Stack
+          role="button"
+          tabIndex={0}
           direction={{ xs: 'column', md: 'row' }}
-          spacing={3}
-          alignItems={{ xs: 'stretch', md: 'flex-start' }}
+          spacing={1.25}
+          alignItems={{ xs: 'stretch', md: 'center' }}
           justifyContent="space-between"
+          onClick={() => setExpanded((current) => !current)}
+          onKeyDown={(event) => {
+            if (event.key === 'Enter' || event.key === ' ') {
+              event.preventDefault()
+              setExpanded((current) => !current)
+            }
+          }}
+          sx={{
+            minHeight: 44,
+            cursor: 'pointer',
+            '&:focus-visible': {
+              outline: `2px solid ${theme.palette.primary.main}`,
+              outlineOffset: 3,
+              borderRadius: 1,
+            },
+          }}
         >
-          <Stack direction="row" spacing={2} alignItems="center">
-            <Avatar
-              sx={{
-                width: 64,
-                height: 64,
-                bgcolor: ticket.user.role === 'driver' ? 'rgba(45, 212, 160, 0.14)' : 'rgba(10, 190, 233, 0.12)',
-                color: ticket.user.role === 'driver' ? theme.palette.primary.main : theme.palette.secondary.main,
-                fontWeight: 700,
-              }}
-            >
-              {ticket.user.initials}
-            </Avatar>
+          <Box
+            sx={{
+              display: 'grid',
+              gap: 1,
+              gridTemplateColumns: { xs: '1fr', sm: '1.4fr 1fr 1fr' },
+              alignItems: 'center',
+              flex: 1,
+              minWidth: 0,
+            }}
+          >
+            <Typography noWrap sx={{ fontWeight: 900 }}>
+              {ticket.user.name}
+            </Typography>
+            <Typography noWrap color="text.secondary" sx={{ fontSize: 13, fontWeight: 800 }}>
+              CPF {ticket.user.cpf}
+            </Typography>
+            <Typography noWrap color="text.secondary" sx={{ fontSize: 13, fontWeight: 800 }}>
+              {ticket.protocol}
+            </Typography>
+          </Box>
 
-            <Box>
-              <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap" alignItems="center">
-                <Button
-                  variant="text"
-                  onClick={() => onOpenUser(ticket)}
-                  sx={{
-                    p: 0,
-                    minWidth: 0,
-                    color: 'text.primary',
-                    textAlign: 'left',
-                    justifyContent: 'flex-start',
-                    '&:hover': {
-                      backgroundColor: 'transparent',
-                      color: 'primary.main',
-                      textDecoration: 'underline',
-                    },
-                  }}
-                >
-                  <Typography variant="h4">{ticket.user.name}</Typography>
-                </Button>
-                {showFullCard && <Chip label={ticket.user.type} color="primary" variant="outlined" size="small" />}
-              </Stack>
-              {showFullCard && (
-                <Typography color="text.secondary" sx={{ mt: 0.5 }}>
-                  Protocolo {ticket.protocol}
-                </Typography>
-              )}
-            </Box>
-          </Stack>
-
-          <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap" alignItems="center">
+          <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap" alignItems="center" justifyContent={{ xs: 'flex-start', md: 'flex-end' }}>
             <Chip
               clickable
-              label={ticket.status}
+              label={statusLabel}
               color={ticket.status === 'Resolvido' ? 'success' : 'warning'}
-              onClick={() => onToggleStatus(ticket)}
+              onClick={(event) => {
+                event.stopPropagation()
+                onToggleStatus(ticket)
+              }}
               sx={{ fontWeight: 700 }}
             />
-            {showFullCard && (
-              <Chip
-                label={`Prioridade ${ticket.priority}`}
-                color={ticket.priority === 'Alta' ? 'error' : 'warning'}
-                variant="outlined"
+            <Chip
+              label={`Prioridade ${ticket.priority}`}
+              color={ticket.priority === 'Alta' ? 'error' : 'warning'}
+              variant="outlined"
+              sx={{ fontWeight: 700 }}
+            />
+            <IconButton
+              size="small"
+              aria-label={expanded ? 'Recolher ticket' : 'Expandir ticket'}
+              onClick={(event) => {
+                event.stopPropagation()
+                setExpanded((current) => !current)
+              }}
+            >
+              <ExpandMoreIcon
+                sx={{
+                  transform: expanded ? 'rotate(180deg)' : 'rotate(0deg)',
+                  transition: theme.transitions.create('transform'),
+                }}
               />
-            )}
-            {compact && (
-              <Button
-                size="small"
-                variant="outlined"
-                endIcon={
-                  <ExpandMoreIcon
-                    sx={{
-                      transform: expanded ? 'rotate(180deg)' : 'rotate(0deg)',
-                      transition: theme.transitions.create('transform'),
-                    }}
-                  />
-                }
-                onClick={() => setExpanded((current) => !current)}
-              >
-                {expanded ? 'Recolher' : 'Expandir'}
-              </Button>
-            )}
+            </IconButton>
           </Stack>
         </Stack>
 
-        <Box
-          sx={{
-            display: 'grid',
-            gap: 2,
-            gridTemplateColumns: {
-              xs: '1fr',
-              sm: showFullCard ? 'repeat(2, minmax(0, 1fr))' : 'repeat(2, minmax(0, 1fr))',
-              lg: showFullCard ? 'repeat(4, minmax(0, 1fr))' : 'repeat(2, minmax(0, 1fr))',
-            },
-            mt: 3,
-          }}
-        >
-          <InfoItem icon={<PersonOutlineIcon />} label="CPF" value={ticket.user.cpf} />
-          <InfoItem icon={<PhoneOutlinedIcon />} label="Telefone" value={ticket.user.phone} />
-          {showFullCard && <InfoItem icon={<EmailOutlinedIcon />} label="E-mail" value={ticket.user.email} />}
-          {showFullCard && <InfoItem icon={<CalendarMonthOutlinedIcon />} label="Cidade" value={ticket.user.city} />}
-        </Box>
+        <Collapse in={expanded} timeout="auto" unmountOnExit>
+          <Box sx={{ pt: 2.5 }}>
+            <Stack
+              direction={{ xs: 'column', md: 'row' }}
+              spacing={3}
+              alignItems={{ xs: 'stretch', md: 'flex-start' }}
+              justifyContent="space-between"
+            >
+              <Stack direction="row" spacing={2} alignItems="center">
+                <Avatar
+                  sx={{
+                    width: 64,
+                    height: 64,
+                    bgcolor: ticket.user.role === 'driver' ? 'rgba(45, 212, 160, 0.14)' : 'rgba(10, 190, 233, 0.12)',
+                    color: ticket.user.role === 'driver' ? theme.palette.primary.main : theme.palette.secondary.main,
+                    fontWeight: 700,
+                  }}
+                >
+                  {ticket.user.initials}
+                </Avatar>
 
-        <Collapse in={showFullCard} timeout="auto" unmountOnExit>
-          <Box>
+                <Box>
+                  <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap" alignItems="center">
+                    <Button
+                      variant="text"
+                      onClick={() => onOpenUser(ticket)}
+                      sx={{
+                        p: 0,
+                        minWidth: 0,
+                        color: 'text.primary',
+                        textAlign: 'left',
+                        justifyContent: 'flex-start',
+                        '&:hover': {
+                          backgroundColor: 'transparent',
+                          color: 'primary.main',
+                          textDecoration: 'underline',
+                        },
+                      }}
+                    >
+                      <Typography variant="h4">{ticket.user.name}</Typography>
+                    </Button>
+                    <Chip label={ticket.user.type} color="primary" variant="outlined" size="small" />
+                  </Stack>
+                  <Typography color="text.secondary" sx={{ mt: 0.5 }}>
+                    Protocolo {ticket.protocol}
+                  </Typography>
+                </Box>
+              </Stack>
+            </Stack>
+
+            <Box
+              sx={{
+                display: 'grid',
+                gap: 2,
+                gridTemplateColumns: {
+                  xs: '1fr',
+                  sm: 'repeat(2, minmax(0, 1fr))',
+                  lg: 'repeat(4, minmax(0, 1fr))',
+                },
+                mt: 3,
+              }}
+            >
+              <InfoItem icon={<PersonOutlineIcon />} label="CPF" value={ticket.user.cpf} />
+              <InfoItem icon={<PhoneOutlinedIcon />} label="Telefone" value={ticket.user.phone} />
+              <InfoItem icon={<EmailOutlinedIcon />} label="E-mail" value={ticket.user.email} />
+              <InfoItem icon={<CalendarMonthOutlinedIcon />} label="Cidade" value={ticket.user.city} />
+            </Box>
+
             <Box
               sx={{
                 display: 'grid',
