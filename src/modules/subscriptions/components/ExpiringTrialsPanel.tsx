@@ -1,5 +1,7 @@
+import { useState } from 'react'
 import AccessTimeOutlinedIcon from '@mui/icons-material/AccessTimeOutlined'
-import { Avatar, Box, Button, Card, CardContent, Chip, Divider, Stack, Typography, useTheme } from '@mui/material'
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
+import { Avatar, Box, Button, ButtonBase, Card, CardContent, Chip, Collapse, Divider, Stack, Typography, useTheme } from '@mui/material'
 import type { TrialExpiration } from '../types'
 
 type ExpiringTrialsPanelProps = {
@@ -51,105 +53,138 @@ function getInitials(name: string) {
 
 export function ExpiringTrialsPanel({ trials }: ExpiringTrialsPanelProps) {
   const theme = useTheme()
+  const [expanded, setExpanded] = useState(false)
+  const criticalTrials = trials.filter((trial) => trial.expiresInDays <= 1).length
 
   return (
     <Card variant="outlined">
-      <CardContent sx={{ p: 2.25 }}>
-        <Stack
-          direction={{ xs: 'column', md: 'row' }}
-          spacing={1.5}
-          alignItems={{ xs: 'flex-start', md: 'center' }}
-          justifyContent="space-between"
-          sx={{ mb: 2 }}
-        >
-          <Box>
-            <Typography variant="h4">Trials expirando (7 dias)</Typography>
-            <Typography color="text.secondary" sx={{ mt: 0.25 }}>
-              Motoristas que precisam de acompanhamento antes da conversao.
-            </Typography>
-          </Box>
+      <ButtonBase
+        onClick={() => setExpanded((current) => !current)}
+        sx={{ width: '100%', display: 'block', textAlign: 'left', borderRadius: 'inherit' }}
+        aria-expanded={expanded}
+        aria-controls="expiring-trials-content"
+      >
+        <CardContent sx={{ p: 2.25, '&:last-child': { pb: 2.25 } }}>
+          <Stack
+            direction={{ xs: 'column', md: 'row' }}
+            spacing={1.5}
+            alignItems={{ xs: 'flex-start', md: 'center' }}
+            justifyContent="space-between"
+          >
+            <Box>
+              <Typography variant="h4">Trials expirando (7 dias)</Typography>
+              <Typography color="text.secondary" sx={{ mt: 0.25 }}>
+                {expanded
+                  ? 'Motoristas que precisam de acompanhamento antes da conversao.'
+                  : `${trials.length} trials em atencao, ${criticalTrials} com urgencia alta.`}
+              </Typography>
+            </Box>
 
-          <Chip
-            icon={<AccessTimeOutlinedIcon />}
-            label={`${trials.length} em atencao`}
-            color="warning"
-            variant="outlined"
-            sx={{ fontWeight: 800 }}
-          />
-        </Stack>
-
-        <Stack divider={<Divider flexItem />} spacing={0}>
-          {trials.map((trial) => {
-            const urgency = getUrgencyMeta(trial.expiresInDays)
-
-            return (
-              <Stack
-                key={trial.id}
-                direction={{ xs: 'column', sm: 'row' }}
-                spacing={1.5}
-                alignItems={{ xs: 'stretch', sm: 'center' }}
-                justifyContent="space-between"
-                sx={{ py: 1.5 }}
+            <Stack direction="row" spacing={1} alignItems="center">
+              <Chip
+                icon={<AccessTimeOutlinedIcon />}
+                label={`${trials.length} em atencao`}
+                color="warning"
+                variant="outlined"
+                sx={{ fontWeight: 800 }}
+              />
+              <Box
+                sx={{
+                  width: 34,
+                  height: 34,
+                  borderRadius: 1.5,
+                  display: 'grid',
+                  placeItems: 'center',
+                  color: 'text.secondary',
+                  transform: expanded ? 'rotate(180deg)' : 'rotate(0deg)',
+                  transition: theme.transitions.create('transform', { duration: theme.transitions.duration.shortest }),
+                }}
               >
-                <Stack direction="row" spacing={1.5} alignItems="center" sx={{ minWidth: 0 }}>
-                  <Avatar
-                    sx={{
-                      width: 42,
-                      height: 42,
-                      bgcolor: `${planColors[trial.plan]}1F`,
-                      color: planColors[trial.plan],
-                      fontWeight: 900,
-                      fontSize: 13,
-                    }}
-                  >
-                    {getInitials(trial.driverName)}
-                  </Avatar>
+                <ExpandMoreIcon fontSize="small" />
+              </Box>
+            </Stack>
+          </Stack>
+        </CardContent>
+      </ButtonBase>
 
-                  <Box sx={{ minWidth: 0 }}>
-                    <Typography fontWeight={800} noWrap>
-                      {trial.driverName}
-                    </Typography>
-                    <Typography color="text.secondary" variant="body2" noWrap>
-                      {trial.city} - {currencyFormatter.format(trial.monthlyValue)}/mes
-                    </Typography>
-                  </Box>
-                </Stack>
+      <Collapse in={expanded} timeout="auto" unmountOnExit>
+        <CardContent
+          id="expiring-trials-content"
+          sx={{ pt: 0, px: 2.25, pb: 2.25, '&:last-child': { pb: 2.25 } }}
+        >
+          <Stack divider={<Divider flexItem />} spacing={0}>
+            {trials.map((trial) => {
+              const urgency = getUrgencyMeta(trial.expiresInDays)
 
+              return (
                 <Stack
-                  direction="row"
-                  spacing={1}
-                  alignItems="center"
-                  justifyContent={{ xs: 'space-between', sm: 'flex-end' }}
-                  sx={{ minWidth: { sm: 300 } }}
+                  key={trial.id}
+                  direction={{ xs: 'column', sm: 'row' }}
+                  spacing={1.5}
+                  alignItems={{ xs: 'stretch', sm: 'center' }}
+                  justifyContent="space-between"
+                  sx={{ py: 1.5 }}
                 >
-                  <Chip
-                    label={trial.plan}
-                    size="small"
-                    variant="outlined"
-                    sx={{
-                      color: planColors[trial.plan],
-                      borderColor: planColors[trial.plan],
-                      fontWeight: 800,
-                    }}
-                  />
-                  <Chip label={urgency.label} size="small" color={urgency.color} sx={{ fontWeight: 800 }} />
-                  <Button
-                    size="small"
-                    variant="text"
-                    sx={{
-                      color: theme.palette.text.primary,
-                      fontWeight: 800,
-                      textTransform: 'none',
-                    }}
+                  <Stack direction="row" spacing={1.5} alignItems="center" sx={{ minWidth: 0 }}>
+                    <Avatar
+                      sx={{
+                        width: 42,
+                        height: 42,
+                        bgcolor: `${planColors[trial.plan]}1F`,
+                        color: planColors[trial.plan],
+                        fontWeight: 900,
+                        fontSize: 13,
+                      }}
+                    >
+                      {getInitials(trial.driverName)}
+                    </Avatar>
+
+                    <Box sx={{ minWidth: 0 }}>
+                      <Typography fontWeight={800} noWrap>
+                        {trial.driverName}
+                      </Typography>
+                      <Typography color="text.secondary" variant="body2" noWrap>
+                        {trial.city} - {currencyFormatter.format(trial.monthlyValue)}/mes
+                      </Typography>
+                    </Box>
+                  </Stack>
+
+                  <Stack
+                    direction="row"
+                    spacing={1}
+                    alignItems="center"
+                    justifyContent={{ xs: 'space-between', sm: 'flex-end' }}
+                    sx={{ minWidth: { sm: 300 } }}
                   >
-                    Ver perfil
-                  </Button>
+                    <Chip
+                      label={trial.plan}
+                      size="small"
+                      variant="outlined"
+                      sx={{
+                        color: planColors[trial.plan],
+                        borderColor: planColors[trial.plan],
+                        fontWeight: 800,
+                      }}
+                    />
+                    <Chip label={urgency.label} size="small" color={urgency.color} sx={{ fontWeight: 800 }} />
+                    <Button
+                      size="small"
+                      variant="text"
+                      sx={{
+                        color: theme.palette.text.primary,
+                        fontWeight: 800,
+                        textTransform: 'none',
+                      }}
+                    >
+                      Ver perfil
+                    </Button>
+                  </Stack>
                 </Stack>
-              </Stack>
-            )
-          })}
-        </Stack>
-      </CardContent>
+              )
+            })}
+          </Stack>
+        </CardContent>
+      </Collapse>
     </Card>
   )
 }
