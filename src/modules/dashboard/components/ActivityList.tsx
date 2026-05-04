@@ -16,12 +16,8 @@ export function ActivityList({ items, compact = false, onItemClick }: ActivityLi
     <Stack
       spacing={1.25}
       sx={{
-        bgcolor: alpha(theme.palette.secondary.main, 0.06),
         borderRadius: 2,
         p: compact ? 1 : 1.25,
-        '[data-toolpad-color-scheme="dark"] &': {
-          bgcolor: alpha(theme.palette.common.black, 0.22),
-        },
       }}
     >
       {items.map((item) => {
