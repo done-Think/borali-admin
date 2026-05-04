@@ -29,7 +29,7 @@ const navigation = [
 
 const branding = {
   title: '',
-  logo: <img src={logo} alt="BoraLi" style={{ width: 92, maxHeight: 44, objectFit: 'contain' }} />,
+  logo: <img src={logo} alt="BoraLi" style={{ width: 184, maxHeight: 88, objectFit: 'contain' }} />,
   homeUrl: '/',
 }
 
