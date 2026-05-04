@@ -4,7 +4,7 @@ import PaidOutlinedIcon from '@mui/icons-material/PaidOutlined'
 import ScheduleOutlinedIcon from '@mui/icons-material/ScheduleOutlined'
 import WorkspacePremiumOutlinedIcon from '@mui/icons-material/WorkspacePremiumOutlined'
 import type { Theme } from '@mui/material/styles'
-import type { MonthlyMrrPoint, PlanDistributionPoint, SubscriptionKpiCard } from '../types'
+import type { MonthlyMrrPoint, PlanDistributionPoint, SubscriptionKpiCard, TrialExpiration } from '../types'
 
 const currencyFormatter = new Intl.NumberFormat('pt-BR', {
   style: 'currency',
@@ -29,6 +29,49 @@ export const planDistribution: PlanDistributionPoint[] = [
   { plan: 'Pro', total: 688, color: '#2563EB' },
   { plan: 'Basico', total: 412, color: '#22D3EE' },
   { plan: 'Premium', total: 184, color: '#22C55E' },
+]
+
+export const expiringTrials: TrialExpiration[] = [
+  {
+    id: 'drv-1048',
+    driverName: 'Marcos Vinicius',
+    plan: 'Pro',
+    expiresInDays: 0,
+    city: 'Sao Paulo',
+    monthlyValue: 89.9,
+  },
+  {
+    id: 'drv-1182',
+    driverName: 'Carla Menezes',
+    plan: 'Premium',
+    expiresInDays: 1,
+    city: 'Campinas',
+    monthlyValue: 129.9,
+  },
+  {
+    id: 'drv-1207',
+    driverName: 'Rafael Costa',
+    plan: 'Basico',
+    expiresInDays: 2,
+    city: 'Santos',
+    monthlyValue: 49.9,
+  },
+  {
+    id: 'drv-1324',
+    driverName: 'Patricia Nogueira',
+    plan: 'Pro',
+    expiresInDays: 4,
+    city: 'Santo Andre',
+    monthlyValue: 89.9,
+  },
+  {
+    id: 'drv-1411',
+    driverName: 'Leandro Barros',
+    plan: 'Basico',
+    expiresInDays: 7,
+    city: 'Osasco',
+    monthlyValue: 49.9,
+  },
 ]
 
 export function getSubscriptionKpiCards(theme: Theme): SubscriptionKpiCard[] {

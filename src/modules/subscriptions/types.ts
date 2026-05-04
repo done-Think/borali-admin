@@ -26,3 +26,12 @@ export type PlanDistributionPoint = {
   total: number
   color: string
 }
+
+export type TrialExpiration = {
+  id: string
+  driverName: string
+  plan: SubscriptionPlan
+  expiresInDays: number
+  city: string
+  monthlyValue: number
+}
