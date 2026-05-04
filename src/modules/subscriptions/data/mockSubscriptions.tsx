@@ -4,7 +4,7 @@ import PaidOutlinedIcon from '@mui/icons-material/PaidOutlined'
 import ScheduleOutlinedIcon from '@mui/icons-material/ScheduleOutlined'
 import WorkspacePremiumOutlinedIcon from '@mui/icons-material/WorkspacePremiumOutlined'
 import type { Theme } from '@mui/material/styles'
-import type { SubscriptionKpiCard } from '../types'
+import type { MonthlyMrrPoint, PlanDistributionPoint, SubscriptionKpiCard } from '../types'
 
 const currencyFormatter = new Intl.NumberFormat('pt-BR', {
   style: 'currency',
@@ -15,6 +15,21 @@ const currencyFormatter = new Intl.NumberFormat('pt-BR', {
 const percentFormatter = new Intl.NumberFormat('pt-BR', {
   maximumFractionDigits: 1,
 })
+
+export const monthlyMrrGrowth: MonthlyMrrPoint[] = [
+  { month: 'Nov', mrr: 54800 },
+  { month: 'Dez', mrr: 59300 },
+  { month: 'Jan', mrr: 64100 },
+  { month: 'Fev', mrr: 71300 },
+  { month: 'Mar', mrr: 74900 },
+  { month: 'Abr', mrr: 84200 },
+]
+
+export const planDistribution: PlanDistributionPoint[] = [
+  { plan: 'Pro', total: 688, color: '#2563EB' },
+  { plan: 'Basico', total: 412, color: '#22D3EE' },
+  { plan: 'Premium', total: 184, color: '#22C55E' },
+]
 
 export function getSubscriptionKpiCards(theme: Theme): SubscriptionKpiCard[] {
   return [

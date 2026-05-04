@@ -15,3 +15,14 @@ export type SubscriptionKpiCard = {
     color?: 'default' | 'primary' | 'secondary' | 'success' | 'warning' | 'error' | 'info'
   }[]
 }
+
+export type MonthlyMrrPoint = {
+  month: string
+  mrr: number
+}
+
+export type PlanDistributionPoint = {
+  plan: SubscriptionPlan
+  total: number
+  color: string
+}

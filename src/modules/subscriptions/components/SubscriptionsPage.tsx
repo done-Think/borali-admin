@@ -1,5 +1,6 @@
 import { Box, Stack, Typography, useTheme } from '@mui/material'
-import { getSubscriptionKpiCards } from '../data/mockSubscriptions'
+import { getSubscriptionKpiCards, monthlyMrrGrowth, planDistribution } from '../data/mockSubscriptions'
+import { SubscriptionCharts } from './SubscriptionCharts'
 import { SubscriptionKpiCards } from './SubscriptionKpiCards'
 
 export default function SubscriptionsPage() {
@@ -18,6 +19,8 @@ export default function SubscriptionsPage() {
       </Box>
 
       <SubscriptionKpiCards cards={kpiCards} />
+
+      <SubscriptionCharts mrrGrowth={monthlyMrrGrowth} planDistribution={planDistribution} />
     </Stack>
   )
 }
