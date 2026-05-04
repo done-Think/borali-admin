@@ -1,8 +1,15 @@
 import { Box, Stack, Typography, useTheme } from '@mui/material'
-import { expiringTrials, getSubscriptionKpiCards, monthlyMrrGrowth, planDistribution } from '../data/mockSubscriptions'
+import {
+  driverSubscriptions,
+  expiringTrials,
+  getSubscriptionKpiCards,
+  monthlyMrrGrowth,
+  planDistribution,
+} from '../data/mockSubscriptions'
 import { ExpiringTrialsPanel } from './ExpiringTrialsPanel'
 import { SubscriptionCharts } from './SubscriptionCharts'
 import { SubscriptionKpiCards } from './SubscriptionKpiCards'
+import { SubscriptionsTable } from './SubscriptionsTable'
 
 export default function SubscriptionsPage() {
   const theme = useTheme()
@@ -24,6 +31,8 @@ export default function SubscriptionsPage() {
       <SubscriptionCharts mrrGrowth={monthlyMrrGrowth} planDistribution={planDistribution} />
 
       <ExpiringTrialsPanel trials={expiringTrials} />
+
+      <SubscriptionsTable subscriptions={driverSubscriptions} />
     </Stack>
   )
 }

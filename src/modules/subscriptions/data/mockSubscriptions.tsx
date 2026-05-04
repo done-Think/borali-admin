@@ -4,7 +4,13 @@ import PaidOutlinedIcon from '@mui/icons-material/PaidOutlined'
 import ScheduleOutlinedIcon from '@mui/icons-material/ScheduleOutlined'
 import WorkspacePremiumOutlinedIcon from '@mui/icons-material/WorkspacePremiumOutlined'
 import type { Theme } from '@mui/material/styles'
-import type { MonthlyMrrPoint, PlanDistributionPoint, SubscriptionKpiCard, TrialExpiration } from '../types'
+import type {
+  DriverSubscription,
+  MonthlyMrrPoint,
+  PlanDistributionPoint,
+  SubscriptionKpiCard,
+  TrialExpiration,
+} from '../types'
 
 const currencyFormatter = new Intl.NumberFormat('pt-BR', {
   style: 'currency',
@@ -70,6 +76,63 @@ export const expiringTrials: TrialExpiration[] = [
     plan: 'Basico',
     expiresInDays: 7,
     city: 'Osasco',
+    monthlyValue: 49.9,
+  },
+]
+
+export const driverSubscriptions: DriverSubscription[] = [
+  {
+    id: 'sub-1001',
+    driverName: 'Andre Luiz',
+    driverPhone: '(11) 98831-2044',
+    plan: 'Pro',
+    status: 'ATIVO',
+    nextBillingAt: '2026-05-12',
+    monthlyValue: 89.9,
+  },
+  {
+    id: 'sub-1002',
+    driverName: 'Juliana Paiva',
+    driverPhone: '(19) 97742-3110',
+    plan: 'Premium',
+    status: 'ATIVO',
+    nextBillingAt: '2026-05-15',
+    monthlyValue: 129.9,
+  },
+  {
+    id: 'sub-1003',
+    driverName: 'Marcos Vinicius',
+    driverPhone: '(11) 96418-7721',
+    plan: 'Pro',
+    status: 'TRIAL',
+    nextBillingAt: '2026-05-04',
+    monthlyValue: 89.9,
+  },
+  {
+    id: 'sub-1004',
+    driverName: 'Renata Campos',
+    driverPhone: '(13) 98877-4102',
+    plan: 'Basico',
+    status: 'ATRASADO',
+    nextBillingAt: '2026-04-29',
+    monthlyValue: 49.9,
+  },
+  {
+    id: 'sub-1005',
+    driverName: 'Carla Menezes',
+    driverPhone: '(19) 98442-2190',
+    plan: 'Premium',
+    status: 'TRIAL',
+    nextBillingAt: '2026-05-05',
+    monthlyValue: 129.9,
+  },
+  {
+    id: 'sub-1006',
+    driverName: 'Leandro Barros',
+    driverPhone: '(11) 94021-0098',
+    plan: 'Basico',
+    status: 'TRIAL',
+    nextBillingAt: '2026-05-11',
     monthlyValue: 49.9,
   },
 ]

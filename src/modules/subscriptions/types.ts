@@ -35,3 +35,15 @@ export type TrialExpiration = {
   city: string
   monthlyValue: number
 }
+
+export type SubscriptionStatus = 'ATIVO' | 'TRIAL' | 'ATRASADO'
+
+export type DriverSubscription = {
+  id: string
+  driverName: string
+  driverPhone: string
+  plan: SubscriptionPlan
+  status: SubscriptionStatus
+  nextBillingAt: string
+  monthlyValue: number
+}
