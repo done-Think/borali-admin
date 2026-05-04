@@ -55,9 +55,9 @@ export default function Layout() {
               to={item.to}
               end={item.end}
               sx={{
-                minHeight: 42,
+                minHeight: 35,
                 px: 1.25,
-                borderRadius: 1.5,
+                borderRadius: '8px',
                 display: 'grid',
                 gridTemplateColumns: '22px 1fr',
                 alignItems: 'center',
