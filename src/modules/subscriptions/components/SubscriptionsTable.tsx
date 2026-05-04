@@ -42,7 +42,7 @@ const dateFormatter = new Intl.DateTimeFormat('pt-BR', {
 })
 
 const planPalette: Record<SubscriptionPlan, string> = {
-  Basico: '#22D3EE',
+  Básico: '#22D3EE',
   Pro: '#2563EB',
   Premium: '#22C55E',
 }
@@ -74,6 +74,9 @@ export function SubscriptionsTable({ subscriptions }: SubscriptionsTableProps) {
   const [selectedSubscription, setSelectedSubscription] = useState<DriverSubscription | null>(null)
   const menuOpen = Boolean(anchorEl)
   const overdueSubscriptions = subscriptions.filter((subscription) => subscription.status === 'ATRASADO').length
+  const overdueLabel = `${overdueSubscriptions} ${
+    overdueSubscriptions === 1 ? 'assinatura atrasada' : 'assinaturas atrasadas'
+  }`
 
   function handleOpenMenu(event: MouseEvent<HTMLElement>, subscription: DriverSubscription) {
     setAnchorEl(event.currentTarget)
@@ -105,7 +108,7 @@ export function SubscriptionsTable({ subscriptions }: SubscriptionsTableProps) {
               <Typography color="text.secondary" sx={{ mt: 0.25 }}>
                 {expanded
                   ? 'Lista operacional de planos ativos, trials e pagamentos atrasados.'
-                  : `${subscriptions.length} registros, ${overdueSubscriptions} assinatura atrasada.`}
+                  : `${subscriptions.length} registros, ${overdueLabel}.`}
               </Typography>
             </Box>
             <Stack direction="row" spacing={1} alignItems="center">
@@ -141,10 +144,10 @@ export function SubscriptionsTable({ subscriptions }: SubscriptionsTableProps) {
                   <TableCell>Motorista</TableCell>
                   <TableCell>Plano</TableCell>
                   <TableCell>Status</TableCell>
-                  <TableCell>Prox. cobranca</TableCell>
+                  <TableCell>Próx. cobrança</TableCell>
                   <TableCell>Valor</TableCell>
                   <TableCell align="right" sx={{ width: 88 }}>
-                    Acoes
+                    Ações
                   </TableCell>
                 </TableRow>
               </TableHead>
@@ -198,10 +201,10 @@ export function SubscriptionsTable({ subscriptions }: SubscriptionsTableProps) {
                     <TableCell>{formatDate(subscription.nextBillingAt)}</TableCell>
                     <TableCell>{currencyFormatter.format(subscription.monthlyValue)}</TableCell>
                     <TableCell align="right">
-                      <Tooltip title="Acoes">
+                      <Tooltip title="Ações">
                         <IconButton
                           size="small"
-                          aria-label={`Acoes de assinatura de ${subscription.driverName}`}
+                          aria-label={`Ações de assinatura de ${subscription.driverName}`}
                           onClick={(event) => handleOpenMenu(event, subscription)}
                         >
                           <MoreHorizIcon fontSize="small" />

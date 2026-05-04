@@ -56,7 +56,7 @@ export function SubscriptionCharts({ mrrGrowth, planDistribution }: Subscription
             sx={{ mb: 2 }}
           >
             <Box>
-              <Typography variant="h4">Crescimento do MRR - Ultimos 6 meses</Typography>
+              <Typography variant="h4">Crescimento do MRR - Últimos 6 meses</Typography>
               <Typography color="text.secondary" sx={{ mt: 0.25 }}>
                 Receita recorrente mensal consolidada.
               </Typography>
@@ -95,7 +95,7 @@ export function SubscriptionCharts({ mrrGrowth, planDistribution }: Subscription
       <Card variant="outlined">
         <CardContent sx={{ p: 2.25 }}>
           <Stack spacing={0.25} sx={{ mb: 2 }}>
-            <Typography variant="h4">Distribuicao de planos</Typography>
+            <Typography variant="h4">Distribuição de planos</Typography>
             <Typography color="text.secondary">Base ativa por categoria.</Typography>
           </Stack>
 

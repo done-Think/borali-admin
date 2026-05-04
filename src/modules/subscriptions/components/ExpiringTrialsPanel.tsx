@@ -15,7 +15,7 @@ const currencyFormatter = new Intl.NumberFormat('pt-BR', {
 })
 
 const planColors = {
-  Basico: '#22D3EE',
+  Básico: '#22D3EE',
   Pro: '#2563EB',
   Premium: '#22C55E',
 }
@@ -75,15 +75,15 @@ export function ExpiringTrialsPanel({ trials }: ExpiringTrialsPanelProps) {
               <Typography variant="h4">Trials expirando (7 dias)</Typography>
               <Typography color="text.secondary" sx={{ mt: 0.25 }}>
                 {expanded
-                  ? 'Motoristas que precisam de acompanhamento antes da conversao.'
-                  : `${trials.length} trials em atencao, ${criticalTrials} com urgencia alta.`}
+                  ? 'Motoristas que precisam de acompanhamento antes da conversão.'
+                  : `${trials.length} trials em atenção, ${criticalTrials} com urgência alta.`}
               </Typography>
             </Box>
 
             <Stack direction="row" spacing={1} alignItems="center">
               <Chip
                 icon={<AccessTimeOutlinedIcon />}
-                label={`${trials.length} em atencao`}
+                label={`${trials.length} em atenção`}
                 color="warning"
                 variant="outlined"
                 sx={{ fontWeight: 800 }}
@@ -144,7 +144,7 @@ export function ExpiringTrialsPanel({ trials }: ExpiringTrialsPanelProps) {
                         {trial.driverName}
                       </Typography>
                       <Typography color="text.secondary" variant="body2" noWrap>
-                        {trial.city} - {currencyFormatter.format(trial.monthlyValue)}/mes
+                        {trial.city} - {currencyFormatter.format(trial.monthlyValue)}/mês
                       </Typography>
                     </Box>
                   </Stack>

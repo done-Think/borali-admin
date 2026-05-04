@@ -1,6 +1,6 @@
 import type { ReactElement } from 'react'
 
-export type SubscriptionPlan = 'Basico' | 'Pro' | 'Premium'
+export type SubscriptionPlan = 'Básico' | 'Pro' | 'Premium'
 
 export type SubscriptionKpiCard = {
   id: string

@@ -33,7 +33,7 @@ export const monthlyMrrGrowth: MonthlyMrrPoint[] = [
 
 export const planDistribution: PlanDistributionPoint[] = [
   { plan: 'Pro', total: 688, color: '#2563EB' },
-  { plan: 'Basico', total: 412, color: '#22D3EE' },
+  { plan: 'Básico', total: 412, color: '#22D3EE' },
   { plan: 'Premium', total: 184, color: '#22C55E' },
 ]
 
@@ -43,7 +43,7 @@ export const expiringTrials: TrialExpiration[] = [
     driverName: 'Marcos Vinicius',
     plan: 'Pro',
     expiresInDays: 0,
-    city: 'Sao Paulo',
+    city: 'São Paulo',
     monthlyValue: 89.9,
   },
   {
@@ -57,23 +57,23 @@ export const expiringTrials: TrialExpiration[] = [
   {
     id: 'drv-1207',
     driverName: 'Rafael Costa',
-    plan: 'Basico',
+    plan: 'Básico',
     expiresInDays: 2,
     city: 'Santos',
     monthlyValue: 49.9,
   },
   {
     id: 'drv-1324',
-    driverName: 'Patricia Nogueira',
+    driverName: 'Patrícia Nogueira',
     plan: 'Pro',
     expiresInDays: 4,
-    city: 'Santo Andre',
+    city: 'Santo André',
     monthlyValue: 89.9,
   },
   {
     id: 'drv-1411',
     driverName: 'Leandro Barros',
-    plan: 'Basico',
+    plan: 'Básico',
     expiresInDays: 7,
     city: 'Osasco',
     monthlyValue: 49.9,
@@ -83,7 +83,7 @@ export const expiringTrials: TrialExpiration[] = [
 export const driverSubscriptions: DriverSubscription[] = [
   {
     id: 'sub-1001',
-    driverName: 'Andre Luiz',
+    driverName: 'André Luiz',
     driverPhone: '(11) 98831-2044',
     plan: 'Pro',
     status: 'ATIVO',
@@ -112,7 +112,7 @@ export const driverSubscriptions: DriverSubscription[] = [
     id: 'sub-1004',
     driverName: 'Renata Campos',
     driverPhone: '(13) 98877-4102',
-    plan: 'Basico',
+    plan: 'Básico',
     status: 'ATRASADO',
     nextBillingAt: '2026-04-29',
     monthlyValue: 49.9,
@@ -130,7 +130,7 @@ export const driverSubscriptions: DriverSubscription[] = [
     id: 'sub-1006',
     driverName: 'Leandro Barros',
     driverPhone: '(11) 94021-0098',
-    plan: 'Basico',
+    plan: 'Básico',
     status: 'TRIAL',
     nextBillingAt: '2026-05-11',
     monthlyValue: 49.9,
@@ -143,7 +143,7 @@ export function getSubscriptionKpiCards(theme: Theme): SubscriptionKpiCard[] {
       id: 'monthly-mrr',
       title: 'MRR Mensal',
       value: currencyFormatter.format(84200),
-      helper: `+${percentFormatter.format(12.4)}% vs. mes anterior`,
+      helper: `+${percentFormatter.format(12.4)}% vs. mês anterior`,
       icon: <PaidOutlinedIcon />,
       color: theme.palette.primary.main,
     },
@@ -155,9 +155,9 @@ export function getSubscriptionKpiCards(theme: Theme): SubscriptionKpiCard[] {
       icon: <WorkspacePremiumOutlinedIcon />,
       color: theme.palette.secondary.main,
       details: [
-        { label: 'Basico', value: '412', color: 'info' },
+        { label: 'Básico', value: '412', color: 'info' },
         { label: 'Pro', value: '688', color: 'primary' },
-        { label: 'Prem', value: '184', color: 'success' },
+        { label: 'Premium', value: '184', color: 'success' },
       ],
     },
     {
@@ -178,9 +178,9 @@ export function getSubscriptionKpiCards(theme: Theme): SubscriptionKpiCard[] {
     },
     {
       id: 'month-revenue',
-      title: 'Receita total mes',
+      title: 'Receita total do mês',
       value: currencyFormatter.format(118450),
-      helper: 'Assinaturas, upgrades e reativacoes',
+      helper: 'Assinaturas, upgrades e reativações',
       icon: <AccountBalanceWalletOutlinedIcon />,
       color: theme.palette.success.main,
     },
