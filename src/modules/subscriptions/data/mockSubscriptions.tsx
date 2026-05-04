@@ -8,6 +8,7 @@ import type {
   DriverSubscription,
   MonthlyMrrPoint,
   PlanDistributionPoint,
+  SubscriptionRenewal,
   SubscriptionKpiCard,
   TrialExpiration,
 } from '../types'
@@ -39,43 +40,48 @@ export const planDistribution: PlanDistributionPoint[] = [
 
 export const expiringTrials: TrialExpiration[] = [
   {
-    id: 'drv-1048',
-    driverName: 'Marcos Vinicius',
+    id: 'trial-DRV-1004',
+    driverId: 'DRV-1004',
+    driverName: 'Carla Teixeira',
     plan: 'Pro',
     expiresInDays: 0,
-    city: 'São Paulo',
+    city: 'Belo Horizonte',
     monthlyValue: 89.9,
   },
   {
-    id: 'drv-1182',
-    driverName: 'Carla Menezes',
+    id: 'trial-DRV-1008',
+    driverId: 'DRV-1008',
+    driverName: 'Helena Duarte',
     plan: 'Premium',
     expiresInDays: 1,
     city: 'Campinas',
     monthlyValue: 129.9,
   },
   {
-    id: 'drv-1207',
-    driverName: 'Rafael Costa',
+    id: 'trial-DRV-1002',
+    driverId: 'DRV-1002',
+    driverName: 'Patrícia Nogueira',
     plan: 'Básico',
     expiresInDays: 2,
-    city: 'Santos',
+    city: 'Curitiba',
     monthlyValue: 49.9,
   },
   {
-    id: 'drv-1324',
-    driverName: 'Patrícia Nogueira',
+    id: 'trial-DRV-4211',
+    driverId: 'DRV-4211',
+    driverName: 'Rafael Souza',
     plan: 'Pro',
     expiresInDays: 4,
-    city: 'Santo André',
+    city: 'São Paulo',
     monthlyValue: 89.9,
   },
   {
-    id: 'drv-1411',
-    driverName: 'Leandro Barros',
+    id: 'trial-DRV-4207',
+    driverId: 'DRV-4207',
+    driverName: 'André Mota',
     plan: 'Básico',
     expiresInDays: 7,
-    city: 'Osasco',
+    city: 'São Paulo',
     monthlyValue: 49.9,
   },
 ]
@@ -136,6 +142,33 @@ export const driverSubscriptions: DriverSubscription[] = [
     monthlyValue: 49.9,
   },
 ]
+
+export const subscriptionRenewalsByDriverId: Record<string, SubscriptionRenewal[]> = {
+  'DRV-1004': [
+    { id: 'ren-1004-01', date: '04/05/2026', plan: 'Pro', value: 89.9, status: 'Pendente', method: 'Trial em conversão' },
+    { id: 'ren-1004-02', date: '04/04/2026', plan: 'Pro', value: 0, status: 'Pago', method: 'Trial gratuito' },
+    { id: 'ren-1004-03', date: '29/03/2026', plan: 'Pro', value: 0, status: 'Pago', method: 'Cadastro aprovado' },
+  ],
+  'DRV-1008': [
+    { id: 'ren-1008-01', date: '05/05/2026', plan: 'Premium', value: 129.9, status: 'Pendente', method: 'Trial em conversão' },
+    { id: 'ren-1008-02', date: '05/04/2026', plan: 'Premium', value: 0, status: 'Pago', method: 'Trial gratuito' },
+  ],
+  'DRV-1002': [
+    { id: 'ren-1002-01', date: '06/05/2026', plan: 'Básico', value: 49.9, status: 'Pendente', method: 'Cartão final 6508' },
+    { id: 'ren-1002-02', date: '06/04/2026', plan: 'Premium', value: 129.9, status: 'Pago', method: 'Cartão final 6508' },
+    { id: 'ren-1002-03', date: '06/03/2026', plan: 'Premium', value: 129.9, status: 'Pago', method: 'Cartão final 6508' },
+  ],
+  'DRV-4211': [
+    { id: 'ren-4211-01', date: '08/05/2026', plan: 'Pro', value: 89.9, status: 'Pendente', method: 'Pix recorrente' },
+    { id: 'ren-4211-02', date: '08/04/2026', plan: 'Pro', value: 89.9, status: 'Pago', method: 'Pix recorrente' },
+    { id: 'ren-4211-03', date: '08/03/2026', plan: 'Pro', value: 89.9, status: 'Pago', method: 'Pix recorrente' },
+  ],
+  'DRV-4207': [
+    { id: 'ren-4207-01', date: '11/05/2026', plan: 'Básico', value: 49.9, status: 'Pendente', method: 'Cartão final 4402' },
+    { id: 'ren-4207-02', date: '11/04/2026', plan: 'Pro', value: 89.9, status: 'Falhou', method: 'Cartão final 4402' },
+    { id: 'ren-4207-03', date: '12/04/2026', plan: 'Pro', value: 89.9, status: 'Pago', method: 'Retentativa automática' },
+  ],
+}
 
 export function getSubscriptionKpiCards(theme: Theme): SubscriptionKpiCard[] {
   return [

@@ -29,11 +29,23 @@ export type PlanDistributionPoint = {
 
 export type TrialExpiration = {
   id: string
+  driverId: string
   driverName: string
   plan: SubscriptionPlan
   expiresInDays: number
   city: string
   monthlyValue: number
+}
+
+export type SubscriptionRenewalStatus = 'Pago' | 'Pendente' | 'Falhou'
+
+export type SubscriptionRenewal = {
+  id: string
+  date: string
+  plan: SubscriptionPlan
+  value: number
+  status: SubscriptionRenewalStatus
+  method: string
 }
 
 export type SubscriptionStatus = 'ATIVO' | 'TRIAL' | 'ATRASADO'

@@ -1,8 +1,30 @@
-import { useState } from 'react'
+import { useState, type MouseEvent } from 'react'
 import AccessTimeOutlinedIcon from '@mui/icons-material/AccessTimeOutlined'
+import CloseIcon from '@mui/icons-material/Close'
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
-import { Avatar, Box, Button, ButtonBase, Card, CardContent, Chip, Collapse, Divider, Stack, Typography, useTheme } from '@mui/material'
-import type { TrialExpiration } from '../types'
+import {
+  Avatar,
+  Box,
+  Button,
+  ButtonBase,
+  Card,
+  CardContent,
+  Chip,
+  Collapse,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  Divider,
+  IconButton,
+  Stack,
+  Typography,
+  useTheme,
+} from '@mui/material'
+import { useNavigate } from 'react-router'
+import { driverDetailsById, drivers } from '../../drivers/data/mockDrivers'
+import { subscriptionRenewalsByDriverId } from '../data/mockSubscriptions'
+import type { SubscriptionRenewal, TrialExpiration } from '../types'
 
 type ExpiringTrialsPanelProps = {
   trials: TrialExpiration[]
@@ -51,10 +73,41 @@ function getInitials(name: string) {
     .toUpperCase()
 }
 
+function getRenewalStatusColor(status: SubscriptionRenewal['status']) {
+  if (status === 'Pago') {
+    return 'success' as const
+  }
+
+  if (status === 'Falhou') {
+    return 'error' as const
+  }
+
+  return 'warning' as const
+}
+
 export function ExpiringTrialsPanel({ trials }: ExpiringTrialsPanelProps) {
   const theme = useTheme()
+  const navigate = useNavigate()
   const [expanded, setExpanded] = useState(false)
+  const [selectedTrial, setSelectedTrial] = useState<TrialExpiration | null>(null)
   const criticalTrials = trials.filter((trial) => trial.expiresInDays <= 1).length
+  const selectedDriver = selectedTrial ? drivers.find((driver) => driver.id === selectedTrial.driverId) : null
+  const selectedDriverDetails = selectedDriver ? driverDetailsById[selectedDriver.id] : null
+  const selectedRenewals = selectedTrial ? subscriptionRenewalsByDriverId[selectedTrial.driverId] ?? [] : []
+  const selectedUrgency = selectedTrial ? getUrgencyMeta(selectedTrial.expiresInDays) : null
+
+  function openDriverSummary(event: MouseEvent<HTMLButtonElement>, trial: TrialExpiration) {
+    event.stopPropagation()
+    setSelectedTrial(trial)
+  }
+
+  function openFullDriverProfile() {
+    if (!selectedTrial) {
+      return
+    }
+
+    navigate('/drivers', { state: { selectedDriverId: selectedTrial.driverId, selectedDriverTab: 0 } })
+  }
 
   return (
     <Card variant="outlined">
@@ -170,6 +223,7 @@ export function ExpiringTrialsPanel({ trials }: ExpiringTrialsPanelProps) {
                     <Button
                       size="small"
                       variant="text"
+                      onClick={(event) => openDriverSummary(event, trial)}
                       sx={{
                         color: theme.palette.text.primary,
                         fontWeight: 800,
@@ -185,6 +239,169 @@ export function ExpiringTrialsPanel({ trials }: ExpiringTrialsPanelProps) {
           </Stack>
         </CardContent>
       </Collapse>
+
+      <Dialog open={Boolean(selectedTrial)} onClose={() => setSelectedTrial(null)} fullWidth maxWidth="md">
+        <DialogTitle sx={{ pr: 7 }}>
+          <Stack direction="row" spacing={1.5} alignItems="center">
+            <Avatar
+              sx={{
+                width: 44,
+                height: 44,
+                bgcolor: selectedTrial ? `${planColors[selectedTrial.plan]}1F` : 'action.hover',
+                color: selectedTrial ? planColors[selectedTrial.plan] : 'text.secondary',
+                fontWeight: 900,
+              }}
+            >
+              {getInitials(selectedDriver?.name ?? selectedTrial?.driverName ?? '')}
+            </Avatar>
+            <Box sx={{ minWidth: 0 }}>
+              <Typography variant="h4" component="span" noWrap>
+                {selectedDriver?.name ?? selectedTrial?.driverName ?? 'Motorista'}
+              </Typography>
+              <Typography color="text.secondary" variant="body2">
+                {selectedDriver?.id ?? selectedTrial?.driverId} · Resumo de trial e renovações
+              </Typography>
+            </Box>
+          </Stack>
+
+          <IconButton
+            aria-label="Fechar resumo do motorista"
+            onClick={() => setSelectedTrial(null)}
+            sx={{ position: 'absolute', right: 16, top: 16 }}
+          >
+            <CloseIcon />
+          </IconButton>
+        </DialogTitle>
+
+        <DialogContent dividers>
+          {selectedTrial ? (
+            <Stack spacing={2.5}>
+              <Stack direction={{ xs: 'column', md: 'row' }} spacing={1.5}>
+                {[
+                  { label: 'Plano em trial', value: selectedTrial.plan },
+                  { label: 'Mensalidade', value: `${currencyFormatter.format(selectedTrial.monthlyValue)}/mês` },
+                  { label: 'Prazo', value: selectedUrgency?.label ?? 'Sem prazo' },
+                ].map((item) => (
+                  <Card key={item.label} variant="outlined" sx={{ flex: 1 }}>
+                    <CardContent sx={{ p: 2, '&:last-child': { pb: 2 } }}>
+                      <Typography color="text.secondary" variant="body2">
+                        {item.label}
+                      </Typography>
+                      <Typography fontWeight={900} sx={{ mt: 0.5 }}>
+                        {item.value}
+                      </Typography>
+                    </CardContent>
+                  </Card>
+                ))}
+              </Stack>
+
+              <Card variant="outlined">
+                <CardContent>
+                  <Stack spacing={2}>
+                    <Stack
+                      direction={{ xs: 'column', sm: 'row' }}
+                      spacing={1.5}
+                      alignItems={{ xs: 'flex-start', sm: 'center' }}
+                      justifyContent="space-between"
+                    >
+                      <Box>
+                        <Typography variant="h5">Resumo do cadastro</Typography>
+                        <Typography color="text.secondary" variant="body2">
+                          Dados principais do motorista antes de abrir o perfil completo.
+                        </Typography>
+                      </Box>
+
+                      <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
+                        {selectedDriver ? <Chip label={selectedDriver.status} size="small" color="info" /> : null}
+                        {selectedDriver ? <Chip label={selectedDriver.category} size="small" variant="outlined" /> : null}
+                      </Stack>
+                    </Stack>
+
+                    <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} flexWrap="wrap" useFlexGap>
+                      <Box sx={{ minWidth: 170 }}>
+                        <Typography color="text.secondary" variant="body2">
+                          Telefone
+                        </Typography>
+                        <Typography fontWeight={800}>{selectedDriver?.phone ?? 'Não informado'}</Typography>
+                      </Box>
+                      <Box sx={{ minWidth: 170 }}>
+                        <Typography color="text.secondary" variant="body2">
+                          Cidade
+                        </Typography>
+                        <Typography fontWeight={800}>{selectedDriverDetails?.city ?? selectedTrial.city}</Typography>
+                      </Box>
+                      <Box sx={{ minWidth: 170 }}>
+                        <Typography color="text.secondary" variant="body2">
+                          Veículo
+                        </Typography>
+                        <Typography fontWeight={800}>{selectedDriverDetails?.vehicle ?? 'Aguardando cadastro'}</Typography>
+                      </Box>
+                      <Box sx={{ minWidth: 170 }}>
+                        <Typography color="text.secondary" variant="body2">
+                          Corridas / avaliação
+                        </Typography>
+                        <Typography fontWeight={800}>
+                          {selectedDriver ? `${selectedDriver.rides} · ${selectedDriver.rating.toFixed(1)}` : 'Não informado'}
+                        </Typography>
+                      </Box>
+                    </Stack>
+                  </Stack>
+                </CardContent>
+              </Card>
+
+              <Card variant="outlined">
+                <CardContent>
+                  <Typography variant="h5">Histórico de renovações</Typography>
+                  <Stack divider={<Divider flexItem />} sx={{ mt: 1.5 }}>
+                    {selectedRenewals.length > 0 ? (
+                      selectedRenewals.map((renewal) => (
+                        <Stack
+                          key={renewal.id}
+                          direction={{ xs: 'column', sm: 'row' }}
+                          spacing={1.5}
+                          alignItems={{ xs: 'flex-start', sm: 'center' }}
+                          justifyContent="space-between"
+                          sx={{ py: 1.25 }}
+                        >
+                          <Box>
+                            <Typography fontWeight={800}>{renewal.date}</Typography>
+                            <Typography color="text.secondary" variant="body2">
+                              {renewal.plan} · {renewal.method}
+                            </Typography>
+                          </Box>
+
+                          <Stack direction="row" spacing={1} alignItems="center">
+                            <Typography fontWeight={900}>{currencyFormatter.format(renewal.value)}</Typography>
+                            <Chip
+                              label={renewal.status}
+                              size="small"
+                              color={getRenewalStatusColor(renewal.status)}
+                              sx={{ fontWeight: 800 }}
+                            />
+                          </Stack>
+                        </Stack>
+                      ))
+                    ) : (
+                      <Typography color="text.secondary" sx={{ py: 1.5 }}>
+                        Nenhuma renovação registrada para este motorista.
+                      </Typography>
+                    )}
+                  </Stack>
+                </CardContent>
+              </Card>
+            </Stack>
+          ) : null}
+        </DialogContent>
+
+        <DialogActions sx={{ px: 3, py: 2, flexWrap: 'wrap', gap: 1 }}>
+          <Button onClick={() => setSelectedTrial(null)} sx={{ textTransform: 'none', fontWeight: 800 }}>
+            Fechar
+          </Button>
+          <Button variant="contained" onClick={openFullDriverProfile} sx={{ textTransform: 'none', fontWeight: 800 }}>
+            Ir para perfil completo
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Card>
   )
 }
