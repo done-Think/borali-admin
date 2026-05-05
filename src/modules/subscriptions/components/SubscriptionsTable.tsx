@@ -3,6 +3,7 @@ import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
 import MoreHorizIcon from '@mui/icons-material/MoreHoriz'
 import SearchIcon from '@mui/icons-material/Search'
 import CloseIcon from '@mui/icons-material/Close'
+import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline'
 import {
   Autocomplete,
   Avatar,
@@ -66,6 +67,32 @@ const statusPalette: Record<SubscriptionStatus, 'success' | 'warning' | 'error'>
   TRIAL: 'warning',
   ATRASADO: 'error',
 }
+
+const availablePlans: {
+  plan: SubscriptionPlan
+  value: number
+  helper: string
+  improvements: string[]
+}[] = [
+  {
+    plan: 'Básico',
+    value: 49.9,
+    helper: 'Entrada para operação ativa',
+    improvements: ['Perfil ativo no app', 'Suporte padrão', 'Relatórios mensais básicos'],
+  },
+  {
+    plan: 'Pro',
+    value: 89.9,
+    helper: 'Mais visibilidade e gestão',
+    improvements: ['Prioridade em chamadas', 'Relatórios semanais', 'Campanhas de retenção', 'Alertas de desempenho'],
+  },
+  {
+    plan: 'Premium',
+    value: 129.9,
+    helper: 'Pacote completo para alta operação',
+    improvements: ['Maior prioridade na busca', 'Suporte prioritário', 'Insights avançados', 'Benefícios promocionais'],
+  },
+]
 
 function getInitials(name: string) {
   return name
@@ -134,6 +161,7 @@ export function SubscriptionsTable({ subscriptions }: SubscriptionsTableProps) {
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null)
   const [selectedSubscription, setSelectedSubscription] = useState<DriverSubscription | null>(null)
   const [detailsSubscription, setDetailsSubscription] = useState<DriverSubscription | null>(null)
+  const [planChangeSubscription, setPlanChangeSubscription] = useState<DriverSubscription | null>(null)
   const menuOpen = Boolean(anchorEl)
   const overdueSubscriptions = subscriptions.filter((subscription) => subscription.status === 'ATRASADO').length
   const overdueLabel = `${overdueSubscriptions} ${
@@ -170,6 +198,11 @@ export function SubscriptionsTable({ subscriptions }: SubscriptionsTableProps) {
 
   function handleOpenDetails() {
     setDetailsSubscription(selectedSubscription)
+    handleCloseMenu()
+  }
+
+  function handleOpenPlanChange() {
+    setPlanChangeSubscription(selectedSubscription)
     handleCloseMenu()
   }
 
@@ -359,7 +392,7 @@ export function SubscriptionsTable({ subscriptions }: SubscriptionsTableProps) {
             transformOrigin={{ vertical: 'top', horizontal: 'right' }}
           >
             <MenuItem onClick={handleOpenDetails}>Ver detalhes</MenuItem>
-            <MenuItem onClick={handleCloseMenu}>Alterar plano</MenuItem>
+            <MenuItem onClick={handleOpenPlanChange}>Alterar plano</MenuItem>
             <MenuItem onClick={handleCloseMenu}>Registrar pagamento</MenuItem>
             <MenuItem onClick={handleCloseMenu} sx={{ color: 'error.main' }}>
               Cancelar assinatura
@@ -576,6 +609,100 @@ export function SubscriptionsTable({ subscriptions }: SubscriptionsTableProps) {
               </Card>
             </Stack>
           ) : null}
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={Boolean(planChangeSubscription)} onClose={() => setPlanChangeSubscription(null)} fullWidth maxWidth="md">
+        <DialogTitle sx={{ pr: 7 }}>
+          <Box>
+            <Typography variant="h4" component="span">
+              Alterar plano
+            </Typography>
+            <Typography color="text.secondary" variant="body2">
+              {planChangeSubscription?.driverName} · plano atual: {planChangeSubscription?.plan}
+            </Typography>
+          </Box>
+
+          <IconButton
+            aria-label="Fechar alteração de plano"
+            onClick={() => setPlanChangeSubscription(null)}
+            sx={{ position: 'absolute', right: 16, top: 16 }}
+          >
+            <CloseIcon />
+          </IconButton>
+        </DialogTitle>
+
+        <DialogContent dividers>
+          <Stack direction={{ xs: 'column', md: 'row' }} spacing={2}>
+            {availablePlans.map((item) => {
+              const isCurrentPlan = item.plan === planChangeSubscription?.plan
+
+              return (
+                <Card
+                  key={item.plan}
+                  variant="outlined"
+                  sx={{
+                    flex: 1,
+                    borderColor: isCurrentPlan ? planPalette[item.plan] : 'divider',
+                    bgcolor: isCurrentPlan ? `${planPalette[item.plan]}0F` : 'background.paper',
+                  }}
+                >
+                  <CardContent>
+                    <Stack spacing={1.5}>
+                      <Stack direction="row" justifyContent="space-between" spacing={1} alignItems="center">
+                        <Box>
+                          <Typography variant="h5">{item.plan}</Typography>
+                          <Typography color="text.secondary" variant="body2">
+                            {item.helper}
+                          </Typography>
+                        </Box>
+                        {isCurrentPlan ? <Chip label="Atual" size="small" color="primary" sx={{ fontWeight: 800 }} /> : null}
+                      </Stack>
+
+                      <Box>
+                        <Typography variant="h4" fontWeight={900}>
+                          {currencyFormatter.format(item.value)}
+                        </Typography>
+                        <Typography color="text.secondary" variant="body2">
+                          por mês
+                        </Typography>
+                      </Box>
+
+                      <Stack spacing={1}>
+                        {item.improvements.map((improvement) => (
+                          <Stack key={improvement} direction="row" spacing={1} alignItems="flex-start">
+                            <CheckCircleOutlineIcon
+                              fontSize="small"
+                              sx={{ color: planPalette[item.plan], mt: 0.15, flexShrink: 0 }}
+                            />
+                            <Typography variant="body2">{improvement}</Typography>
+                          </Stack>
+                        ))}
+                      </Stack>
+
+                      <ButtonBase
+                        disabled={isCurrentPlan}
+                        onClick={() => setPlanChangeSubscription(null)}
+                        sx={{
+                          mt: 1,
+                          borderRadius: 1,
+                          py: 1,
+                          px: 1.5,
+                          bgcolor: isCurrentPlan ? 'action.disabledBackground' : planPalette[item.plan],
+                          color: isCurrentPlan ? 'text.disabled' : 'common.white',
+                          fontWeight: 900,
+                          textAlign: 'center',
+                          width: '100%',
+                        }}
+                      >
+                        {isCurrentPlan ? 'Plano atual' : 'Selecionar plano'}
+                      </ButtonBase>
+                    </Stack>
+                  </CardContent>
+                </Card>
+              )
+            })}
+          </Stack>
         </DialogContent>
       </Dialog>
     </Card>
