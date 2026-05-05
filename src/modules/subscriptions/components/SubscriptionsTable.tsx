@@ -1,7 +1,9 @@
-import { useState, type MouseEvent } from 'react'
+import { useMemo, useState, type MouseEvent } from 'react'
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
 import MoreHorizIcon from '@mui/icons-material/MoreHoriz'
+import SearchIcon from '@mui/icons-material/Search'
 import {
+  Autocomplete,
   Avatar,
   Box,
   ButtonBase,
@@ -19,6 +21,7 @@ import {
   TableContainer,
   TableHead,
   TableRow,
+  TextField,
   Tooltip,
   Typography,
   useTheme,
@@ -67,9 +70,29 @@ function formatDate(date: string) {
   return dateFormatter.format(new Date(`${date}T12:00:00`))
 }
 
+function normalizeSearch(value: string) {
+  return value
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .trim()
+}
+
+function getSubscriptionSearchText(subscription: DriverSubscription) {
+  return [
+    subscription.driverName,
+    subscription.driverPhone,
+    subscription.plan,
+    subscription.status,
+    formatDate(subscription.nextBillingAt),
+    `${subscription.monthlyValue}`,
+  ].join(' ')
+}
+
 export function SubscriptionsTable({ subscriptions }: SubscriptionsTableProps) {
   const theme = useTheme()
-  const [expanded, setExpanded] = useState(false)
+  const [expanded, setExpanded] = useState(true)
+  const [searchTerm, setSearchTerm] = useState('')
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null)
   const [selectedSubscription, setSelectedSubscription] = useState<DriverSubscription | null>(null)
   const menuOpen = Boolean(anchorEl)
@@ -77,6 +100,24 @@ export function SubscriptionsTable({ subscriptions }: SubscriptionsTableProps) {
   const overdueLabel = `${overdueSubscriptions} ${
     overdueSubscriptions === 1 ? 'assinatura atrasada' : 'assinaturas atrasadas'
   }`
+  const subscriptionSearchOptions = useMemo(
+    () =>
+      Array.from(new Set(subscriptions.map((subscription) => subscription.driverName))).sort((a, b) =>
+        a.localeCompare(b, 'pt-BR'),
+      ),
+    [subscriptions],
+  )
+  const filteredSubscriptions = useMemo(() => {
+    const normalizedTerm = normalizeSearch(searchTerm)
+
+    if (!normalizedTerm) {
+      return subscriptions
+    }
+
+    return subscriptions.filter((subscription) =>
+      normalizeSearch(getSubscriptionSearchText(subscription)).includes(normalizedTerm),
+    )
+  }, [searchTerm, subscriptions])
 
   function handleOpenMenu(event: MouseEvent<HTMLElement>, subscription: DriverSubscription) {
     setAnchorEl(event.currentTarget)
@@ -137,6 +178,31 @@ export function SubscriptionsTable({ subscriptions }: SubscriptionsTableProps) {
           id="subscriptions-table-content"
           sx={{ pt: 0, px: 2.25, pb: 2.25, '&:last-child': { pb: 2.25 } }}
         >
+          <Autocomplete
+            freeSolo
+            options={subscriptionSearchOptions}
+            inputValue={searchTerm}
+            onInputChange={(_, value) => setSearchTerm(value)}
+            size="small"
+            sx={{ mb: 1.5, maxWidth: 420 }}
+            renderInput={(params) => (
+              <TextField
+                {...params}
+                label="Buscar assinatura"
+                placeholder="Nome, telefone, plano ou status"
+                InputProps={{
+                  ...params.InputProps,
+                  startAdornment: (
+                    <>
+                      <SearchIcon color="action" fontSize="small" sx={{ mr: 1 }} />
+                      {params.InputProps.startAdornment}
+                    </>
+                  ),
+                }}
+              />
+            )}
+          />
+
           <TableContainer>
             <Table sx={{ minWidth: 860 }}>
               <TableHead>
@@ -152,7 +218,7 @@ export function SubscriptionsTable({ subscriptions }: SubscriptionsTableProps) {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {subscriptions.map((subscription) => (
+                {filteredSubscriptions.map((subscription) => (
                   <TableRow key={subscription.id} hover>
                     <TableCell>
                       <Stack direction="row" spacing={1.5} alignItems="center">
@@ -213,6 +279,16 @@ export function SubscriptionsTable({ subscriptions }: SubscriptionsTableProps) {
                     </TableCell>
                   </TableRow>
                 ))}
+
+                {filteredSubscriptions.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={6}>
+                      <Typography color="text.secondary" sx={{ py: 2 }}>
+                        Nenhuma assinatura encontrada para essa busca.
+                      </Typography>
+                    </TableCell>
+                  </TableRow>
+                ) : null}
               </TableBody>
             </Table>
           </TableContainer>

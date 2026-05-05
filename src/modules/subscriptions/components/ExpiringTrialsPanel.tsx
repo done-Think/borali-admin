@@ -1,8 +1,10 @@
-import { useState, type MouseEvent } from 'react'
+import { useMemo, useState, type MouseEvent } from 'react'
 import AccessTimeOutlinedIcon from '@mui/icons-material/AccessTimeOutlined'
 import CloseIcon from '@mui/icons-material/Close'
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
+import SearchIcon from '@mui/icons-material/Search'
 import {
+  Autocomplete,
   Avatar,
   Box,
   Button,
@@ -18,6 +20,7 @@ import {
   Divider,
   IconButton,
   Stack,
+  TextField,
   Typography,
   useTheme,
 } from '@mui/material'
@@ -85,12 +88,40 @@ function getRenewalStatusColor(status: SubscriptionRenewal['status']) {
   return 'warning' as const
 }
 
+function normalizeSearch(value: string) {
+  return value
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .trim()
+}
+
+function getTrialSearchText(trial: TrialExpiration) {
+  const driver = drivers.find((item) => item.id === trial.driverId)
+
+  return [trial.driverName, driver?.phone, trial.city, trial.plan, `${trial.monthlyValue}`].filter(Boolean).join(' ')
+}
+
 export function ExpiringTrialsPanel({ trials }: ExpiringTrialsPanelProps) {
   const theme = useTheme()
   const navigate = useNavigate()
-  const [expanded, setExpanded] = useState(false)
+  const [expanded, setExpanded] = useState(true)
+  const [searchTerm, setSearchTerm] = useState('')
   const [selectedTrial, setSelectedTrial] = useState<TrialExpiration | null>(null)
   const criticalTrials = trials.filter((trial) => trial.expiresInDays <= 1).length
+  const trialSearchOptions = useMemo(
+    () => Array.from(new Set(trials.map((trial) => trial.driverName))).sort((a, b) => a.localeCompare(b, 'pt-BR')),
+    [trials],
+  )
+  const filteredTrials = useMemo(() => {
+    const normalizedTerm = normalizeSearch(searchTerm)
+
+    if (!normalizedTerm) {
+      return trials
+    }
+
+    return trials.filter((trial) => normalizeSearch(getTrialSearchText(trial)).includes(normalizedTerm))
+  }, [searchTerm, trials])
   const selectedDriver = selectedTrial ? drivers.find((driver) => driver.id === selectedTrial.driverId) : null
   const selectedDriverDetails = selectedDriver ? driverDetailsById[selectedDriver.id] : null
   const selectedRenewals = selectedTrial ? subscriptionRenewalsByDriverId[selectedTrial.driverId] ?? [] : []
@@ -165,8 +196,33 @@ export function ExpiringTrialsPanel({ trials }: ExpiringTrialsPanelProps) {
           id="expiring-trials-content"
           sx={{ pt: 0, px: 2.25, pb: 2.25, '&:last-child': { pb: 2.25 } }}
         >
+          <Autocomplete
+            freeSolo
+            options={trialSearchOptions}
+            inputValue={searchTerm}
+            onInputChange={(_, value) => setSearchTerm(value)}
+            size="small"
+            sx={{ mb: 1.5, maxWidth: 420 }}
+            renderInput={(params) => (
+              <TextField
+                {...params}
+                label="Buscar motorista em trial"
+                placeholder="Nome, cidade, telefone ou plano"
+                InputProps={{
+                  ...params.InputProps,
+                  startAdornment: (
+                    <>
+                      <SearchIcon color="action" fontSize="small" sx={{ mr: 1 }} />
+                      {params.InputProps.startAdornment}
+                    </>
+                  ),
+                }}
+              />
+            )}
+          />
+
           <Stack divider={<Divider flexItem />} spacing={0}>
-            {trials.map((trial) => {
+            {filteredTrials.map((trial) => {
               const urgency = getUrgencyMeta(trial.expiresInDays)
 
               return (
@@ -236,6 +292,12 @@ export function ExpiringTrialsPanel({ trials }: ExpiringTrialsPanelProps) {
                 </Stack>
               )
             })}
+
+            {filteredTrials.length === 0 ? (
+              <Typography color="text.secondary" sx={{ py: 2 }}>
+                Nenhum motorista encontrado para essa busca.
+              </Typography>
+            ) : null}
           </Stack>
         </CardContent>
       </Collapse>
