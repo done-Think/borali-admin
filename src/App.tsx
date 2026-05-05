@@ -8,15 +8,15 @@ import HeadsetMicIcon from '@mui/icons-material/HeadsetMic'
 import RouteIcon from '@mui/icons-material/Route'
 import SettingsIcon from '@mui/icons-material/Settings'
 import { Badge, CssBaseline, GlobalStyles } from '@mui/material'
+import { useEffect, useState } from 'react'
 import { Outlet } from 'react-router'
 import { ReactRouterAppProvider } from '@toolpad/core/react-router'
 import theme from './theme/themeProvider'
 import logo from '@/assets/logo.png'
 import { pendingApprovalDrivers } from '@modules/approvals/data/mockApprovals'
 
-const pendingApprovalsCount = pendingApprovalDrivers.length
-
-const navigation = [
+function createNavigation(pendingApprovalsCount: number) {
+  return [
   { kind: 'header' as const, title: 'Visao Geral' },
   { segment: '', title: 'Dashboard', icon: <DashboardIcon /> },
   { kind: 'header' as const, title: 'Gestao' },
@@ -38,7 +38,8 @@ const navigation = [
   { kind: 'header' as const, title: 'Dados' },
   { segment: 'analytics', title: 'Dados', icon: <BarChartIcon /> },
   { segment: 'settings', title: 'Ajustes', icon: <SettingsIcon /> },
-]
+  ]
+}
 
 const branding = {
   title: '',
@@ -54,6 +55,22 @@ const session = {
 }
 
 export default function App() {
+  const [pendingApprovalsCount, setPendingApprovalsCount] = useState(pendingApprovalDrivers.length)
+  const navigation = createNavigation(pendingApprovalsCount)
+
+  useEffect(() => {
+    function handlePendingCount(event: Event) {
+      const nextCount = (event as CustomEvent<number>).detail
+
+      if (typeof nextCount === 'number') {
+        setPendingApprovalsCount(nextCount)
+      }
+    }
+
+    window.addEventListener('approvals:pending-count', handlePendingCount)
+    return () => window.removeEventListener('approvals:pending-count', handlePendingCount)
+  }, [])
+
   return (
     <ReactRouterAppProvider
       theme={theme}

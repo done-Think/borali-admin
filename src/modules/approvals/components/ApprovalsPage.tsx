@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import AssignmentTurnedInIcon from '@mui/icons-material/AssignmentTurnedIn'
 import DescriptionOutlinedIcon from '@mui/icons-material/DescriptionOutlined'
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
@@ -26,6 +26,7 @@ import {
   useTheme,
 } from '@mui/material'
 import CloseIcon from '@mui/icons-material/Close'
+import { useSnackbar } from 'notistack'
 import { pendingApprovalDrivers, recentApprovalHistory } from '../data/mockApprovals'
 import type { ApprovalDocument, ApprovalDriver } from '../types'
 
@@ -47,10 +48,11 @@ function getDocumentIcon(document: ApprovalDocument) {
 
 export default function ApprovalsPage() {
   const theme = useTheme()
+  const { enqueueSnackbar } = useSnackbar()
   const [pendingDrivers, setPendingDrivers] = useState(pendingApprovalDrivers)
   const [approvalHistory, setApprovalHistory] = useState(recentApprovalHistory)
 
-  function handleDecision(driver: ApprovalDriver, decision: 'Aprovado' | 'Rejeitado') {
+  function handleDecision(driver: ApprovalDriver, decision: 'Aprovado' | 'Rejeitado', reason?: string) {
     setPendingDrivers((current) => current.filter((item) => item.id !== driver.id))
     setApprovalHistory((current) => [
       {
@@ -65,10 +67,21 @@ export default function ApprovalsPage() {
           minute: '2-digit',
         }).format(new Date()),
         reviewer: 'Admin',
+        reason,
       },
       ...current,
     ])
+    enqueueSnackbar(
+      decision === 'Aprovado'
+        ? `${driver.name} aprovado com sucesso.`
+        : `${driver.name} rejeitado e removido da fila.`,
+      { variant: decision === 'Aprovado' ? 'success' : 'warning', autoHideDuration: 2000 },
+    )
   }
+
+  useEffect(() => {
+    window.dispatchEvent(new CustomEvent('approvals:pending-count', { detail: pendingDrivers.length }))
+  }, [pendingDrivers.length])
 
   return (
     <Stack spacing={3}>
@@ -116,6 +129,11 @@ export default function ApprovalsPage() {
                   <Typography color="text.secondary" variant="body2">
                     {item.decidedAt} · {item.reviewer}
                   </Typography>
+                  {item.reason ? (
+                    <Typography color="text.secondary" variant="body2" sx={{ mt: 0.25 }}>
+                      Motivo: {item.reason}
+                    </Typography>
+                  ) : null}
                 </Box>
                 <Chip
                   label={item.decision}
@@ -137,7 +155,7 @@ function ApprovalDriverCard({
   onDecision,
 }: {
   driver: ApprovalDriver
-  onDecision: (driver: ApprovalDriver, decision: 'Aprovado' | 'Rejeitado') => void
+  onDecision: (driver: ApprovalDriver, decision: 'Aprovado' | 'Rejeitado', reason?: string) => void
 }) {
   const theme = useTheme()
   const [expanded, setExpanded] = useState(false)
@@ -151,7 +169,7 @@ function ApprovalDriverCard({
       return
     }
 
-    onDecision(driver, 'Rejeitado')
+    onDecision(driver, 'Rejeitado', rejectionReason.trim())
   }
 
   return (

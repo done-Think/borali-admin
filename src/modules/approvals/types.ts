@@ -31,4 +31,5 @@ export type ApprovalHistoryItem = {
   decision: 'Aprovado' | 'Rejeitado'
   decidedAt: string
   reviewer: string
+  reason?: string
 }
