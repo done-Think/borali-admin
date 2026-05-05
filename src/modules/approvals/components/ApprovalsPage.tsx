@@ -8,6 +8,7 @@ import ImageOutlinedIcon from '@mui/icons-material/ImageOutlined'
 import {
   Avatar,
   Box,
+  Button,
   ButtonBase,
   Card,
   CardContent,
@@ -20,6 +21,7 @@ import {
   IconButton,
   LinearProgress,
   Stack,
+  TextField,
   Typography,
   useTheme,
 } from '@mui/material'
@@ -45,6 +47,28 @@ function getDocumentIcon(document: ApprovalDocument) {
 
 export default function ApprovalsPage() {
   const theme = useTheme()
+  const [pendingDrivers, setPendingDrivers] = useState(pendingApprovalDrivers)
+  const [approvalHistory, setApprovalHistory] = useState(recentApprovalHistory)
+
+  function handleDecision(driver: ApprovalDriver, decision: 'Aprovado' | 'Rejeitado') {
+    setPendingDrivers((current) => current.filter((item) => item.id !== driver.id))
+    setApprovalHistory((current) => [
+      {
+        id: `hist-${driver.id}-${Date.now()}`,
+        driverName: driver.name,
+        decision,
+        decidedAt: new Intl.DateTimeFormat('pt-BR', {
+          day: '2-digit',
+          month: '2-digit',
+          year: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit',
+        }).format(new Date()),
+        reviewer: 'Admin',
+      },
+      ...current,
+    ])
+  }
 
   return (
     <Stack spacing={3}>
@@ -59,7 +83,7 @@ export default function ApprovalsPage() {
         </Box>
         <Chip
           icon={<AssignmentTurnedInIcon />}
-          label={`${pendingApprovalDrivers.length} pendentes`}
+          label={`${pendingDrivers.length} pendentes`}
           color="error"
           variant="outlined"
           sx={{ fontWeight: 900 }}
@@ -67,8 +91,8 @@ export default function ApprovalsPage() {
       </Stack>
 
       <Stack spacing={1.5}>
-        {pendingApprovalDrivers.map((driver) => (
-          <ApprovalDriverCard key={driver.id} driver={driver} />
+        {pendingDrivers.map((driver) => (
+          <ApprovalDriverCard key={driver.id} driver={driver} onDecision={handleDecision} />
         ))}
       </Stack>
 
@@ -85,7 +109,7 @@ export default function ApprovalsPage() {
           </Stack>
 
           <Stack spacing={1} divider={<Divider flexItem />}>
-            {recentApprovalHistory.map((item) => (
+            {approvalHistory.map((item) => (
               <Stack key={item.id} direction={{ xs: 'column', sm: 'row' }} spacing={1} alignItems={{ xs: 'flex-start', sm: 'center' }} justifyContent="space-between" sx={{ py: 1 }}>
                 <Box>
                   <Typography fontWeight={900}>{item.driverName}</Typography>
@@ -108,11 +132,27 @@ export default function ApprovalsPage() {
   )
 }
 
-function ApprovalDriverCard({ driver }: { driver: ApprovalDriver }) {
+function ApprovalDriverCard({
+  driver,
+  onDecision,
+}: {
+  driver: ApprovalDriver
+  onDecision: (driver: ApprovalDriver, decision: 'Aprovado' | 'Rejeitado') => void
+}) {
   const theme = useTheme()
   const [expanded, setExpanded] = useState(false)
   const [selectedDocument, setSelectedDocument] = useState<ApprovalDocument | null>(null)
+  const [rejectionMode, setRejectionMode] = useState(false)
+  const [rejectionReason, setRejectionReason] = useState('')
   const faceCheckColor = getFaceCheckColor(driver.faceCheck.status)
+
+  function submitRejection() {
+    if (!rejectionReason.trim()) {
+      return
+    }
+
+    onDecision(driver, 'Rejeitado')
+  }
 
   return (
     <Card variant="outlined">
@@ -261,6 +301,67 @@ function ApprovalDriverCard({ driver }: { driver: ApprovalDriver }) {
               </CardContent>
             </Card>
           </Box>
+
+          <Card variant="outlined" sx={{ mt: 1.5 }}>
+            <CardContent sx={{ p: 1.5, '&:last-child': { pb: 1.5 } }}>
+              <Stack
+                direction={{ xs: 'column', md: 'row' }}
+                spacing={1.5}
+                alignItems={{ xs: 'stretch', md: 'center' }}
+                justifyContent="space-between"
+              >
+                <Box>
+                  <Typography variant="h5">Decisão do cadastro</Typography>
+                  <Typography color="text.secondary" variant="body2">
+                    Aprove o motorista ou informe o motivo da rejeição.
+                  </Typography>
+                </Box>
+
+                <Stack direction="row" spacing={1} justifyContent={{ xs: 'stretch', md: 'flex-end' }}>
+                  <Button
+                    variant="contained"
+                    color="success"
+                    onClick={() => onDecision(driver, 'Aprovado')}
+                    sx={{ fontWeight: 900, textTransform: 'none' }}
+                  >
+                    Aprovar
+                  </Button>
+                  <Button
+                    variant={rejectionMode ? 'contained' : 'outlined'}
+                    color="error"
+                    onClick={() => setRejectionMode((current) => !current)}
+                    sx={{ fontWeight: 900, textTransform: 'none' }}
+                  >
+                    Rejeitar
+                  </Button>
+                </Stack>
+              </Stack>
+
+              {rejectionMode ? (
+                <Stack direction={{ xs: 'column', md: 'row' }} spacing={1.25} alignItems={{ xs: 'stretch', md: 'flex-start' }} sx={{ mt: 1.5 }}>
+                  <TextField
+                    value={rejectionReason}
+                    onChange={(event) => setRejectionReason(event.target.value)}
+                    label="Motivo da rejeição"
+                    placeholder="Ex.: documento ilegível, divergência facial, CRLV vencido"
+                    size="small"
+                    multiline
+                    minRows={2}
+                    fullWidth
+                  />
+                  <Button
+                    variant="contained"
+                    color="error"
+                    disabled={!rejectionReason.trim()}
+                    onClick={submitRejection}
+                    sx={{ fontWeight: 900, textTransform: 'none', minWidth: 150 }}
+                  >
+                    Confirmar
+                  </Button>
+                </Stack>
+              ) : null}
+            </CardContent>
+          </Card>
         </CardContent>
       </Collapse>
 
