@@ -13,12 +13,17 @@ import {
   CardContent,
   Chip,
   Collapse,
+  Dialog,
+  DialogContent,
+  DialogTitle,
   Divider,
+  IconButton,
   LinearProgress,
   Stack,
   Typography,
   useTheme,
 } from '@mui/material'
+import CloseIcon from '@mui/icons-material/Close'
 import { pendingApprovalDrivers, recentApprovalHistory } from '../data/mockApprovals'
 import type { ApprovalDocument, ApprovalDriver } from '../types'
 
@@ -106,6 +111,7 @@ export default function ApprovalsPage() {
 function ApprovalDriverCard({ driver }: { driver: ApprovalDriver }) {
   const theme = useTheme()
   const [expanded, setExpanded] = useState(false)
+  const [selectedDocument, setSelectedDocument] = useState<ApprovalDocument | null>(null)
   const faceCheckColor = getFaceCheckColor(driver.faceCheck.status)
 
   return (
@@ -192,7 +198,18 @@ function ApprovalDriverCard({ driver }: { driver: ApprovalDriver }) {
                 <Typography variant="h5">Documentos</Typography>
                 <Stack divider={<Divider flexItem />} sx={{ mt: 1 }}>
                   {driver.documents.map((document) => (
-                    <Stack key={document.id} direction="row" spacing={1.25} alignItems="center" justifyContent="space-between" sx={{ py: 1 }}>
+                    <ButtonBase
+                      key={document.id}
+                      onClick={() => setSelectedDocument(document)}
+                      sx={{
+                        display: 'block',
+                        width: '100%',
+                        borderRadius: 1,
+                        textAlign: 'left',
+                        '&:hover': { bgcolor: 'action.hover' },
+                      }}
+                    >
+                    <Stack direction="row" spacing={1.25} alignItems="center" justifyContent="space-between" sx={{ py: 1, px: 0.75 }}>
                       <Stack direction="row" spacing={1} alignItems="center" sx={{ minWidth: 0 }}>
                         <Box sx={{ color: 'text.secondary', display: 'grid', placeItems: 'center', '& svg': { fontSize: 20 } }}>
                           {getDocumentIcon(document)}
@@ -208,6 +225,7 @@ function ApprovalDriverCard({ driver }: { driver: ApprovalDriver }) {
                       </Stack>
                       <Chip label={document.format} size="small" variant="outlined" sx={{ fontWeight: 800 }} />
                     </Stack>
+                    </ButtonBase>
                   ))}
                 </Stack>
               </CardContent>
@@ -245,6 +263,12 @@ function ApprovalDriverCard({ driver }: { driver: ApprovalDriver }) {
           </Box>
         </CardContent>
       </Collapse>
+
+      <DocumentPreviewDialog
+        driver={driver}
+        document={selectedDocument}
+        onClose={() => setSelectedDocument(null)}
+      />
     </Card>
   )
 }
@@ -259,5 +283,91 @@ function DetailItem({ label, value }: { label: string; value: string }) {
         {value}
       </Typography>
     </Box>
+  )
+}
+
+function DocumentPreviewDialog({
+  driver,
+  document,
+  onClose,
+}: {
+  driver: ApprovalDriver
+  document: ApprovalDocument | null
+  onClose: () => void
+}) {
+  const theme = useTheme()
+
+  return (
+    <Dialog open={Boolean(document)} onClose={onClose} fullWidth maxWidth="md">
+      <DialogTitle sx={{ pr: 7 }}>
+        <Box>
+          <Typography variant="h4" component="span">
+            {document?.type ?? 'Documento'}
+          </Typography>
+          <Typography color="text.secondary" variant="body2">
+            {driver.name} · {document?.name}
+          </Typography>
+        </Box>
+
+        <IconButton aria-label="Fechar visualizador" onClick={onClose} sx={{ position: 'absolute', right: 16, top: 16 }}>
+          <CloseIcon />
+        </IconButton>
+      </DialogTitle>
+
+      <DialogContent dividers>
+        {document ? (
+          <Stack spacing={2}>
+            <Box
+              sx={{
+                minHeight: { xs: 320, md: 460 },
+                border: `1px solid ${theme.palette.divider}`,
+                borderRadius: 2,
+                bgcolor: 'background.default',
+                display: 'grid',
+                placeItems: 'center',
+                overflow: 'hidden',
+              }}
+            >
+              {document.format === 'PDF' ? (
+                <Stack spacing={1.5} alignItems="center" sx={{ px: 3, textAlign: 'center' }}>
+                  <DescriptionOutlinedIcon sx={{ fontSize: 72, color: theme.palette.error.main }} />
+                  <Typography variant="h4">{document.name}</Typography>
+                  <Typography color="text.secondary">
+                    Prévia de PDF mockada. Na integração real, este painel recebe o arquivo assinado da API.
+                  </Typography>
+                </Stack>
+              ) : (
+                <Box
+                  sx={{
+                    width: 'min(100%, 560px)',
+                    aspectRatio: '4 / 3',
+                    borderRadius: 2,
+                    border: `1px solid ${theme.palette.divider}`,
+                    background:
+                      'linear-gradient(135deg, rgba(10, 190, 233, 0.16), rgba(45, 212, 160, 0.14))',
+                    display: 'grid',
+                    placeItems: 'center',
+                  }}
+                >
+                  <Stack spacing={1.25} alignItems="center" sx={{ textAlign: 'center', px: 3 }}>
+                    <ImageOutlinedIcon sx={{ fontSize: 72, color: theme.palette.secondary.main }} />
+                    <Typography variant="h4">{document.name}</Typography>
+                    <Typography color="text.secondary">
+                      Prévia de imagem mockada para revisão documental.
+                    </Typography>
+                  </Stack>
+                </Box>
+              )}
+            </Box>
+
+            <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(3, minmax(0, 1fr))' }, gap: 1.5 }}>
+              <DetailItem label="Motorista" value={driver.name} />
+              <DetailItem label="Arquivo" value={document.name} />
+              <DetailItem label="Formato" value={document.format} />
+            </Box>
+          </Stack>
+        ) : null}
+      </DialogContent>
+    </Dialog>
   )
 }
