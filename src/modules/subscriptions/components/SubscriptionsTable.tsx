@@ -8,6 +8,7 @@ import {
   Autocomplete,
   Avatar,
   Box,
+  Button,
   ButtonBase,
   Card,
   CardContent,
@@ -33,6 +34,7 @@ import {
   Typography,
   useTheme,
 } from '@mui/material'
+import { useSnackbar } from 'notistack'
 import { driverDetailsById, drivers } from '../../drivers/data/mockDrivers'
 import {
   subscriptionMovementBySubscriptionId,
@@ -42,6 +44,9 @@ import type { DriverSubscription, SubscriptionPaymentRecord, SubscriptionPlan, S
 
 type SubscriptionsTableProps = {
   subscriptions: DriverSubscription[]
+  onRegisterPayment: (subscription: DriverSubscription) => void
+  onCancelPayment: (subscription: DriverSubscription, previousStatus: DriverSubscription['status']) => void
+  onCancelSubscription: (subscription: DriverSubscription) => void
 }
 
 const currencyFormatter = new Intl.NumberFormat('pt-BR', {
@@ -66,6 +71,7 @@ const statusPalette: Record<SubscriptionStatus, 'success' | 'warning' | 'error'>
   ATIVO: 'success',
   TRIAL: 'warning',
   ATRASADO: 'error',
+  EXPIRADO: 'error',
 }
 
 const availablePlans: {
@@ -154,37 +160,63 @@ function getPaymentPunctuality(payments: SubscriptionPaymentRecord[]) {
   return `${latePayments} pagamento${latePayments === 1 ? '' : 's'} com atraso`
 }
 
-export function SubscriptionsTable({ subscriptions }: SubscriptionsTableProps) {
+export function SubscriptionsTable({
+  subscriptions,
+  onRegisterPayment,
+  onCancelPayment,
+  onCancelSubscription,
+}: SubscriptionsTableProps) {
   const theme = useTheme()
+  const { closeSnackbar, enqueueSnackbar } = useSnackbar()
   const [expanded, setExpanded] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
+  const [planOverrides, setPlanOverrides] = useState<Record<string, SubscriptionPlan>>({})
+  const [paymentStatusBeforeExpiration, setPaymentStatusBeforeExpiration] = useState<Record<string, DriverSubscription['status']>>({})
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null)
   const [selectedSubscription, setSelectedSubscription] = useState<DriverSubscription | null>(null)
   const [detailsSubscription, setDetailsSubscription] = useState<DriverSubscription | null>(null)
   const [planChangeSubscription, setPlanChangeSubscription] = useState<DriverSubscription | null>(null)
   const menuOpen = Boolean(anchorEl)
-  const overdueSubscriptions = subscriptions.filter((subscription) => subscription.status === 'ATRASADO').length
+  const visibleSubscriptions = useMemo(
+    () =>
+      subscriptions.map((subscription) => {
+        const selectedPlan = planOverrides[subscription.id]
+        const selectedPlanData = availablePlans.find((item) => item.plan === selectedPlan)
+
+        if (!selectedPlan || !selectedPlanData) {
+          return subscription
+        }
+
+        return {
+          ...subscription,
+          plan: selectedPlan,
+          monthlyValue: selectedPlanData.value,
+        }
+      }),
+    [planOverrides, subscriptions],
+  )
+  const overdueSubscriptions = visibleSubscriptions.filter((subscription) => subscription.status === 'ATRASADO').length
   const overdueLabel = `${overdueSubscriptions} ${
     overdueSubscriptions === 1 ? 'assinatura atrasada' : 'assinaturas atrasadas'
   }`
   const subscriptionSearchOptions = useMemo(
     () =>
-      Array.from(new Set(subscriptions.map((subscription) => subscription.driverName))).sort((a, b) =>
+      Array.from(new Set(visibleSubscriptions.map((subscription) => subscription.driverName))).sort((a, b) =>
         a.localeCompare(b, 'pt-BR'),
       ),
-    [subscriptions],
+    [visibleSubscriptions],
   )
   const filteredSubscriptions = useMemo(() => {
     const normalizedTerm = normalizeSearch(searchTerm)
 
     if (!normalizedTerm) {
-      return subscriptions
+      return visibleSubscriptions
     }
 
-    return subscriptions.filter((subscription) =>
+    return visibleSubscriptions.filter((subscription) =>
       normalizeSearch(getSubscriptionSearchText(subscription)).includes(normalizedTerm),
     )
-  }, [searchTerm, subscriptions])
+  }, [searchTerm, visibleSubscriptions])
 
   function handleOpenMenu(event: MouseEvent<HTMLElement>, subscription: DriverSubscription) {
     setAnchorEl(event.currentTarget)
@@ -204,6 +236,109 @@ export function SubscriptionsTable({ subscriptions }: SubscriptionsTableProps) {
   function handleOpenPlanChange() {
     setPlanChangeSubscription(selectedSubscription)
     handleCloseMenu()
+  }
+
+  function handleRegisterPayment() {
+    if (!selectedSubscription) {
+      return
+    }
+
+    setPaymentStatusBeforeExpiration((current) => ({
+      ...current,
+      [selectedSubscription.id]: selectedSubscription.status,
+    }))
+    onRegisterPayment(selectedSubscription)
+    enqueueSnackbar(`Pagamento registrado. ${selectedSubscription.driverName} entrou como expirado.`, {
+      variant: 'warning',
+      autoHideDuration: 2000,
+    })
+    handleCloseMenu()
+  }
+
+  function handleCancelPayment() {
+    if (!selectedSubscription) {
+      return
+    }
+
+    const previousStatus = paymentStatusBeforeExpiration[selectedSubscription.id] ?? 'TRIAL'
+
+    onCancelPayment(selectedSubscription, previousStatus)
+    setPaymentStatusBeforeExpiration((current) => {
+      const next = { ...current }
+      delete next[selectedSubscription.id]
+      return next
+    })
+    enqueueSnackbar(`Pagamento cancelado para ${selectedSubscription.driverName}.`, {
+      variant: 'info',
+      autoHideDuration: 2000,
+    })
+    handleCloseMenu()
+  }
+
+  function handleRequestCancelSubscription() {
+    if (!selectedSubscription) {
+      return
+    }
+
+    const subscriptionToCancel = selectedSubscription
+
+    enqueueSnackbar(`A assinatura de ${subscriptionToCancel.driverName} irá ser cancelada. Deseja confirmar?`, {
+      variant: 'warning',
+      persist: true,
+      action: (snackbarId) => (
+        <Stack direction="row" spacing={1}>
+          <Button
+            size="small"
+            color="inherit"
+            onClick={() => {
+              onCancelSubscription(subscriptionToCancel)
+              enqueueSnackbar(`${subscriptionToCancel.driverName} foi movido para Cancelados.`, {
+                variant: 'success',
+                autoHideDuration: 2000,
+              })
+              window.setTimeout(() => closeSnackbar(snackbarId), 2000)
+            }}
+            sx={{ fontWeight: 900, textTransform: 'none' }}
+          >
+            Confirmar
+          </Button>
+          <Button
+            size="small"
+            color="inherit"
+            onClick={() => window.setTimeout(() => closeSnackbar(snackbarId), 2000)}
+            sx={{ fontWeight: 900, textTransform: 'none' }}
+          >
+            Não
+          </Button>
+        </Stack>
+      ),
+    })
+    handleCloseMenu()
+  }
+
+  function handleSelectPlan(plan: SubscriptionPlan) {
+    if (!planChangeSubscription) {
+      return
+    }
+
+    const selectedPlanData = availablePlans.find((item) => item.plan === plan)
+
+    setPlanOverrides((current) => ({
+      ...current,
+      [planChangeSubscription.id]: plan,
+    }))
+    setPlanChangeSubscription(
+      selectedPlanData
+        ? {
+            ...planChangeSubscription,
+            plan,
+            monthlyValue: selectedPlanData.value,
+          }
+        : {
+            ...planChangeSubscription,
+            plan,
+          },
+    )
   }
 
   const detailsDriver = detailsSubscription
@@ -240,11 +375,11 @@ export function SubscriptionsTable({ subscriptions }: SubscriptionsTableProps) {
               <Typography color="text.secondary" sx={{ mt: 0.25 }}>
                 {expanded
                   ? 'Lista operacional de planos ativos, trials e pagamentos atrasados.'
-                  : `${subscriptions.length} registros, ${overdueLabel}.`}
+                  : `${visibleSubscriptions.length} registros, ${overdueLabel}.`}
               </Typography>
             </Box>
             <Stack direction="row" spacing={1} alignItems="center">
-              <Chip label={`${subscriptions.length} registros`} color="primary" variant="outlined" sx={{ fontWeight: 800 }} />
+              <Chip label={`${visibleSubscriptions.length} registros`} color="primary" variant="outlined" sx={{ fontWeight: 800 }} />
               <Box
                 sx={{
                   width: 34,
@@ -393,8 +528,12 @@ export function SubscriptionsTable({ subscriptions }: SubscriptionsTableProps) {
           >
             <MenuItem onClick={handleOpenDetails}>Ver detalhes</MenuItem>
             <MenuItem onClick={handleOpenPlanChange}>Alterar plano</MenuItem>
-            <MenuItem onClick={handleCloseMenu}>Registrar pagamento</MenuItem>
-            <MenuItem onClick={handleCloseMenu} sx={{ color: 'error.main' }}>
+            {selectedSubscription?.status === 'EXPIRADO' ? (
+              <MenuItem onClick={handleCancelPayment}>Cancelar pagamento</MenuItem>
+            ) : (
+              <MenuItem onClick={handleRegisterPayment}>Registrar pagamento</MenuItem>
+            )}
+            <MenuItem onClick={handleRequestCancelSubscription} sx={{ color: 'error.main' }}>
               Cancelar assinatura
             </MenuItem>
           </Menu>
@@ -682,7 +821,7 @@ export function SubscriptionsTable({ subscriptions }: SubscriptionsTableProps) {
 
                       <ButtonBase
                         disabled={isCurrentPlan}
-                        onClick={() => setPlanChangeSubscription(null)}
+                        onClick={() => handleSelectPlan(item.plan)}
                         sx={{
                           mt: 1,
                           borderRadius: 1,
@@ -705,6 +844,134 @@ export function SubscriptionsTable({ subscriptions }: SubscriptionsTableProps) {
           </Stack>
         </DialogContent>
       </Dialog>
+    </Card>
+  )
+}
+
+export function CanceledSubscriptionsPanel({ subscriptions }: { subscriptions: DriverSubscription[] }) {
+  const theme = useTheme()
+  const [expanded, setExpanded] = useState(true)
+
+  return (
+    <Card variant="outlined">
+      <ButtonBase
+        onClick={() => setExpanded((current) => !current)}
+        sx={{ width: '100%', display: 'block', textAlign: 'left', borderRadius: 'inherit' }}
+        aria-expanded={expanded}
+        aria-controls="canceled-subscriptions-content"
+      >
+        <CardContent sx={{ p: 2.25, '&:last-child': { pb: 2.25 } }}>
+          <Stack
+            direction={{ xs: 'column', md: 'row' }}
+            spacing={1.5}
+            alignItems={{ xs: 'flex-start', md: 'center' }}
+            justifyContent="space-between"
+          >
+            <Box>
+              <Typography variant="h4">Cancelados</Typography>
+              <Typography color="text.secondary" sx={{ mt: 0.25 }}>
+                {subscriptions.length === 0
+                  ? 'Assinaturas canceladas aparecerão aqui após a confirmação.'
+                  : `${subscriptions.length} assinatura${subscriptions.length === 1 ? '' : 's'} cancelada${subscriptions.length === 1 ? '' : 's'}.`}
+              </Typography>
+            </Box>
+
+            <Stack direction="row" spacing={1} alignItems="center">
+              <Chip label={`${subscriptions.length} cancelados`} color="error" variant="outlined" sx={{ fontWeight: 800 }} />
+              <Box
+                sx={{
+                  width: 34,
+                  height: 34,
+                  borderRadius: 1.5,
+                  display: 'grid',
+                  placeItems: 'center',
+                  color: 'text.secondary',
+                  transform: expanded ? 'rotate(180deg)' : 'rotate(0deg)',
+                  transition: theme.transitions.create('transform', { duration: theme.transitions.duration.shortest }),
+                }}
+              >
+                <ExpandMoreIcon fontSize="small" />
+              </Box>
+            </Stack>
+          </Stack>
+        </CardContent>
+      </ButtonBase>
+
+      <Collapse in={expanded} timeout="auto" unmountOnExit>
+        <CardContent
+          id="canceled-subscriptions-content"
+          sx={{ pt: 0, px: 2.25, pb: 2.25, '&:last-child': { pb: 2.25 } }}
+        >
+          <TableContainer>
+            <Table sx={{ minWidth: 760 }}>
+              <TableHead>
+                <TableRow>
+                  <TableCell>Motorista</TableCell>
+                  <TableCell>Plano cancelado</TableCell>
+                  <TableCell>Último valor</TableCell>
+                  <TableCell>Status</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {subscriptions.map((subscription) => (
+                  <TableRow key={subscription.id} hover>
+                    <TableCell>
+                      <Stack direction="row" spacing={1.5} alignItems="center">
+                        <Avatar
+                          sx={{
+                            width: 40,
+                            height: 40,
+                            bgcolor: 'rgba(239, 68, 68, 0.12)',
+                            color: theme.palette.error.main,
+                            fontWeight: 800,
+                            fontSize: 13,
+                          }}
+                        >
+                          {getInitials(subscription.driverName)}
+                        </Avatar>
+                        <Box sx={{ minWidth: 0 }}>
+                          <Typography fontWeight={800} noWrap>
+                            {subscription.driverName}
+                          </Typography>
+                          <Typography color="text.secondary" variant="body2" noWrap>
+                            {subscription.driverPhone}
+                          </Typography>
+                        </Box>
+                      </Stack>
+                    </TableCell>
+                    <TableCell>
+                      <Chip
+                        label={subscription.plan}
+                        size="small"
+                        variant="outlined"
+                        sx={{
+                          color: planPalette[subscription.plan],
+                          borderColor: planPalette[subscription.plan],
+                          fontWeight: 800,
+                        }}
+                      />
+                    </TableCell>
+                    <TableCell>{currencyFormatter.format(subscription.monthlyValue)}</TableCell>
+                    <TableCell>
+                      <Chip label="CANCELADO" size="small" color="error" sx={{ fontWeight: 800 }} />
+                    </TableCell>
+                  </TableRow>
+                ))}
+
+                {subscriptions.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={4}>
+                      <Typography color="text.secondary" sx={{ py: 2 }}>
+                        Nenhuma assinatura cancelada até agora.
+                      </Typography>
+                    </TableCell>
+                  </TableRow>
+                ) : null}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        </CardContent>
+      </Collapse>
     </Card>
   )
 }

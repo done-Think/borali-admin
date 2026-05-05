@@ -48,7 +48,7 @@ export type SubscriptionRenewal = {
   method: string
 }
 
-export type SubscriptionStatus = 'ATIVO' | 'TRIAL' | 'ATRASADO'
+export type SubscriptionStatus = 'ATIVO' | 'TRIAL' | 'ATRASADO' | 'EXPIRADO'
 
 export type DriverSubscription = {
   id: string
