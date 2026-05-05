@@ -385,12 +385,12 @@ function SupportTicketCard({
         boxShadow: highlighted ? `0 0 0 3px rgba(45, 212, 160, 0.18)` : undefined,
       }}
     >
-      <CardContent sx={{ p: 1.5, '&:last-child': { pb: 1.5 } }}>
+      <CardContent sx={{ p: 1.15, '&:last-child': { pb: 1.15 } }}>
         <Stack
           role="button"
           tabIndex={0}
           direction={{ xs: 'column', md: 'row' }}
-          spacing={1.25}
+          spacing={1}
           alignItems={{ xs: 'stretch', md: 'center' }}
           justifyContent="space-between"
           onClick={() => setExpanded((current) => !current)}
@@ -401,7 +401,7 @@ function SupportTicketCard({
             }
           }}
           sx={{
-            minHeight: 44,
+            minHeight: 38,
             cursor: 'pointer',
             '&:focus-visible': {
               outline: `2px solid ${theme.palette.primary.main}`,
@@ -413,7 +413,7 @@ function SupportTicketCard({
           <Box
             sx={{
               display: 'grid',
-              gap: 1,
+              gap: 0.75,
               gridTemplateColumns: { xs: '1fr', sm: '1.4fr 1fr 1fr' },
               alignItems: 'center',
               flex: 1,
@@ -431,7 +431,7 @@ function SupportTicketCard({
             </Typography>
           </Box>
 
-          <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap" alignItems="center" justifyContent={{ xs: 'flex-start', md: 'flex-end' }}>
+          <Stack direction="row" spacing={0.75} useFlexGap flexWrap="wrap" alignItems="center" justifyContent={{ xs: 'flex-start', md: 'flex-end' }}>
             <Chip
               clickable
               label={statusLabel}
@@ -440,12 +440,14 @@ function SupportTicketCard({
                 event.stopPropagation()
                 onToggleStatus(ticket)
               }}
+              size="small"
               sx={{ fontWeight: 700 }}
             />
             <Chip
               label={`Prioridade ${ticket.priority}`}
               color={ticket.priority === 'Alta' ? 'error' : 'warning'}
               variant="outlined"
+              size="small"
               sx={{ fontWeight: 700 }}
             />
             <IconButton
@@ -467,21 +469,22 @@ function SupportTicketCard({
         </Stack>
 
         <Collapse in={expanded} timeout="auto" unmountOnExit>
-          <Box sx={{ pt: 2.5 }}>
+          <Box sx={{ pt: 1.25 }}>
             <Stack
               direction={{ xs: 'column', md: 'row' }}
-              spacing={3}
+              spacing={1.25}
               alignItems={{ xs: 'stretch', md: 'flex-start' }}
               justifyContent="space-between"
             >
-              <Stack direction="row" spacing={2} alignItems="center">
+              <Stack direction="row" spacing={1.25} alignItems="center">
                 <Avatar
                   sx={{
-                    width: 64,
-                    height: 64,
+                    width: 44,
+                    height: 44,
                     bgcolor: ticket.user.role === 'driver' ? 'rgba(45, 212, 160, 0.14)' : 'rgba(10, 190, 233, 0.12)',
                     color: ticket.user.role === 'driver' ? theme.palette.primary.main : theme.palette.secondary.main,
                     fontWeight: 700,
+                    fontSize: 15,
                   }}
                 >
                   {ticket.user.initials}
@@ -505,11 +508,11 @@ function SupportTicketCard({
                         },
                       }}
                     >
-                      <Typography variant="h4">{ticket.user.name}</Typography>
+                      <Typography variant="h5" fontWeight={900}>{ticket.user.name}</Typography>
                     </Button>
                     <Chip label={ticket.user.type} color="primary" variant="outlined" size="small" />
                   </Stack>
-                  <Typography color="text.secondary" sx={{ mt: 0.5 }}>
+                  <Typography color="text.secondary" variant="body2" sx={{ mt: 0.25 }}>
                     Protocolo {ticket.protocol}
                   </Typography>
                 </Box>
@@ -519,13 +522,13 @@ function SupportTicketCard({
             <Box
               sx={{
                 display: 'grid',
-                gap: 2,
+                gap: 1,
                 gridTemplateColumns: {
                   xs: '1fr',
                   sm: 'repeat(2, minmax(0, 1fr))',
-                  lg: 'repeat(4, minmax(0, 1fr))',
+                  md: 'repeat(4, minmax(0, 1fr))',
                 },
-                mt: 3,
+                mt: 1.25,
               }}
             >
               <InfoItem icon={<PersonOutlineIcon />} label="CPF" value={ticket.user.cpf} />
@@ -537,12 +540,12 @@ function SupportTicketCard({
             <Box
               sx={{
                 display: 'grid',
-                gap: 2,
+                gap: 1,
                 gridTemplateColumns: {
                   xs: '1fr',
                   md: 'repeat(3, minmax(0, 1fr))',
                 },
-                mt: 2,
+                mt: 1,
               }}
             >
               <MetricCard
@@ -568,29 +571,29 @@ function SupportTicketCard({
               />
             </Box>
 
-            <Divider sx={{ my: 3 }} />
+            <Divider sx={{ my: 1.5 }} />
 
             <Box
               sx={{
                 border: `1px solid ${theme.palette.divider}`,
                 borderRadius: 2,
-                p: 2,
+                p: 1.25,
                 backgroundColor: 'background.default',
               }}
             >
               <Stack
                 direction={{ xs: 'column', sm: 'row' }}
-                spacing={2}
+                spacing={1}
                 alignItems={{ xs: 'flex-start', sm: 'center' }}
                 justifyContent="space-between"
-                sx={{ mb: 2 }}
+                sx={{ mb: 1 }}
               >
-                <Stack direction="row" spacing={1.5} alignItems="center">
+                <Stack direction="row" spacing={1} alignItems="center">
                   <Box
                     sx={{
-                      width: 42,
-                      height: 42,
-                      borderRadius: 2,
+                      width: 34,
+                      height: 34,
+                      borderRadius: 1.5,
                       display: 'grid',
                       placeItems: 'center',
                       color: theme.palette.primary.main,
@@ -600,8 +603,8 @@ function SupportTicketCard({
                     <SupportAgentIcon />
                   </Box>
                   <Box>
-                    <Typography variant="h4">{ticket.occurrence.title}</Typography>
-                    <Typography color="text.secondary">Aberta em {ticket.occurrence.createdAt}</Typography>
+                    <Typography variant="h5" fontWeight={900}>{ticket.occurrence.title}</Typography>
+                    <Typography color="text.secondary" variant="body2">Aberta em {ticket.occurrence.createdAt}</Typography>
                   </Box>
                 </Stack>
 
@@ -611,13 +614,13 @@ function SupportTicketCard({
                 </Stack>
               </Stack>
 
-              <Typography color="text.secondary" sx={{ lineHeight: 1.7 }}>
+              <Typography color="text.secondary" variant="body2" sx={{ lineHeight: 1.55 }}>
                 {ticket.occurrence.description}
               </Typography>
 
               {ticket.occurrence.attachments && ticket.occurrence.attachments.length > 0 && (
-                <Box sx={{ mt: 2.5 }}>
-                  <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 1.5 }}>
+                <Box sx={{ mt: 1.5 }}>
+                  <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 1 }}>
                     <ImageOutlinedIcon fontSize="small" color="primary" />
                     <Typography fontWeight={700}>Imagens anexadas pelo usuário</Typography>
                     <Chip label={ticket.occurrence.attachments.length} size="small" color="primary" variant="outlined" />
@@ -626,7 +629,7 @@ function SupportTicketCard({
                   <Box
                     sx={{
                       display: 'grid',
-                      gap: 1.5,
+                      gap: 1,
                       gridTemplateColumns: {
                         xs: '1fr',
                         sm: 'repeat(2, minmax(0, 1fr))',
@@ -639,8 +642,8 @@ function SupportTicketCard({
                         key={attachment.name}
                         sx={{
                           display: 'grid',
-                          gridTemplateColumns: '72px 1fr',
-                          gap: 1.5,
+                          gridTemplateColumns: '52px 1fr',
+                          gap: 1,
                           alignItems: 'center',
                           border: `1px solid ${theme.palette.divider}`,
                           borderRadius: 2,
@@ -650,8 +653,8 @@ function SupportTicketCard({
                       >
                         <Box
                           sx={{
-                            width: 72,
-                            height: 56,
+                            width: 52,
+                            height: 42,
                             borderRadius: 1.5,
                             display: 'grid',
                             placeItems: 'center',
@@ -694,11 +697,13 @@ function InfoItem({
   value: string
 }) {
   return (
-    <Stack direction="row" spacing={1.5} alignItems="center">
-      <Box sx={{ color: 'text.secondary', display: 'grid', placeItems: 'center' }}>{icon}</Box>
+    <Stack direction="row" spacing={1} alignItems="center" sx={{ minWidth: 0 }}>
+      <Box sx={{ color: 'text.secondary', display: 'grid', placeItems: 'center', '& svg': { fontSize: 18 } }}>{icon}</Box>
       <Box sx={{ minWidth: 0 }}>
-        <Typography color="text.secondary">{label}</Typography>
-        <Typography fontWeight={700} noWrap>
+        <Typography color="text.secondary" variant="caption">
+          {label}
+        </Typography>
+        <Typography fontWeight={800} variant="body2" noWrap>
           {value}
         </Typography>
       </Box>
@@ -1101,31 +1106,33 @@ function MetricCard({
         border: '1px solid',
         borderColor: 'divider',
         borderRadius: 2,
-        p: 2,
+        p: 1.25,
       }}
     >
-      <Stack spacing={1.5}>
+      <Stack direction="row" spacing={1.25} alignItems="center">
         <Box
           sx={{
-            width: 38,
-            height: 38,
-            borderRadius: 2,
+            width: 32,
+            height: 32,
+            borderRadius: 1.5,
             display: 'grid',
             placeItems: 'center',
             color,
             backgroundColor: `${color}1F`,
+            flexShrink: 0,
+            '& svg': { fontSize: 20 },
           }}
         >
           {icon}
         </Box>
-        <Box>
-          <Typography color="text.secondary" fontWeight={600}>
+        <Box sx={{ minWidth: 0 }}>
+          <Typography color="text.secondary" variant="caption" fontWeight={700}>
             {title}
           </Typography>
-          <Typography variant="h4" sx={{ mt: 0.5 }}>
+          <Typography variant="h5" fontWeight={900} noWrap>
             {value}
           </Typography>
-          <Typography color="text.secondary" sx={{ mt: 0.5 }}>
+          <Typography color="text.secondary" variant="caption">
             {helper}
           </Typography>
         </Box>
