@@ -36,6 +36,11 @@ export default function SubscriptionsPage() {
     setCanceledSubscriptions((current) => [{ ...subscription, status: 'ATRASADO' }, ...current])
   }
 
+  function handleRenewSubscription(subscription: DriverSubscription) {
+    setCanceledSubscriptions((current) => current.filter((item) => item.id !== subscription.id))
+    setActiveSubscriptions((current) => [{ ...subscription, status: 'ATIVO' }, ...current])
+  }
+
   return (
     <Stack spacing={3}>
       <Box>
@@ -60,7 +65,7 @@ export default function SubscriptionsPage() {
         onCancelSubscription={handleCancelSubscription}
       />
 
-      <CanceledSubscriptionsPanel subscriptions={canceledSubscriptions} />
+      <CanceledSubscriptionsPanel subscriptions={canceledSubscriptions} onRenewSubscription={handleRenewSubscription} />
     </Stack>
   )
 }

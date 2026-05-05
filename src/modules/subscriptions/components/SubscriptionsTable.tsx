@@ -35,8 +35,11 @@ import {
   useTheme,
 } from '@mui/material'
 import { useSnackbar } from 'notistack'
+import { useNavigate } from 'react-router'
 import { driverDetailsById, drivers } from '../../drivers/data/mockDrivers'
+import { supportTickets } from '../../../shared/mocks/supportTickets'
 import {
+  subscriptionRenewalsByDriverId,
   subscriptionMovementBySubscriptionId,
   subscriptionPaymentHistoryBySubscriptionId,
 } from '../data/mockSubscriptions'
@@ -848,9 +851,68 @@ export function SubscriptionsTable({
   )
 }
 
-export function CanceledSubscriptionsPanel({ subscriptions }: { subscriptions: DriverSubscription[] }) {
+export function CanceledSubscriptionsPanel({
+  subscriptions,
+  onRenewSubscription,
+}: {
+  subscriptions: DriverSubscription[]
+  onRenewSubscription: (subscription: DriverSubscription) => void
+}) {
   const theme = useTheme()
+  const navigate = useNavigate()
+  const { enqueueSnackbar } = useSnackbar()
   const [expanded, setExpanded] = useState(true)
+  const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null)
+  const [selectedSubscription, setSelectedSubscription] = useState<DriverSubscription | null>(null)
+  const [historySubscription, setHistorySubscription] = useState<DriverSubscription | null>(null)
+  const menuOpen = Boolean(anchorEl)
+  const historyPayments = historySubscription
+    ? subscriptionPaymentHistoryBySubscriptionId[historySubscription.id] ?? []
+    : []
+  const historyRenewals = historySubscription
+    ? subscriptionRenewalsByDriverId[historySubscription.driverId] ?? []
+    : []
+  const historyComplaints = historySubscription
+    ? supportTickets.filter(
+        (ticket) =>
+          ticket.user.driverId === historySubscription.driverId ||
+          ticket.user.phone === historySubscription.driverPhone ||
+          ticket.user.name === historySubscription.driverName,
+      )
+    : []
+
+  function handleOpenMenu(event: MouseEvent<HTMLElement>, subscription: DriverSubscription) {
+    setAnchorEl(event.currentTarget)
+    setSelectedSubscription(subscription)
+  }
+
+  function handleCloseMenu() {
+    setAnchorEl(null)
+    setSelectedSubscription(null)
+  }
+
+  function handleOpenHistory() {
+    setHistorySubscription(selectedSubscription)
+    handleCloseMenu()
+  }
+
+  function handleRenewSubscription() {
+    if (!selectedSubscription) {
+      return
+    }
+
+    onRenewSubscription(selectedSubscription)
+    enqueueSnackbar(`${selectedSubscription.driverName} foi renovado e voltou para Assinaturas.`, {
+      variant: 'success',
+      autoHideDuration: 2000,
+    })
+    handleCloseMenu()
+  }
+
+  function openSupportTicket(protocol: string) {
+    setHistorySubscription(null)
+    navigate(`/support?ticket=${encodeURIComponent(protocol)}`)
+  }
 
   return (
     <Card variant="outlined">
@@ -910,6 +972,9 @@ export function CanceledSubscriptionsPanel({ subscriptions }: { subscriptions: D
                   <TableCell>Plano cancelado</TableCell>
                   <TableCell>Último valor</TableCell>
                   <TableCell>Status</TableCell>
+                  <TableCell align="right" sx={{ width: 88 }}>
+                    Ações
+                  </TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -955,12 +1020,23 @@ export function CanceledSubscriptionsPanel({ subscriptions }: { subscriptions: D
                     <TableCell>
                       <Chip label="CANCELADO" size="small" color="error" sx={{ fontWeight: 800 }} />
                     </TableCell>
+                    <TableCell align="right">
+                      <Tooltip title="Ações">
+                        <IconButton
+                          size="small"
+                          aria-label={`Ações de assinatura cancelada de ${subscription.driverName}`}
+                          onClick={(event) => handleOpenMenu(event, subscription)}
+                        >
+                          <MoreHorizIcon fontSize="small" />
+                        </IconButton>
+                      </Tooltip>
+                    </TableCell>
                   </TableRow>
                 ))}
 
                 {subscriptions.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={4}>
+                    <TableCell colSpan={5}>
                       <Typography color="text.secondary" sx={{ py: 2 }}>
                         Nenhuma assinatura cancelada até agora.
                       </Typography>
@@ -970,8 +1046,161 @@ export function CanceledSubscriptionsPanel({ subscriptions }: { subscriptions: D
               </TableBody>
             </Table>
           </TableContainer>
+
+          <Menu
+            anchorEl={anchorEl}
+            open={menuOpen}
+            onClose={handleCloseMenu}
+            anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+            transformOrigin={{ vertical: 'top', horizontal: 'right' }}
+          >
+            <MenuItem onClick={handleOpenHistory}>Ver histórico</MenuItem>
+            <MenuItem onClick={handleRenewSubscription}>Renovar cadastro</MenuItem>
+          </Menu>
         </CardContent>
       </Collapse>
+
+      <Dialog open={Boolean(historySubscription)} onClose={() => setHistorySubscription(null)} fullWidth maxWidth="md">
+        <DialogTitle sx={{ pr: 7 }}>
+          <Box>
+            <Typography variant="h4" component="span">
+              Histórico do cadastro
+            </Typography>
+            <Typography color="text.secondary" variant="body2">
+              {historySubscription?.driverName} · assinatura cancelada
+            </Typography>
+          </Box>
+
+          <IconButton
+            aria-label="Fechar histórico do cadastro"
+            onClick={() => setHistorySubscription(null)}
+            sx={{ position: 'absolute', right: 16, top: 16 }}
+          >
+            <CloseIcon />
+          </IconButton>
+        </DialogTitle>
+
+        <DialogContent dividers>
+          <Stack spacing={2}>
+            {historySubscription ? (
+              <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5}>
+                {[
+                  { label: 'Plano cancelado', value: historySubscription.plan },
+                  { label: 'Último valor', value: currencyFormatter.format(historySubscription.monthlyValue) },
+                  { label: 'Telefone', value: historySubscription.driverPhone },
+                ].map((item) => (
+                  <Card key={item.label} variant="outlined" sx={{ flex: 1 }}>
+                    <CardContent sx={{ p: 2, '&:last-child': { pb: 2 } }}>
+                      <Typography color="text.secondary" variant="body2">
+                        {item.label}
+                      </Typography>
+                      <Typography fontWeight={900} sx={{ mt: 0.5 }}>
+                        {item.value}
+                      </Typography>
+                    </CardContent>
+                  </Card>
+                ))}
+              </Stack>
+            ) : null}
+
+            <Box sx={{ display: 'grid', gap: 2, gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' } }}>
+              <Card variant="outlined">
+                <CardContent>
+                  <Typography variant="h5">Histórico de renovações</Typography>
+                  <Stack divider={<Divider flexItem />} sx={{ mt: 1.5 }}>
+                    {historyRenewals.map((renewal) => (
+                      <Stack
+                        key={renewal.id}
+                        direction={{ xs: 'column', sm: 'row', md: 'column', lg: 'row' }}
+                        spacing={1.5}
+                        alignItems={{ xs: 'flex-start', lg: 'center' }}
+                        justifyContent="space-between"
+                        sx={{ py: 1.25 }}
+                      >
+                        <Box>
+                          <Typography fontWeight={800}>{renewal.date}</Typography>
+                          <Typography color="text.secondary" variant="body2">
+                            {renewal.plan} · {renewal.method}
+                          </Typography>
+                        </Box>
+                        <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap" useFlexGap>
+                          <Typography fontWeight={900}>{currencyFormatter.format(renewal.value)}</Typography>
+                          <Chip
+                            label={renewal.status}
+                            size="small"
+                            color={getPaymentStatusColor(renewal.status)}
+                            sx={{ fontWeight: 800 }}
+                          />
+                        </Stack>
+                      </Stack>
+                    ))}
+                    {historyRenewals.length === 0 ? (
+                      <Typography color="text.secondary" sx={{ py: 1.5 }}>
+                        Nenhum histórico de renovação encontrado.
+                      </Typography>
+                    ) : null}
+                  </Stack>
+                </CardContent>
+              </Card>
+
+              <Card variant="outlined">
+                <CardContent>
+                  <Typography variant="h5">Histórico de reclamações</Typography>
+                  <Stack divider={<Divider flexItem />} sx={{ mt: 1.5 }}>
+                    {historyComplaints.map((ticket) => (
+                      <ButtonBase
+                        key={ticket.protocol}
+                        onClick={() => openSupportTicket(ticket.protocol)}
+                        sx={{
+                          display: 'block',
+                          width: '100%',
+                          textAlign: 'left',
+                          borderRadius: 1,
+                          py: 1.25,
+                          px: 1,
+                          '&:hover': { bgcolor: 'action.hover' },
+                        }}
+                      >
+                        <Stack spacing={1.25} alignItems="flex-start">
+                          <Box sx={{ minWidth: 0 }}>
+                            <Typography fontWeight={800}>{ticket.occurrence.title}</Typography>
+                            <Typography color="text.secondary" variant="body2">
+                              {ticket.protocol} · {ticket.occurrence.category} · {ticket.occurrence.createdAt}
+                            </Typography>
+                            <Typography color="text.secondary" variant="body2" sx={{ mt: 0.75 }}>
+                              {ticket.occurrence.description}
+                            </Typography>
+                          </Box>
+                          <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap" useFlexGap>
+                            <Chip
+                              label={ticket.status}
+                              color={ticket.status === 'Resolvido' ? 'success' : 'warning'}
+                              size="small"
+                              sx={{ fontWeight: 800 }}
+                            />
+                            <Chip
+                              label={`Prioridade ${ticket.priority}`}
+                              color={ticket.priority === 'Alta' ? 'error' : 'warning'}
+                              variant="outlined"
+                              size="small"
+                              sx={{ fontWeight: 800 }}
+                            />
+                          </Stack>
+                        </Stack>
+                      </ButtonBase>
+                    ))}
+                    {historyComplaints.length === 0 ? (
+                      <Typography color="text.secondary" sx={{ py: 1.5 }}>
+                        Nenhuma reclamação vinculada a este cadastro.
+                      </Typography>
+                    ) : null}
+                  </Stack>
+                </CardContent>
+              </Card>
+            </Box>
+          </Stack>
+        </DialogContent>
+      </Dialog>
     </Card>
   )
 }
