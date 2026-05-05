@@ -52,10 +52,32 @@ export type SubscriptionStatus = 'ATIVO' | 'TRIAL' | 'ATRASADO'
 
 export type DriverSubscription = {
   id: string
+  driverId: string
   driverName: string
   driverPhone: string
   plan: SubscriptionPlan
   status: SubscriptionStatus
   nextBillingAt: string
   monthlyValue: number
+}
+
+export type SubscriptionPaymentMethod = 'Cartão' | 'Pix' | 'Dinheiro'
+
+export type SubscriptionPaymentRecord = {
+  id: string
+  date: string
+  dueDate: string
+  plan: SubscriptionPlan
+  value: number
+  status: SubscriptionRenewalStatus
+  method: SubscriptionPaymentMethod
+  paidWith: string
+  delayDays: number
+}
+
+export type SubscriptionMovementSummary = {
+  averageRides: number
+  averageRevenue: number
+  averageOnlineHours: number
+  planUsage: number
 }

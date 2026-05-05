@@ -8,6 +8,8 @@ import type {
   DriverSubscription,
   MonthlyMrrPoint,
   PlanDistributionPoint,
+  SubscriptionMovementSummary,
+  SubscriptionPaymentRecord,
   SubscriptionRenewal,
   SubscriptionKpiCard,
   TrialExpiration,
@@ -89,6 +91,7 @@ export const expiringTrials: TrialExpiration[] = [
 export const driverSubscriptions: DriverSubscription[] = [
   {
     id: 'sub-1001',
+    driverId: 'DRV-1001',
     driverName: 'André Luiz',
     driverPhone: '(11) 98831-2044',
     plan: 'Pro',
@@ -98,6 +101,7 @@ export const driverSubscriptions: DriverSubscription[] = [
   },
   {
     id: 'sub-1002',
+    driverId: 'DRV-4210',
     driverName: 'Juliana Paiva',
     driverPhone: '(19) 97742-3110',
     plan: 'Premium',
@@ -107,6 +111,7 @@ export const driverSubscriptions: DriverSubscription[] = [
   },
   {
     id: 'sub-1003',
+    driverId: 'DRV-4211',
     driverName: 'Marcos Vinicius',
     driverPhone: '(11) 96418-7721',
     plan: 'Pro',
@@ -116,6 +121,7 @@ export const driverSubscriptions: DriverSubscription[] = [
   },
   {
     id: 'sub-1004',
+    driverId: 'DRV-4207',
     driverName: 'Renata Campos',
     driverPhone: '(13) 98877-4102',
     plan: 'Básico',
@@ -125,6 +131,7 @@ export const driverSubscriptions: DriverSubscription[] = [
   },
   {
     id: 'sub-1005',
+    driverId: 'DRV-4208',
     driverName: 'Carla Menezes',
     driverPhone: '(19) 98442-2190',
     plan: 'Premium',
@@ -134,6 +141,7 @@ export const driverSubscriptions: DriverSubscription[] = [
   },
   {
     id: 'sub-1006',
+    driverId: 'DRV-4209',
     driverName: 'Leandro Barros',
     driverPhone: '(11) 94021-0098',
     plan: 'Básico',
@@ -142,6 +150,45 @@ export const driverSubscriptions: DriverSubscription[] = [
     monthlyValue: 49.9,
   },
 ]
+
+export const subscriptionPaymentHistoryBySubscriptionId: Record<string, SubscriptionPaymentRecord[]> = {
+  'sub-1001': [
+    { id: 'pay-1001-05', date: '12/05/2026', dueDate: '12/05/2026', plan: 'Pro', value: 89.9, status: 'Pago', method: 'Cartão', paidWith: 'Cartão final 2044', delayDays: 0 },
+    { id: 'pay-1001-04', date: '12/04/2026', dueDate: '12/04/2026', plan: 'Pro', value: 89.9, status: 'Pago', method: 'Cartão', paidWith: 'Cartão final 2044', delayDays: 0 },
+    { id: 'pay-1001-03', date: '12/03/2026', dueDate: '12/03/2026', plan: 'Pro', value: 89.9, status: 'Pago', method: 'Pix', paidWith: 'Pix recorrente', delayDays: 0 },
+  ],
+  'sub-1002': [
+    { id: 'pay-1002-05', date: '15/05/2026', dueDate: '15/05/2026', plan: 'Premium', value: 129.9, status: 'Pago', method: 'Pix', paidWith: 'Pix recorrente', delayDays: 0 },
+    { id: 'pay-1002-04', date: '15/04/2026', dueDate: '15/04/2026', plan: 'Premium', value: 129.9, status: 'Pago', method: 'Pix', paidWith: 'Pix recorrente', delayDays: 0 },
+    { id: 'pay-1002-03', date: '17/03/2026', dueDate: '15/03/2026', plan: 'Premium', value: 129.9, status: 'Pago', method: 'Cartão', paidWith: 'Cartão final 3110', delayDays: 2 },
+  ],
+  'sub-1003': [
+    { id: 'pay-1003-05', date: '04/05/2026', dueDate: '04/05/2026', plan: 'Pro', value: 0, status: 'Pendente', method: 'Cartão', paidWith: 'Trial em conversão', delayDays: 0 },
+    { id: 'pay-1003-04', date: '04/04/2026', dueDate: '04/04/2026', plan: 'Pro', value: 0, status: 'Pago', method: 'Cartão', paidWith: 'Trial gratuito', delayDays: 0 },
+  ],
+  'sub-1004': [
+    { id: 'pay-1004-04', date: '02/05/2026', dueDate: '29/04/2026', plan: 'Básico', value: 49.9, status: 'Falhou', method: 'Cartão', paidWith: 'Cartão final 4102', delayDays: 3 },
+    { id: 'pay-1004-03', date: '30/03/2026', dueDate: '29/03/2026', plan: 'Básico', value: 49.9, status: 'Pago', method: 'Dinheiro', paidWith: 'Dinheiro no suporte', delayDays: 1 },
+    { id: 'pay-1004-02', date: '29/02/2026', dueDate: '29/02/2026', plan: 'Básico', value: 49.9, status: 'Pago', method: 'Pix', paidWith: 'Pix avulso', delayDays: 0 },
+  ],
+  'sub-1005': [
+    { id: 'pay-1005-05', date: '05/05/2026', dueDate: '05/05/2026', plan: 'Premium', value: 0, status: 'Pendente', method: 'Pix', paidWith: 'Trial em conversão', delayDays: 0 },
+    { id: 'pay-1005-04', date: '05/04/2026', dueDate: '05/04/2026', plan: 'Premium', value: 0, status: 'Pago', method: 'Pix', paidWith: 'Trial gratuito', delayDays: 0 },
+  ],
+  'sub-1006': [
+    { id: 'pay-1006-05', date: '11/05/2026', dueDate: '11/05/2026', plan: 'Básico', value: 0, status: 'Pendente', method: 'Cartão', paidWith: 'Trial em conversão', delayDays: 0 },
+    { id: 'pay-1006-04', date: '11/04/2026', dueDate: '11/04/2026', plan: 'Básico', value: 0, status: 'Pago', method: 'Cartão', paidWith: 'Trial gratuito', delayDays: 0 },
+  ],
+}
+
+export const subscriptionMovementBySubscriptionId: Record<string, SubscriptionMovementSummary> = {
+  'sub-1001': { averageRides: 142, averageRevenue: 8420, averageOnlineHours: 176, planUsage: 92 },
+  'sub-1002': { averageRides: 118, averageRevenue: 6760, averageOnlineHours: 148, planUsage: 88 },
+  'sub-1003': { averageRides: 137, averageRevenue: 8120, averageOnlineHours: 162, planUsage: 74 },
+  'sub-1004': { averageRides: 96, averageRevenue: 9270, averageOnlineHours: 134, planUsage: 69 },
+  'sub-1005': { averageRides: 72, averageRevenue: 5890, averageOnlineHours: 121, planUsage: 64 },
+  'sub-1006': { averageRides: 102, averageRevenue: 7340, averageOnlineHours: 139, planUsage: 71 },
+}
 
 export const subscriptionRenewalsByDriverId: Record<string, SubscriptionRenewal[]> = {
   'DRV-1004': [

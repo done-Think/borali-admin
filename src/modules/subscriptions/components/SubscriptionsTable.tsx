@@ -2,6 +2,7 @@ import { useMemo, useState, type MouseEvent } from 'react'
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
 import MoreHorizIcon from '@mui/icons-material/MoreHoriz'
 import SearchIcon from '@mui/icons-material/Search'
+import CloseIcon from '@mui/icons-material/Close'
 import {
   Autocomplete,
   Avatar,
@@ -11,9 +12,14 @@ import {
   CardContent,
   Chip,
   Collapse,
+  Dialog,
+  DialogContent,
+  DialogTitle,
+  Divider,
   IconButton,
   Menu,
   MenuItem,
+  LinearProgress,
   Stack,
   Table,
   TableBody,
@@ -26,7 +32,12 @@ import {
   Typography,
   useTheme,
 } from '@mui/material'
-import type { DriverSubscription, SubscriptionPlan, SubscriptionStatus } from '../types'
+import { driverDetailsById, drivers } from '../../drivers/data/mockDrivers'
+import {
+  subscriptionMovementBySubscriptionId,
+  subscriptionPaymentHistoryBySubscriptionId,
+} from '../data/mockSubscriptions'
+import type { DriverSubscription, SubscriptionPaymentRecord, SubscriptionPlan, SubscriptionStatus } from '../types'
 
 type SubscriptionsTableProps = {
   subscriptions: DriverSubscription[]
@@ -89,12 +100,40 @@ function getSubscriptionSearchText(subscription: DriverSubscription) {
   ].join(' ')
 }
 
+function getPaymentStatusColor(status: SubscriptionPaymentRecord['status']) {
+  if (status === 'Pago') {
+    return 'success' as const
+  }
+
+  if (status === 'Falhou') {
+    return 'error' as const
+  }
+
+  return 'warning' as const
+}
+
+function getPaymentPunctuality(payments: SubscriptionPaymentRecord[]) {
+  const completedPayments = payments.filter((payment) => payment.status === 'Pago')
+  const latePayments = completedPayments.filter((payment) => payment.delayDays > 0).length
+
+  if (completedPayments.length === 0) {
+    return 'Sem pagamentos concluídos'
+  }
+
+  if (latePayments === 0) {
+    return 'Sempre em dia'
+  }
+
+  return `${latePayments} pagamento${latePayments === 1 ? '' : 's'} com atraso`
+}
+
 export function SubscriptionsTable({ subscriptions }: SubscriptionsTableProps) {
   const theme = useTheme()
   const [expanded, setExpanded] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null)
   const [selectedSubscription, setSelectedSubscription] = useState<DriverSubscription | null>(null)
+  const [detailsSubscription, setDetailsSubscription] = useState<DriverSubscription | null>(null)
   const menuOpen = Boolean(anchorEl)
   const overdueSubscriptions = subscriptions.filter((subscription) => subscription.status === 'ATRASADO').length
   const overdueLabel = `${overdueSubscriptions} ${
@@ -128,6 +167,25 @@ export function SubscriptionsTable({ subscriptions }: SubscriptionsTableProps) {
     setAnchorEl(null)
     setSelectedSubscription(null)
   }
+
+  function handleOpenDetails() {
+    setDetailsSubscription(selectedSubscription)
+    handleCloseMenu()
+  }
+
+  const detailsDriver = detailsSubscription
+    ? drivers.find((driver) => driver.id === detailsSubscription.driverId || driver.phone === detailsSubscription.driverPhone)
+    : null
+  const detailsDriverProfile = detailsDriver ? driverDetailsById[detailsDriver.id] : null
+  const detailsPayments = detailsSubscription
+    ? subscriptionPaymentHistoryBySubscriptionId[detailsSubscription.id] ?? []
+    : []
+  const detailsMovement = detailsSubscription ? subscriptionMovementBySubscriptionId[detailsSubscription.id] : null
+  const latestPayment = detailsPayments[0]
+  const totalPaid = detailsPayments
+    .filter((payment) => payment.status === 'Pago')
+    .reduce((total, payment) => total + payment.value, 0)
+  const punctualityLabel = getPaymentPunctuality(detailsPayments)
 
   return (
     <Card variant="outlined">
@@ -300,7 +358,7 @@ export function SubscriptionsTable({ subscriptions }: SubscriptionsTableProps) {
             anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
             transformOrigin={{ vertical: 'top', horizontal: 'right' }}
           >
-            <MenuItem onClick={handleCloseMenu}>Ver detalhes</MenuItem>
+            <MenuItem onClick={handleOpenDetails}>Ver detalhes</MenuItem>
             <MenuItem onClick={handleCloseMenu}>Alterar plano</MenuItem>
             <MenuItem onClick={handleCloseMenu}>Registrar pagamento</MenuItem>
             <MenuItem onClick={handleCloseMenu} sx={{ color: 'error.main' }}>
@@ -315,6 +373,211 @@ export function SubscriptionsTable({ subscriptions }: SubscriptionsTableProps) {
           ) : null}
         </CardContent>
       </Collapse>
+
+      <Dialog open={Boolean(detailsSubscription)} onClose={() => setDetailsSubscription(null)} fullWidth maxWidth="lg">
+        <DialogTitle sx={{ pr: 7 }}>
+          <Stack direction="row" spacing={1.5} alignItems="center">
+            <Avatar
+              sx={{
+                width: 44,
+                height: 44,
+                bgcolor: detailsSubscription ? `${planPalette[detailsSubscription.plan]}1F` : 'action.hover',
+                color: detailsSubscription ? planPalette[detailsSubscription.plan] : 'text.secondary',
+                fontWeight: 900,
+              }}
+            >
+              {getInitials(detailsSubscription?.driverName ?? '')}
+            </Avatar>
+            <Box sx={{ minWidth: 0 }}>
+              <Typography variant="h4" component="span" noWrap>
+                {detailsSubscription?.driverName ?? 'Assinatura'}
+              </Typography>
+              <Typography color="text.secondary" variant="body2">
+                {detailsSubscription?.driverPhone} · resumo da assinatura e pagamentos
+              </Typography>
+            </Box>
+          </Stack>
+
+          <IconButton
+            aria-label="Fechar detalhes da assinatura"
+            onClick={() => setDetailsSubscription(null)}
+            sx={{ position: 'absolute', right: 16, top: 16 }}
+          >
+            <CloseIcon />
+          </IconButton>
+        </DialogTitle>
+
+        <DialogContent dividers>
+          {detailsSubscription ? (
+            <Stack spacing={2.5}>
+              <Stack direction={{ xs: 'column', md: 'row' }} spacing={1.5}>
+                {[
+                  { label: 'Plano atual', value: detailsSubscription.plan },
+                  { label: 'Status', value: detailsSubscription.status },
+                  { label: 'Próxima cobrança', value: formatDate(detailsSubscription.nextBillingAt) },
+                  { label: 'Total pago no histórico', value: currencyFormatter.format(totalPaid) },
+                ].map((item) => (
+                  <Card key={item.label} variant="outlined" sx={{ flex: 1 }}>
+                    <CardContent sx={{ p: 2, '&:last-child': { pb: 2 } }}>
+                      <Typography color="text.secondary" variant="body2">
+                        {item.label}
+                      </Typography>
+                      <Typography fontWeight={900} sx={{ mt: 0.5 }}>
+                        {item.value}
+                      </Typography>
+                    </CardContent>
+                  </Card>
+                ))}
+              </Stack>
+
+              <Stack direction={{ xs: 'column', lg: 'row' }} spacing={2}>
+                <Card variant="outlined" sx={{ flex: 1 }}>
+                  <CardContent>
+                    <Typography variant="h5">Cadastro resumido</Typography>
+                    <Stack divider={<Divider flexItem />} sx={{ mt: 1.5 }}>
+                      {[
+                        { label: 'Motorista', value: detailsSubscription.driverName },
+                        { label: 'Telefone', value: detailsSubscription.driverPhone },
+                        { label: 'Cidade', value: detailsDriverProfile?.city ?? 'Não informado' },
+                        { label: 'Veículo', value: detailsDriverProfile?.vehicle ?? 'Não informado' },
+                        { label: 'Entrada', value: detailsDriverProfile?.joinedAt ?? 'Não informado' },
+                      ].map((item) => (
+                        <Stack key={item.label} direction="row" justifyContent="space-between" spacing={2} sx={{ py: 1 }}>
+                          <Typography color="text.secondary">{item.label}</Typography>
+                          <Typography fontWeight={800} textAlign="right">
+                            {item.value}
+                          </Typography>
+                        </Stack>
+                      ))}
+                    </Stack>
+                  </CardContent>
+                </Card>
+
+                <Card variant="outlined" sx={{ flex: 1 }}>
+                  <CardContent>
+                    <Typography variant="h5">Pagamento registrado</Typography>
+                    {latestPayment ? (
+                      <Stack spacing={1.25} sx={{ mt: 1.5 }}>
+                        <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap" useFlexGap>
+                          <Chip
+                            label={latestPayment.status}
+                            size="small"
+                            color={getPaymentStatusColor(latestPayment.status)}
+                            sx={{ fontWeight: 800 }}
+                          />
+                          <Chip label={latestPayment.method} size="small" variant="outlined" sx={{ fontWeight: 800 }} />
+                          <Chip label={punctualityLabel} size="small" variant="outlined" sx={{ fontWeight: 800 }} />
+                        </Stack>
+                        <Typography fontWeight={900}>{currencyFormatter.format(latestPayment.value)}</Typography>
+                        <Typography color="text.secondary">
+                          Pago via {latestPayment.paidWith} em {latestPayment.date}. Vencimento em {latestPayment.dueDate}.
+                        </Typography>
+                        <Typography color={latestPayment.delayDays > 0 ? 'error.main' : 'success.main'} fontWeight={800}>
+                          {latestPayment.delayDays > 0
+                            ? `${latestPayment.delayDays} dia${latestPayment.delayDays === 1 ? '' : 's'} de atraso`
+                            : 'Pagamento dentro do prazo'}
+                        </Typography>
+                      </Stack>
+                    ) : (
+                      <Typography color="text.secondary" sx={{ mt: 1.5 }}>
+                        Nenhum pagamento registrado.
+                      </Typography>
+                    )}
+                  </CardContent>
+                </Card>
+              </Stack>
+
+              <Card variant="outlined">
+                <CardContent>
+                  <Typography variant="h5">Média de movimentação no plano</Typography>
+                  {detailsMovement ? (
+                    <Stack direction={{ xs: 'column', md: 'row' }} spacing={2} sx={{ mt: 1.5 }}>
+                      {[
+                        { label: 'Corridas/mês', value: `${detailsMovement.averageRides}` },
+                        { label: 'Receita/mês', value: currencyFormatter.format(detailsMovement.averageRevenue) },
+                        { label: 'Horas online/mês', value: `${detailsMovement.averageOnlineHours}h` },
+                      ].map((item) => (
+                        <Box key={item.label} sx={{ flex: 1 }}>
+                          <Typography color="text.secondary" variant="body2">
+                            {item.label}
+                          </Typography>
+                          <Typography variant="h5" fontWeight={900}>
+                            {item.value}
+                          </Typography>
+                        </Box>
+                      ))}
+                      <Box sx={{ flex: 1, minWidth: 180 }}>
+                        <Typography color="text.secondary" variant="body2">
+                          Uso dos recursos do plano
+                        </Typography>
+                        <Stack direction="row" spacing={1} alignItems="center" sx={{ mt: 0.75 }}>
+                          <LinearProgress
+                            variant="determinate"
+                            value={detailsMovement.planUsage}
+                            sx={{ flex: 1, height: 8, borderRadius: 999 }}
+                          />
+                          <Typography fontWeight={900}>{detailsMovement.planUsage}%</Typography>
+                        </Stack>
+                      </Box>
+                    </Stack>
+                  ) : (
+                    <Typography color="text.secondary" sx={{ mt: 1.5 }}>
+                      Sem movimentação consolidada para este plano.
+                    </Typography>
+                  )}
+                </CardContent>
+              </Card>
+
+              <Card variant="outlined">
+                <CardContent>
+                  <Typography variant="h5">Histórico de pagamentos</Typography>
+                  <Stack divider={<Divider flexItem />} sx={{ mt: 1.5 }}>
+                    {detailsPayments.map((payment) => (
+                      <Stack
+                        key={payment.id}
+                        direction={{ xs: 'column', md: 'row' }}
+                        spacing={1.5}
+                        alignItems={{ xs: 'flex-start', md: 'center' }}
+                        justifyContent="space-between"
+                        sx={{ py: 1.25 }}
+                      >
+                        <Box>
+                          <Typography fontWeight={800}>{payment.date}</Typography>
+                          <Typography color="text.secondary" variant="body2">
+                            {payment.plan} · {payment.paidWith} · venc. {payment.dueDate}
+                          </Typography>
+                        </Box>
+                        <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap" useFlexGap>
+                          <Typography fontWeight={900}>{currencyFormatter.format(payment.value)}</Typography>
+                          <Chip label={payment.method} size="small" variant="outlined" sx={{ fontWeight: 800 }} />
+                          <Chip
+                            label={payment.status}
+                            size="small"
+                            color={getPaymentStatusColor(payment.status)}
+                            sx={{ fontWeight: 800 }}
+                          />
+                          <Chip
+                            label={payment.delayDays > 0 ? `${payment.delayDays}d atraso` : 'Em dia'}
+                            size="small"
+                            color={payment.delayDays > 0 ? 'error' : 'success'}
+                            variant="outlined"
+                            sx={{ fontWeight: 800 }}
+                          />
+                        </Stack>
+                      </Stack>
+                    ))}
+                    {detailsPayments.length === 0 ? (
+                      <Typography color="text.secondary" sx={{ py: 1.5 }}>
+                        Nenhum histórico de pagamento encontrado.
+                      </Typography>
+                    ) : null}
+                  </Stack>
+                </CardContent>
+              </Card>
+            </Stack>
+          ) : null}
+        </DialogContent>
+      </Dialog>
     </Card>
   )
 }
