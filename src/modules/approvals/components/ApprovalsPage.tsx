@@ -1,22 +1,42 @@
+import { useState } from 'react'
 import AssignmentTurnedInIcon from '@mui/icons-material/AssignmentTurnedIn'
+import DescriptionOutlinedIcon from '@mui/icons-material/DescriptionOutlined'
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
+import FaceRetouchingNaturalIcon from '@mui/icons-material/FaceRetouchingNatural'
 import HistoryIcon from '@mui/icons-material/History'
+import ImageOutlinedIcon from '@mui/icons-material/ImageOutlined'
 import {
   Avatar,
   Box,
+  ButtonBase,
   Card,
   CardContent,
   Chip,
+  Collapse,
+  Divider,
+  LinearProgress,
   Stack,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
   Typography,
   useTheme,
 } from '@mui/material'
 import { pendingApprovalDrivers, recentApprovalHistory } from '../data/mockApprovals'
+import type { ApprovalDocument, ApprovalDriver } from '../types'
+
+function getFaceCheckColor(status: ApprovalDriver['faceCheck']['status']) {
+  if (status === 'Aprovado') {
+    return 'success' as const
+  }
+
+  if (status === 'Reprovado') {
+    return 'error' as const
+  }
+
+  return 'warning' as const
+}
+
+function getDocumentIcon(document: ApprovalDocument) {
+  return document.format === 'PDF' ? <DescriptionOutlinedIcon /> : <ImageOutlinedIcon />
+}
 
 export default function ApprovalsPage() {
   const theme = useTheme()
@@ -41,74 +61,11 @@ export default function ApprovalsPage() {
         />
       </Stack>
 
-      <Card variant="outlined">
-        <CardContent>
-          <Stack direction="row" spacing={1.5} alignItems="center" justifyContent="space-between" sx={{ mb: 1.5 }}>
-            <Box>
-              <Typography variant="h4">Fila de aprovação</Typography>
-              <Typography color="text.secondary" variant="body2">
-                Motoristas com status PENDING aguardando revisão.
-              </Typography>
-            </Box>
-          </Stack>
-
-          <TableContainer>
-            <Table sx={{ minWidth: 820 }}>
-              <TableHead>
-                <TableRow>
-                  <TableCell>Motorista</TableCell>
-                  <TableCell>Categoria</TableCell>
-                  <TableCell>Documentos</TableCell>
-                  <TableCell>Face check</TableCell>
-                  <TableCell>Solicitado em</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {pendingApprovalDrivers.map((driver) => (
-                  <TableRow key={driver.id} hover>
-                    <TableCell>
-                      <Stack direction="row" spacing={1.5} alignItems="center">
-                        <Avatar
-                          sx={{
-                            bgcolor: 'rgba(239, 68, 68, 0.12)',
-                            color: theme.palette.error.main,
-                            fontWeight: 900,
-                          }}
-                        >
-                          {driver.initials}
-                        </Avatar>
-                        <Box sx={{ minWidth: 0 }}>
-                          <Typography fontWeight={900}>{driver.name}</Typography>
-                          <Typography color="text.secondary" variant="body2">
-                            {driver.id} · {driver.city}
-                          </Typography>
-                        </Box>
-                      </Stack>
-                    </TableCell>
-                    <TableCell>{driver.category}</TableCell>
-                    <TableCell>
-                      <Stack direction="row" spacing={0.75} useFlexGap flexWrap="wrap">
-                        {driver.documents.map((document) => (
-                          <Chip key={document.id} label={document.type} size="small" variant="outlined" sx={{ fontWeight: 800 }} />
-                        ))}
-                      </Stack>
-                    </TableCell>
-                    <TableCell>
-                      <Chip
-                        label={`${driver.faceCheck.status} · ${driver.faceCheck.score.toFixed(1)}%`}
-                        color={driver.faceCheck.status === 'Aprovado' ? 'success' : 'warning'}
-                        size="small"
-                        sx={{ fontWeight: 800 }}
-                      />
-                    </TableCell>
-                    <TableCell>{driver.requestedAt}</TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </TableContainer>
-        </CardContent>
-      </Card>
+      <Stack spacing={1.5}>
+        {pendingApprovalDrivers.map((driver) => (
+          <ApprovalDriverCard key={driver.id} driver={driver} />
+        ))}
+      </Stack>
 
       <Card variant="outlined">
         <CardContent>
@@ -122,7 +79,7 @@ export default function ApprovalsPage() {
             </Box>
           </Stack>
 
-          <Stack spacing={1} divider={<Box sx={{ borderTop: '1px solid', borderColor: 'divider' }} />}>
+          <Stack spacing={1} divider={<Divider flexItem />}>
             {recentApprovalHistory.map((item) => (
               <Stack key={item.id} direction={{ xs: 'column', sm: 'row' }} spacing={1} alignItems={{ xs: 'flex-start', sm: 'center' }} justifyContent="space-between" sx={{ py: 1 }}>
                 <Box>
@@ -143,5 +100,164 @@ export default function ApprovalsPage() {
         </CardContent>
       </Card>
     </Stack>
+  )
+}
+
+function ApprovalDriverCard({ driver }: { driver: ApprovalDriver }) {
+  const theme = useTheme()
+  const [expanded, setExpanded] = useState(false)
+  const faceCheckColor = getFaceCheckColor(driver.faceCheck.status)
+
+  return (
+    <Card variant="outlined">
+      <ButtonBase
+        onClick={() => setExpanded((current) => !current)}
+        sx={{ width: '100%', display: 'block', textAlign: 'left', borderRadius: 'inherit' }}
+        aria-expanded={expanded}
+        aria-controls={`approval-driver-${driver.id}`}
+      >
+        <CardContent sx={{ p: 1.75, '&:last-child': { pb: 1.75 } }}>
+          <Stack direction={{ xs: 'column', md: 'row' }} spacing={1.5} alignItems={{ xs: 'flex-start', md: 'center' }} justifyContent="space-between">
+            <Stack direction="row" spacing={1.5} alignItems="center" sx={{ minWidth: 0 }}>
+              <Avatar
+                sx={{
+                  width: 46,
+                  height: 46,
+                  bgcolor: 'rgba(239, 68, 68, 0.12)',
+                  color: theme.palette.error.main,
+                  fontWeight: 900,
+                }}
+              >
+                {driver.initials}
+              </Avatar>
+              <Box sx={{ minWidth: 0 }}>
+                <Typography fontWeight={900} noWrap>
+                  {driver.name}
+                </Typography>
+                <Typography color="text.secondary" variant="body2" noWrap>
+                  {driver.id} · {driver.city} · {driver.phone}
+                </Typography>
+              </Box>
+            </Stack>
+
+            <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap" useFlexGap>
+              <Chip label={driver.category} size="small" variant="outlined" sx={{ fontWeight: 800 }} />
+              <Chip label={`${driver.documents.length} documentos`} size="small" color="primary" variant="outlined" sx={{ fontWeight: 800 }} />
+              <Chip
+                label={`${driver.faceCheck.status} · ${driver.faceCheck.score.toFixed(1)}%`}
+                color={faceCheckColor}
+                size="small"
+                sx={{ fontWeight: 800 }}
+              />
+              <Box
+                sx={{
+                  width: 32,
+                  height: 32,
+                  borderRadius: 1.5,
+                  display: 'grid',
+                  placeItems: 'center',
+                  color: 'text.secondary',
+                  transform: expanded ? 'rotate(180deg)' : 'rotate(0deg)',
+                  transition: theme.transitions.create('transform', { duration: theme.transitions.duration.shortest }),
+                }}
+              >
+                <ExpandMoreIcon fontSize="small" />
+              </Box>
+            </Stack>
+          </Stack>
+        </CardContent>
+      </ButtonBase>
+
+      <Collapse in={expanded} timeout="auto" unmountOnExit>
+        <CardContent id={`approval-driver-${driver.id}`} sx={{ pt: 0, px: 1.75, pb: 1.75, '&:last-child': { pb: 1.75 } }}>
+          <Divider sx={{ mb: 1.75 }} />
+
+          <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', lg: '1.1fr 1fr 0.9fr' }, gap: 1.5 }}>
+            <Card variant="outlined">
+              <CardContent sx={{ p: 1.5, '&:last-child': { pb: 1.5 } }}>
+                <Typography variant="h5">Cadastro</Typography>
+                <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 1.25, mt: 1.25 }}>
+                  <DetailItem label="Categoria" value={driver.category} />
+                  <DetailItem label="Solicitado" value={driver.requestedAt} />
+                  <DetailItem label="Veículo" value={driver.vehicle} />
+                  <DetailItem label="Placa" value={driver.plate} />
+                  <DetailItem label="Cidade" value={driver.city} />
+                  <DetailItem label="Telefone" value={driver.phone} />
+                </Box>
+              </CardContent>
+            </Card>
+
+            <Card variant="outlined">
+              <CardContent sx={{ p: 1.5, '&:last-child': { pb: 1.5 } }}>
+                <Typography variant="h5">Documentos</Typography>
+                <Stack divider={<Divider flexItem />} sx={{ mt: 1 }}>
+                  {driver.documents.map((document) => (
+                    <Stack key={document.id} direction="row" spacing={1.25} alignItems="center" justifyContent="space-between" sx={{ py: 1 }}>
+                      <Stack direction="row" spacing={1} alignItems="center" sx={{ minWidth: 0 }}>
+                        <Box sx={{ color: 'text.secondary', display: 'grid', placeItems: 'center', '& svg': { fontSize: 20 } }}>
+                          {getDocumentIcon(document)}
+                        </Box>
+                        <Box sx={{ minWidth: 0 }}>
+                          <Typography fontWeight={800} noWrap>
+                            {document.type}
+                          </Typography>
+                          <Typography color="text.secondary" variant="body2" noWrap>
+                            {document.name}
+                          </Typography>
+                        </Box>
+                      </Stack>
+                      <Chip label={document.format} size="small" variant="outlined" sx={{ fontWeight: 800 }} />
+                    </Stack>
+                  ))}
+                </Stack>
+              </CardContent>
+            </Card>
+
+            <Card variant="outlined">
+              <CardContent sx={{ p: 1.5, '&:last-child': { pb: 1.5 } }}>
+                <Stack direction="row" spacing={1} alignItems="center">
+                  <FaceRetouchingNaturalIcon color={faceCheckColor} />
+                  <Box>
+                    <Typography variant="h5">Face check</Typography>
+                    <Typography color="text.secondary" variant="body2">
+                      Selfie vs. documento
+                    </Typography>
+                  </Box>
+                </Stack>
+
+                <Box sx={{ mt: 2 }}>
+                  <Stack direction="row" justifyContent="space-between" spacing={1}>
+                    <Typography color="text.secondary" variant="body2">
+                      Score CompreFace
+                    </Typography>
+                    <Typography fontWeight={900}>{driver.faceCheck.score.toFixed(1)}%</Typography>
+                  </Stack>
+                  <LinearProgress
+                    variant="determinate"
+                    value={driver.faceCheck.score}
+                    color={faceCheckColor}
+                    sx={{ mt: 1, height: 8, borderRadius: 999 }}
+                  />
+                  <Chip label={driver.faceCheck.status} color={faceCheckColor} sx={{ mt: 1.5, fontWeight: 800 }} />
+                </Box>
+              </CardContent>
+            </Card>
+          </Box>
+        </CardContent>
+      </Collapse>
+    </Card>
+  )
+}
+
+function DetailItem({ label, value }: { label: string; value: string }) {
+  return (
+    <Box sx={{ minWidth: 0 }}>
+      <Typography color="text.secondary" variant="caption">
+        {label}
+      </Typography>
+      <Typography fontWeight={800} variant="body2" noWrap>
+        {value}
+      </Typography>
+    </Box>
   )
 }

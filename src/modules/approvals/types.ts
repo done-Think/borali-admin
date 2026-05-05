@@ -14,6 +14,8 @@ export type ApprovalDriver = {
   category: string
   city: string
   phone: string
+  vehicle: string
+  plate: string
   requestedAt: string
   status: 'PENDING'
   documents: ApprovalDocument[]
