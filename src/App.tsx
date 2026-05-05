@@ -1,3 +1,4 @@
+import AssignmentTurnedInIcon from '@mui/icons-material/AssignmentTurnedIn'
 import BarChartIcon from '@mui/icons-material/BarChart'
 import CreditCardIcon from '@mui/icons-material/CreditCard'
 import DashboardIcon from '@mui/icons-material/Dashboard'
@@ -6,16 +7,28 @@ import GroupIcon from '@mui/icons-material/Group'
 import HeadsetMicIcon from '@mui/icons-material/HeadsetMic'
 import RouteIcon from '@mui/icons-material/Route'
 import SettingsIcon from '@mui/icons-material/Settings'
-import { CssBaseline, GlobalStyles } from '@mui/material'
+import { Badge, CssBaseline, GlobalStyles } from '@mui/material'
 import { Outlet } from 'react-router'
 import { ReactRouterAppProvider } from '@toolpad/core/react-router'
 import theme from './theme/themeProvider'
 import logo from '@/assets/logo.png'
+import { pendingApprovalDrivers } from '@modules/approvals/data/mockApprovals'
+
+const pendingApprovalsCount = pendingApprovalDrivers.length
 
 const navigation = [
   { kind: 'header' as const, title: 'Visao Geral' },
   { segment: '', title: 'Dashboard', icon: <DashboardIcon /> },
   { kind: 'header' as const, title: 'Gestao' },
+  {
+    segment: 'approvals',
+    title: 'Aprovações',
+    icon: (
+      <Badge badgeContent={pendingApprovalsCount} color="error" overlap="circular">
+        <AssignmentTurnedInIcon />
+      </Badge>
+    ),
+  },
   { segment: 'drivers', title: 'Motoristas', icon: <DirectionsCarIcon /> },
   { segment: 'passengers', title: 'Passageiros', icon: <GroupIcon /> },
   { segment: 'rides', title: 'Corridas', icon: <RouteIcon /> },
