@@ -29,7 +29,7 @@ import CloseIcon from '@mui/icons-material/Close'
 import { useSnackbar } from 'notistack'
 import { useLocation } from 'react-router'
 import { pendingApprovalDrivers, recentApprovalHistory } from '../data/mockApprovals'
-import type { ApprovalDocument, ApprovalDriver } from '../types'
+import type { ApprovalDocument, ApprovalDriver, ApprovalHistoryItem } from '../types'
 
 function getFaceCheckColor(status: ApprovalDriver['faceCheck']['status']) {
   if (status === 'Aprovado') {
@@ -54,6 +54,7 @@ export default function ApprovalsPage() {
   const locationState = location.state as { selectedApprovalDriverId?: string; selectedApprovalDriverName?: string } | null
   const [pendingDrivers, setPendingDrivers] = useState(pendingApprovalDrivers)
   const [approvalHistory, setApprovalHistory] = useState(recentApprovalHistory)
+  const [selectedHistory, setSelectedHistory] = useState<ApprovalHistoryItem | null>(null)
 
   function handleDecision(driver: ApprovalDriver, decision: 'Aprovado' | 'Rejeitado', reason?: string) {
     setPendingDrivers((current) => current.filter((item) => item.id !== driver.id))
@@ -70,6 +71,7 @@ export default function ApprovalsPage() {
           minute: '2-digit',
         }).format(new Date()),
         reviewer: 'Admin',
+        driver,
         reason,
       },
       ...current,
@@ -146,17 +148,39 @@ export default function ApprovalsPage() {
                     </Typography>
                   ) : null}
                 </Box>
-                <Chip
-                  label={item.decision}
-                  color={item.decision === 'Aprovado' ? 'success' : 'error'}
-                  size="small"
-                  sx={{ fontWeight: 800 }}
-                />
+                <Stack direction="row" spacing={1} alignItems="center">
+                  <Button
+                    variant="outlined"
+                    size="small"
+                    onClick={() => setSelectedHistory(item)}
+                    sx={{ fontWeight: 900, textTransform: 'none' }}
+                  >
+                    Ver
+                  </Button>
+                  <Chip
+                    label={item.decision}
+                    color={item.decision === 'Aprovado' ? 'success' : 'error'}
+                    size="small"
+                    sx={{ fontWeight: 800 }}
+                  />
+                </Stack>
               </Stack>
             ))}
           </Stack>
         </CardContent>
       </Card>
+
+      {selectedHistory ? (
+        <FullRegistrationDialog
+          driver={selectedHistory.driver}
+          open
+          decision={selectedHistory.decision}
+          decidedAt={selectedHistory.decidedAt}
+          reviewer={selectedHistory.reviewer}
+          reason={selectedHistory.reason}
+          onClose={() => setSelectedHistory(null)}
+        />
+      ) : null}
     </Stack>
   )
 }
@@ -443,10 +467,18 @@ function DetailItem({ label, value }: { label: string; value: string }) {
 function FullRegistrationDialog({
   driver,
   open,
+  decision,
+  decidedAt,
+  reviewer,
+  reason,
   onClose,
 }: {
   driver: ApprovalDriver
   open: boolean
+  decision?: ApprovalHistoryItem['decision']
+  decidedAt?: string
+  reviewer?: string
+  reason?: string
   onClose: () => void
 }) {
   return (
@@ -468,6 +500,31 @@ function FullRegistrationDialog({
 
       <DialogContent dividers>
         <Stack spacing={1.5}>
+          {decision ? (
+            <Card variant="outlined">
+              <CardContent sx={{ p: 1.5, '&:last-child': { pb: 1.5 } }}>
+                <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} alignItems={{ xs: 'flex-start', sm: 'center' }} justifyContent="space-between">
+                  <Box>
+                    <Typography variant="h5">Decisao registrada</Typography>
+                    <Typography color="text.secondary" variant="body2">
+                      {decidedAt} · {reviewer}
+                    </Typography>
+                    {reason ? (
+                      <Typography color="text.secondary" variant="body2" sx={{ mt: 0.5 }}>
+                        Motivo: {reason}
+                      </Typography>
+                    ) : null}
+                  </Box>
+                  <Chip
+                    label={decision}
+                    color={decision === 'Aprovado' ? 'success' : 'error'}
+                    sx={{ fontWeight: 900 }}
+                  />
+                </Stack>
+              </CardContent>
+            </Card>
+          ) : null}
+
           <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(3, minmax(0, 1fr))' }, gap: 1.5 }}>
             <RegistrationSection
               title="Dados pessoais"
