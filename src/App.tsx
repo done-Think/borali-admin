@@ -24,7 +24,21 @@ function createNavigation(pendingApprovalsCount: number) {
     segment: 'approvals',
     title: 'Aprovações',
     icon: (
-      <Badge badgeContent={pendingApprovalsCount} color="error" overlap="circular">
+      <Badge
+        badgeContent={pendingApprovalsCount}
+        color="error"
+        overlap="circular"
+        sx={{
+          '& .MuiBadge-badge': {
+            right: 1,
+            top: 4,
+            minWidth: 17,
+            height: 17,
+            fontSize: 10,
+            fontWeight: 900,
+          },
+        }}
+      >
         <AssignmentTurnedInIcon />
       </Badge>
     ),

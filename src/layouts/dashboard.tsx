@@ -20,21 +20,21 @@ export default function Layout() {
         },
         '& .MuiListItem-root': {
           px: 1,
-          overflow: 'hidden',
+          overflow: 'visible',
         },
         '& .MuiListItemButton-root': {
           minHeight: '35px !important',
           height: '35px !important',
           borderRadius: '8px !important',
           px: '10px !important',
-          overflow: 'hidden !important',
+          overflow: 'visible !important',
           scrollbarWidth: 'none',
           '&::-webkit-scrollbar': {
             display: 'none',
           },
         },
         '& .MuiListItemButton-root > .MuiBox-root': {
-          overflow: 'hidden',
+          overflow: 'visible',
         },
         '& .MuiListItemButton-root:not(:has(.MuiListItemText-root))': {
           minHeight: '60px !important',
@@ -78,12 +78,20 @@ export default function Layout() {
         },
         '& .MuiListItemIcon-root': {
           minWidth: '28px !important',
+          overflow: 'visible',
           '& svg': {
             fontSize: 20,
           },
         },
+        '& .MuiBadge-root': {
+          overflow: 'visible',
+          '& .MuiBadge-badge': {
+            zIndex: 1,
+          },
+        },
         '& .MuiListItemText-root': {
           ml: '6px !important',
+          overflow: 'hidden',
         },
         '& .MuiListItemText-primary': {
           fontSize: 12,
