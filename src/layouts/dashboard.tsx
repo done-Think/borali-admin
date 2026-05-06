@@ -15,6 +15,10 @@ export default function Layout() {
         '& .MuiDrawer-paper nav': {
           pt: 1,
         },
+        '& .MuiAppBar-root .MuiIconButton-root[aria-label*="navigation menu"]': {
+          position: 'relative',
+          zIndex: 2,
+        },
         '& .MuiList-root': {
           mb: '0 !important',
         },

@@ -57,7 +57,20 @@ function createNavigation(pendingApprovalsCount: number) {
 
 const branding = {
   title: '',
-  logo: <img src={logo} alt="BoraLi" style={{ width: 184, maxHeight: 88, objectFit: 'contain' }} />,
+  logo: (
+    <img
+      src={logo}
+      alt="BoraLi"
+      style={{
+        width: 168,
+        maxHeight: 72,
+        objectFit: 'contain',
+        display: 'block',
+        pointerEvents: 'none',
+        transform: 'translateX(-64px)',
+      }}
+    />
+  ),
   homeUrl: '/',
 }
 
