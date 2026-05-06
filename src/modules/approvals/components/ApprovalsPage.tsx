@@ -56,6 +56,16 @@ export default function ApprovalsPage() {
   const [approvalHistory, setApprovalHistory] = useState(recentApprovalHistory)
   const [selectedHistory, setSelectedHistory] = useState<ApprovalHistoryItem | null>(null)
 
+  function getDecisionTimestamp() {
+    return new Intl.DateTimeFormat('pt-BR', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    }).format(new Date())
+  }
+
   function handleDecision(driver: ApprovalDriver, decision: 'Aprovado' | 'Rejeitado', reason?: string) {
     setPendingDrivers((current) => current.filter((item) => item.id !== driver.id))
     setApprovalHistory((current) => [
@@ -63,13 +73,7 @@ export default function ApprovalsPage() {
         id: `hist-${driver.id}-${Date.now()}`,
         driverName: driver.name,
         decision,
-        decidedAt: new Intl.DateTimeFormat('pt-BR', {
-          day: '2-digit',
-          month: '2-digit',
-          year: 'numeric',
-          hour: '2-digit',
-          minute: '2-digit',
-        }).format(new Date()),
+        decidedAt: getDecisionTimestamp(),
         reviewer: 'Admin',
         driver,
         reason,
@@ -82,6 +86,38 @@ export default function ApprovalsPage() {
         : `${driver.name} rejeitado e removido da fila.`,
       { variant: decision === 'Aprovado' ? 'success' : 'warning', autoHideDuration: 2000 },
     )
+  }
+
+  function handleReviewHistory(item: ApprovalHistoryItem, decision: 'Aprovado' | 'Rejeitado', reason?: string) {
+    const reviewedItem: ApprovalHistoryItem = {
+      ...item,
+      decision,
+      decidedAt: getDecisionTimestamp(),
+      reviewer: 'Admin',
+      reason: decision === 'Rejeitado' ? reason : undefined,
+    }
+
+    setApprovalHistory((current) => current.map((historyItem) => (historyItem.id === item.id ? reviewedItem : historyItem)))
+    setSelectedHistory(reviewedItem)
+    enqueueSnackbar(
+      decision === 'Aprovado'
+        ? `${item.driverName} marcado como aprovado.`
+        : `${item.driverName} marcado como rejeitado.`,
+      { variant: decision === 'Aprovado' ? 'success' : 'warning', autoHideDuration: 2000 },
+    )
+  }
+
+  function handleRestoreToApprovals(item: ApprovalHistoryItem) {
+    setPendingDrivers((current) => {
+      if (current.some((driver) => driver.id === item.driver.id)) {
+        return current
+      }
+
+      return [item.driver, ...current]
+    })
+    setApprovalHistory((current) => current.filter((historyItem) => historyItem.id !== item.id))
+    setSelectedHistory(null)
+    enqueueSnackbar(`${item.driverName} voltou para a fila de aprovações.`, { variant: 'info', autoHideDuration: 2000 })
   }
 
   useEffect(() => {
@@ -178,6 +214,8 @@ export default function ApprovalsPage() {
           decidedAt={selectedHistory.decidedAt}
           reviewer={selectedHistory.reviewer}
           reason={selectedHistory.reason}
+          onReviewDecision={(decision, reason) => handleReviewHistory(selectedHistory, decision, reason)}
+          onRestoreToApprovals={() => handleRestoreToApprovals(selectedHistory)}
           onClose={() => setSelectedHistory(null)}
         />
       ) : null}
@@ -471,6 +509,8 @@ function FullRegistrationDialog({
   decidedAt,
   reviewer,
   reason,
+  onReviewDecision,
+  onRestoreToApprovals,
   onClose,
 }: {
   driver: ApprovalDriver
@@ -479,8 +519,27 @@ function FullRegistrationDialog({
   decidedAt?: string
   reviewer?: string
   reason?: string
+  onReviewDecision?: (decision: ApprovalHistoryItem['decision'], reason?: string) => void
+  onRestoreToApprovals?: () => void
   onClose: () => void
 }) {
+  const [reviewMode, setReviewMode] = useState(false)
+  const [reviewReason, setReviewReason] = useState(reason ?? '')
+
+  useEffect(() => {
+    setReviewReason(reason ?? '')
+    setReviewMode(false)
+  }, [driver.id, reason])
+
+  function submitReview(decisionValue: ApprovalHistoryItem['decision']) {
+    if (decisionValue === 'Rejeitado' && !reviewReason.trim()) {
+      return
+    }
+
+    onReviewDecision?.(decisionValue, decisionValue === 'Rejeitado' ? reviewReason.trim() : undefined)
+    setReviewMode(false)
+  }
+
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="lg">
       <DialogTitle sx={{ pr: 7 }}>
@@ -585,6 +644,77 @@ function FullRegistrationDialog({
               ]}
             />
           </Box>
+
+          {decision && onReviewDecision ? (
+            <Card variant="outlined">
+              <CardContent sx={{ p: 1.5, '&:last-child': { pb: 1.5 } }}>
+                <Stack
+                  direction={{ xs: 'column', md: 'row' }}
+                  spacing={1.5}
+                  alignItems={{ xs: 'stretch', md: 'center' }}
+                  justifyContent="space-between"
+                >
+                  <Box>
+                    <Typography variant="h5">Rever decisão</Typography>
+                    <Typography color="text.secondary" variant="body2">
+                      Altere o resultado registrado ou devolva o cadastro para a fila de aprovações.
+                    </Typography>
+                  </Box>
+
+                  <Stack direction="row" spacing={1} justifyContent={{ xs: 'stretch', md: 'flex-end' }} flexWrap="wrap" useFlexGap>
+                    <Button
+                      variant="contained"
+                      color="success"
+                      onClick={() => submitReview('Aprovado')}
+                      sx={{ fontWeight: 900, textTransform: 'none' }}
+                    >
+                      Aprovar
+                    </Button>
+                    <Button
+                      variant={reviewMode ? 'contained' : 'outlined'}
+                      color="error"
+                      onClick={() => setReviewMode((current) => !current)}
+                      sx={{ fontWeight: 900, textTransform: 'none' }}
+                    >
+                      Rejeitar
+                    </Button>
+                    <Button
+                      variant="outlined"
+                      color="secondary"
+                      onClick={onRestoreToApprovals}
+                      sx={{ fontWeight: 900, textTransform: 'none' }}
+                    >
+                      Voltar para aprovações
+                    </Button>
+                  </Stack>
+                </Stack>
+
+                {reviewMode ? (
+                  <Stack direction={{ xs: 'column', md: 'row' }} spacing={1.25} alignItems={{ xs: 'stretch', md: 'flex-start' }} sx={{ mt: 1.5 }}>
+                    <TextField
+                      value={reviewReason}
+                      onChange={(event) => setReviewReason(event.target.value)}
+                      label="Motivo da rejeição"
+                      placeholder="Ex.: documento ilegível, divergência facial, CRLV vencido"
+                      size="small"
+                      multiline
+                      minRows={2}
+                      fullWidth
+                    />
+                    <Button
+                      variant="contained"
+                      color="error"
+                      disabled={!reviewReason.trim()}
+                      onClick={() => submitReview('Rejeitado')}
+                      sx={{ fontWeight: 900, textTransform: 'none', minWidth: 150 }}
+                    >
+                      Confirmar
+                    </Button>
+                  </Stack>
+                ) : null}
+              </CardContent>
+            </Card>
+          ) : null}
         </Stack>
       </DialogContent>
     </Dialog>
