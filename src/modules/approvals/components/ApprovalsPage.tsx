@@ -173,6 +173,7 @@ function ApprovalDriverCard({
   const theme = useTheme()
   const [expanded, setExpanded] = useState(initialExpanded)
   const [selectedDocument, setSelectedDocument] = useState<ApprovalDocument | null>(null)
+  const [profileOpen, setProfileOpen] = useState(false)
   const [rejectionMode, setRejectionMode] = useState(false)
   const [rejectionReason, setRejectionReason] = useState('')
   const faceCheckColor = getFaceCheckColor(driver.faceCheck.status)
@@ -258,7 +259,17 @@ function ApprovalDriverCard({
           <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', lg: '1.1fr 1fr 0.9fr' }, gap: 1.5 }}>
             <Card variant="outlined">
               <CardContent sx={{ p: 1.5, '&:last-child': { pb: 1.5 } }}>
-                <Typography variant="h5">Cadastro</Typography>
+                <Stack direction="row" spacing={1} alignItems="center" justifyContent="space-between">
+                  <Typography variant="h5">Cadastro</Typography>
+                  <Button
+                    variant="outlined"
+                    size="small"
+                    onClick={() => setProfileOpen(true)}
+                    sx={{ fontWeight: 900, textTransform: 'none' }}
+                  >
+                    Ver mais
+                  </Button>
+                </Stack>
                 <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 1.25, mt: 1.25 }}>
                   <DetailItem label="Categoria" value={driver.category} />
                   <DetailItem label="Solicitado" value={driver.requestedAt} />
@@ -407,6 +418,11 @@ function ApprovalDriverCard({
         document={selectedDocument}
         onClose={() => setSelectedDocument(null)}
       />
+      <FullRegistrationDialog
+        driver={driver}
+        open={profileOpen}
+        onClose={() => setProfileOpen(false)}
+      />
     </Card>
   )
 }
@@ -421,6 +437,123 @@ function DetailItem({ label, value }: { label: string; value: string }) {
         {value}
       </Typography>
     </Box>
+  )
+}
+
+function FullRegistrationDialog({
+  driver,
+  open,
+  onClose,
+}: {
+  driver: ApprovalDriver
+  open: boolean
+  onClose: () => void
+}) {
+  return (
+    <Dialog open={open} onClose={onClose} fullWidth maxWidth="lg">
+      <DialogTitle sx={{ pr: 7 }}>
+        <Box>
+          <Typography variant="h4" component="span">
+            Cadastro completo
+          </Typography>
+          <Typography color="text.secondary" variant="body2">
+            {driver.name} · {driver.id}
+          </Typography>
+        </Box>
+
+        <IconButton aria-label="Fechar cadastro completo" onClick={onClose} sx={{ position: 'absolute', right: 16, top: 16 }}>
+          <CloseIcon />
+        </IconButton>
+      </DialogTitle>
+
+      <DialogContent dividers>
+        <Stack spacing={1.5}>
+          <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(3, minmax(0, 1fr))' }, gap: 1.5 }}>
+            <RegistrationSection
+              title="Dados pessoais"
+              items={[
+                { label: 'Nome completo', value: driver.name },
+                { label: 'CPF', value: driver.cpf },
+                { label: 'Nascimento', value: driver.birthDate },
+                { label: 'E-mail', value: driver.email },
+                { label: 'Telefone', value: driver.phone },
+                { label: 'Origem', value: driver.referralSource },
+              ]}
+            />
+            <RegistrationSection
+              title="Endereco"
+              items={[
+                { label: 'Cidade', value: driver.city },
+                { label: 'Bairro', value: driver.neighborhood },
+                { label: 'Endereco', value: driver.address },
+                { label: 'CEP', value: driver.zipCode },
+              ]}
+            />
+            <RegistrationSection
+              title="CNH"
+              items={[
+                { label: 'Categoria CNH', value: driver.cnhCategory },
+                { label: 'Validade', value: driver.cnhExpiresAt },
+                { label: 'Status face check', value: driver.faceCheck.status },
+                { label: 'Score face check', value: `${driver.faceCheck.score.toFixed(1)}%` },
+              ]}
+            />
+          </Box>
+
+          <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(3, minmax(0, 1fr))' }, gap: 1.5 }}>
+            <RegistrationSection
+              title="Veiculo"
+              items={[
+                { label: 'Modelo', value: driver.vehicle },
+                { label: 'Ano', value: driver.vehicleYear },
+                { label: 'Cor', value: driver.vehicleColor },
+                { label: 'Placa', value: driver.plate },
+                { label: 'Categoria', value: driver.category },
+              ]}
+            />
+            <RegistrationSection
+              title="Dados bancarios"
+              items={[
+                { label: 'Banco', value: driver.bankName },
+                { label: 'Agencia', value: driver.bankAgency },
+                { label: 'Conta', value: driver.bankAccount },
+              ]}
+            />
+            <RegistrationSection
+              title="Emergencia"
+              items={[
+                { label: 'Contato', value: driver.emergencyContact },
+                { label: 'Telefone', value: driver.emergencyPhone },
+                { label: 'Solicitado em', value: driver.requestedAt },
+              ]}
+            />
+          </Box>
+        </Stack>
+      </DialogContent>
+    </Dialog>
+  )
+}
+
+function RegistrationSection({
+  title,
+  items,
+}: {
+  title: string
+  items: Array<{ label: string; value: string }>
+}) {
+  return (
+    <Card variant="outlined">
+      <CardContent sx={{ p: 1.5, '&:last-child': { pb: 1.5 } }}>
+        <Typography variant="h5" sx={{ mb: 1.25 }}>
+          {title}
+        </Typography>
+        <Stack spacing={1}>
+          {items.map((item) => (
+            <DetailItem key={`${title}-${item.label}`} label={item.label} value={item.value} />
+          ))}
+        </Stack>
+      </CardContent>
+    </Card>
   )
 }
 
