@@ -7,8 +7,6 @@ export type DriverSortKey = 'category' | 'status' | 'rides' | 'rating' | 'subscr
 export type SortDirection = 'asc' | 'desc'
 
 export type DriversLocationState = {
-  openNewDriverDialog?: boolean
-  expandedRequestId?: string
   selectedDriverId?: string
   selectedDriverName?: string
   selectedDriverTab?: number

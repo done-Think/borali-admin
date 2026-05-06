@@ -27,6 +27,7 @@ import {
 } from '@mui/material'
 import CloseIcon from '@mui/icons-material/Close'
 import { useSnackbar } from 'notistack'
+import { useLocation } from 'react-router'
 import { pendingApprovalDrivers, recentApprovalHistory } from '../data/mockApprovals'
 import type { ApprovalDocument, ApprovalDriver } from '../types'
 
@@ -48,7 +49,9 @@ function getDocumentIcon(document: ApprovalDocument) {
 
 export default function ApprovalsPage() {
   const theme = useTheme()
+  const location = useLocation()
   const { enqueueSnackbar } = useSnackbar()
+  const locationState = location.state as { selectedApprovalDriverId?: string; selectedApprovalDriverName?: string } | null
   const [pendingDrivers, setPendingDrivers] = useState(pendingApprovalDrivers)
   const [approvalHistory, setApprovalHistory] = useState(recentApprovalHistory)
 
@@ -105,7 +108,15 @@ export default function ApprovalsPage() {
 
       <Stack spacing={1.5}>
         {pendingDrivers.map((driver) => (
-          <ApprovalDriverCard key={driver.id} driver={driver} onDecision={handleDecision} />
+          <ApprovalDriverCard
+            key={driver.id}
+            driver={driver}
+            initialExpanded={
+              driver.id === locationState?.selectedApprovalDriverId ||
+              driver.name === locationState?.selectedApprovalDriverName
+            }
+            onDecision={handleDecision}
+          />
         ))}
       </Stack>
 
@@ -152,17 +163,25 @@ export default function ApprovalsPage() {
 
 function ApprovalDriverCard({
   driver,
+  initialExpanded = false,
   onDecision,
 }: {
   driver: ApprovalDriver
+  initialExpanded?: boolean
   onDecision: (driver: ApprovalDriver, decision: 'Aprovado' | 'Rejeitado', reason?: string) => void
 }) {
   const theme = useTheme()
-  const [expanded, setExpanded] = useState(false)
+  const [expanded, setExpanded] = useState(initialExpanded)
   const [selectedDocument, setSelectedDocument] = useState<ApprovalDocument | null>(null)
   const [rejectionMode, setRejectionMode] = useState(false)
   const [rejectionReason, setRejectionReason] = useState('')
   const faceCheckColor = getFaceCheckColor(driver.faceCheck.status)
+
+  useEffect(() => {
+    if (initialExpanded) {
+      setExpanded(true)
+    }
+  }, [initialExpanded])
 
   function submitRejection() {
     if (!rejectionReason.trim()) {
