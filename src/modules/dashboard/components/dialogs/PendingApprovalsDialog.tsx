@@ -9,8 +9,8 @@ export function PendingApprovalsDialog({ open, onClose }: { open: boolean; onClo
   const [expandedId, setExpandedId] = useState<string | null>(null)
   const navigate = useNavigate()
 
-  function openDriverRequest(requestId: string) {
-    navigate('/drivers', { state: { openNewDriverDialog: true, expandedRequestId: requestId } })
+  function openDriverRequest(application: (typeof driverApplications)[number]) {
+    navigate('/approvals', { state: { selectedApprovalDriverId: application.id, selectedApprovalDriverName: application.name } })
   }
 
   return (
@@ -57,8 +57,8 @@ export function PendingApprovalsDialog({ open, onClose }: { open: boolean; onClo
                       <ApplicationDetail label="Prazo" value={application.expiresIn} />
                       <ApplicationDetail label="Protocolo" value={application.id} />
                       <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gridColumn: { xs: 'auto', md: 'span 4' } }}>
-                        <ButtonBase onClick={() => openDriverRequest(application.id)} sx={{ border: '1px solid', borderColor: 'secondary.main', borderRadius: 1.5, color: 'secondary.main', px: 2, py: 1, fontWeight: 800 }}>
-                          Ver cadastro completo em Motoristas
+                        <ButtonBase onClick={() => openDriverRequest(application)} sx={{ border: '1px solid', borderColor: 'secondary.main', borderRadius: 1.5, color: 'secondary.main', px: 2, py: 1, fontWeight: 800 }}>
+                          Ver cadastro completo em Aprovações
                         </ButtonBase>
                       </Box>
                     </Box>

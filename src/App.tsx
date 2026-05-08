@@ -1,3 +1,4 @@
+import AssignmentTurnedInIcon from '@mui/icons-material/AssignmentTurnedIn'
 import BarChartIcon from '@mui/icons-material/BarChart'
 import CreditCardIcon from '@mui/icons-material/CreditCard'
 import DashboardIcon from '@mui/icons-material/Dashboard'
@@ -6,16 +7,42 @@ import GroupIcon from '@mui/icons-material/Group'
 import HeadsetMicIcon from '@mui/icons-material/HeadsetMic'
 import RouteIcon from '@mui/icons-material/Route'
 import SettingsIcon from '@mui/icons-material/Settings'
-import { CssBaseline, GlobalStyles } from '@mui/material'
+import { Badge, CssBaseline, GlobalStyles } from '@mui/material'
+import { useEffect, useState } from 'react'
 import { Outlet } from 'react-router'
 import { ReactRouterAppProvider } from '@toolpad/core/react-router'
 import theme from './theme/themeProvider'
 import logo from '@/assets/logo.png'
+import { pendingApprovalDrivers } from '@modules/approvals/data/mockApprovals'
 
-const navigation = [
+function createNavigation(pendingApprovalsCount: number) {
+  return [
   { kind: 'header' as const, title: 'Visao Geral' },
   { segment: '', title: 'Dashboard', icon: <DashboardIcon /> },
   { kind: 'header' as const, title: 'Gestao' },
+  {
+    segment: 'approvals',
+    title: 'Aprovações',
+    icon: (
+      <Badge
+        badgeContent={pendingApprovalsCount}
+        color="error"
+        overlap="circular"
+        sx={{
+          '& .MuiBadge-badge': {
+            right: 1,
+            top: 4,
+            minWidth: 17,
+            height: 17,
+            fontSize: 10,
+            fontWeight: 900,
+          },
+        }}
+      >
+        <AssignmentTurnedInIcon />
+      </Badge>
+    ),
+  },
   { segment: 'drivers', title: 'Motoristas', icon: <DirectionsCarIcon /> },
   { segment: 'passengers', title: 'Passageiros', icon: <GroupIcon /> },
   { segment: 'rides', title: 'Corridas', icon: <RouteIcon /> },
@@ -25,11 +52,25 @@ const navigation = [
   { kind: 'header' as const, title: 'Dados' },
   { segment: 'analytics', title: 'Dados', icon: <BarChartIcon /> },
   { segment: 'settings', title: 'Ajustes', icon: <SettingsIcon /> },
-]
+  ]
+}
 
 const branding = {
   title: '',
-  logo: <img src={logo} alt="BoraLi" style={{ width: 184, maxHeight: 88, objectFit: 'contain' }} />,
+  logo: (
+    <img
+      src={logo}
+      alt="BoraLi"
+      style={{
+        width: 168,
+        maxHeight: 72,
+        objectFit: 'contain',
+        display: 'block',
+        pointerEvents: 'none',
+        transform: 'translateX(-64px)',
+      }}
+    />
+  ),
   homeUrl: '/',
 }
 
@@ -41,6 +82,22 @@ const session = {
 }
 
 export default function App() {
+  const [pendingApprovalsCount, setPendingApprovalsCount] = useState(pendingApprovalDrivers.length)
+  const navigation = createNavigation(pendingApprovalsCount)
+
+  useEffect(() => {
+    function handlePendingCount(event: Event) {
+      const nextCount = (event as CustomEvent<number>).detail
+
+      if (typeof nextCount === 'number') {
+        setPendingApprovalsCount(nextCount)
+      }
+    }
+
+    window.addEventListener('approvals:pending-count', handlePendingCount)
+    return () => window.removeEventListener('approvals:pending-count', handlePendingCount)
+  }, [])
+
   return (
     <ReactRouterAppProvider
       theme={theme}

@@ -1,16 +1,15 @@
 import { useEffect, useMemo, useState } from 'react'
-import AddIcon from '@mui/icons-material/Add'
 import BlockIcon from '@mui/icons-material/Block'
 import EditOutlinedIcon from '@mui/icons-material/EditOutlined'
 import LockOpenOutlinedIcon from '@mui/icons-material/LockOpenOutlined'
 import SearchIcon from '@mui/icons-material/Search'
 import { Avatar, Box, Button, Card, CardContent, FormControl, IconButton, InputAdornment, InputLabel, MenuItem, Pagination, Select, Stack, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField, ToggleButton, ToggleButtonGroup, Tooltip, Typography, useTheme } from '@mui/material'
 import { useLocation } from 'react-router'
-import { driverRequests, drivers } from '../data/mockDrivers'
-import type { Driver, DriverCategoryFilter, DriverDetails, DriverEditForm, DriverFilter, DriverRequest, DriversLocationState, DriverSortKey, DriverStatus, SortDirection } from '../types'
+import { drivers } from '../data/mockDrivers'
+import type { Driver, DriverCategoryFilter, DriverDetails, DriverEditForm, DriverFilter, DriversLocationState, DriverSortKey, DriverStatus, SortDirection } from '../types'
 import { categoryPalette, statusPalette, subscriptionPalette } from '../utils/driverPalettes'
 import { currencyFormatter, filters, getDriverSortValue, getInitials, normalizeSearch, numberFormatter } from '../utils/drivers'
-import { DriverBadge, DriverDetailsDialog, DriverEditDialog, NewDriverDialog, SortableHeader } from './DriverManagementComponents'
+import { DriverBadge, DriverDetailsDialog, DriverEditDialog, SortableHeader } from './DriverManagementComponents'
 
 export default function DriversPage() {
   const theme = useTheme()
@@ -26,17 +25,8 @@ export default function DriversPage() {
   const [sortDirection, setSortDirection] = useState<SortDirection>('asc')
   const [selectedDriver, setSelectedDriver] = useState<Driver | null>(null)
   const [editingDriver, setEditingDriver] = useState<Driver | null>(null)
-  const [showNewDriverDialog, setShowNewDriverDialog] = useState(false)
-  const [manualDriverDraft, setManualDriverDraft] = useState<DriverRequest | null>(null)
-  const [pendingDriverRequests, setPendingDriverRequests] = useState(driverRequests)
   const [driverDetailsTab, setDriverDetailsTab] = useState(0)
   const rowsPerPage = 5
-
-  useEffect(() => {
-    if (locationState?.openNewDriverDialog) {
-      setShowNewDriverDialog(true)
-    }
-  }, [locationState?.openNewDriverDialog])
 
   useEffect(() => {
     const initialSearch = new URLSearchParams(location.search).get('search')
@@ -202,78 +192,6 @@ export default function DriversPage() {
     )
   }
 
-  function createManualDriverDraft() {
-    const nextId = `DRV-${String(1011 + driverRows.length + pendingDriverRequests.length).padStart(4, '0')}`
-
-    setManualDriverDraft({
-      requestId: `MANUAL-${Date.now()}`,
-      id: nextId,
-      name: '',
-      initials: '',
-      phone: '',
-      category: 'Econômico',
-      status: 'Offline',
-      rides: 0,
-      rating: 0,
-      subscription: 'Trial',
-      monthlyEarnings: 0,
-      cpf: '',
-      email: '',
-      city: '',
-      vehicle: '',
-      plate: '',
-      joinedAt: '28/04/2026',
-      lastOnline: 'Cadastro manual',
-      requestedAt: 'Cadastro manual',
-      attachments: [],
-    })
-  }
-
-  function addDriverFromForm(form: DriverEditForm) {
-    const newDriver: Driver = {
-      id: form.id,
-      name: form.name,
-      initials: getInitials(form.name),
-      phone: form.phone,
-      category: form.category,
-      status: form.status,
-      rides: form.rides,
-      rating: form.rating,
-      subscription: form.subscription,
-      monthlyEarnings: form.monthlyEarnings,
-    }
-
-    setDriverRows((currentRows) => [newDriver, ...currentRows])
-    setDriverDetailsOverrides((currentOverrides) => ({
-      ...currentOverrides,
-      [newDriver.id]: {
-        photoLabel: `Foto do motorista ${newDriver.name}`,
-        cpf: form.cpf,
-        email: form.email,
-        city: form.city,
-        vehicle: form.vehicle,
-        plate: form.plate,
-        joinedAt: form.joinedAt,
-        lastOnline: form.lastOnline,
-      },
-    }))
-    setManualDriverDraft(null)
-    setShowNewDriverDialog(false)
-    setSelectedFilter('all')
-    setPage(1)
-  }
-
-  function approveDriverRequest(request: DriverRequest) {
-    addDriverFromForm({
-      ...request,
-      status: 'Offline',
-      rating: 5,
-    })
-    setPendingDriverRequests((currentRequests) =>
-      currentRequests.filter((currentRequest) => currentRequest.requestId !== request.requestId),
-    )
-  }
-
   return (
     <Stack spacing={3}>
       <Stack
@@ -291,22 +209,6 @@ export default function DriversPage() {
           </Typography>
         </Box>
 
-        <Button
-          variant="contained"
-          startIcon={<AddIcon />}
-          onClick={() => setShowNewDriverDialog(true)}
-          sx={{
-            bgcolor: theme.palette.primary.main,
-            color: theme.palette.primary.contrastText,
-            minHeight: 42,
-            px: 2,
-            '&:hover': {
-              bgcolor: theme.palette.primary.dark,
-            },
-          }}
-        >
-          Novo motorista
-        </Button>
       </Stack>
 
       <Card variant="outlined">
@@ -546,20 +448,6 @@ export default function DriversPage() {
         detailsOverride={editingDriver ? driverDetailsOverrides[editingDriver.id] : undefined}
         onClose={() => setEditingDriver(null)}
         onSave={handleSaveDriver}
-      />
-      <NewDriverDialog
-        open={showNewDriverDialog}
-        requests={pendingDriverRequests}
-        initialExpandedRequestId={locationState?.expandedRequestId}
-        onClose={() => setShowNewDriverDialog(false)}
-        onCreateManual={createManualDriverDraft}
-        onApprove={approveDriverRequest}
-      />
-      <DriverEditDialog
-        driver={manualDriverDraft}
-        mode="create"
-        onClose={() => setManualDriverDraft(null)}
-        onSave={addDriverFromForm}
       />
     </Stack>
   )

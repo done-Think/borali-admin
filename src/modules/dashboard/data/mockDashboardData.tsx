@@ -110,9 +110,9 @@ export const driversAppOpenOnly: DriverAvailability[] = [
 ]
 
 export const driverApplications: DriverApplication[] = [
-  { id: 'REQ-2026-0428-01', name: 'Samuel Andrade', cpf: '840.217.390-12', phone: '(11) 98244-1188', email: 'samuel.andrade@email.com', city: 'Sao Paulo, SP', vehicle: 'Hyundai HB20 2023', plate: 'SMA-2D18', category: 'Conforto', requestedAt: 'Hoje as 10:12', expiresIn: 'expira em 2h' },
-  { id: 'REQ-2026-0428-02', name: 'Taina Ribeiro', cpf: '219.684.730-55', phone: '(21) 99830-7741', email: 'taina.ribeiro@email.com', city: 'Rio de Janeiro, RJ', vehicle: 'Jeep Compass 2022', plate: 'TRB-9A42', category: 'Executivo', requestedAt: 'Hoje as 11:03', expiresIn: 'expira em 4h' },
-  { id: 'REQ-2026-0428-03', name: 'Carla Teixeira', cpf: '501.738.920-44', phone: '(31) 98418-5530', email: 'carla.teixeira@email.com', city: 'Belo Horizonte, MG', vehicle: 'Toyota Corolla 2021', plate: 'CTE-7H21', category: 'Economico', requestedAt: 'Ontem as 18:40', expiresIn: 'expira em 8h' },
+  { id: 'DRV-5101', name: 'Samuel Andrade', cpf: '840.217.390-12', phone: '(11) 98244-1188', email: 'samuel.andrade@email.com', city: 'Sao Paulo, SP', vehicle: 'Hyundai HB20 2023', plate: 'SMA-2D18', category: 'Conforto', requestedAt: 'Hoje as 10:12', expiresIn: 'expira em 2h' },
+  { id: 'DRV-5102', name: 'Taina Ribeiro', cpf: '219.684.730-55', phone: '(21) 99830-7741', email: 'taina.ribeiro@email.com', city: 'Rio de Janeiro, RJ', vehicle: 'Jeep Compass 2022', plate: 'TRB-9A42', category: 'Executivo', requestedAt: 'Hoje as 11:03', expiresIn: 'expira em 4h' },
+  { id: 'DRV-5103', name: 'Marcelo Vieira', cpf: '501.738.920-44', phone: '(19) 98121-4018', email: 'marcelo.vieira@email.com', city: 'Campinas, SP', vehicle: 'Chevrolet Onix 2021', plate: 'MCV-4F92', category: 'Economico', requestedAt: 'Ontem as 18:40', expiresIn: 'expira em 8h' },
 ]
 
 export const revenueComparisons: Record<RevenuePeriod, RevenueComparison> = {
