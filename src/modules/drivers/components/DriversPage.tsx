@@ -47,7 +47,7 @@ import {
   useTheme,
 } from '@mui/material'
 import { supportTickets } from '@shared/mocks/supportTickets'
-import { useNavigate } from 'react-router'
+import { useLocation, useNavigate } from 'react-router'
 
 type DriverFilter = 'all' | 'online' | 'approved' | 'pending' | 'blocked'
 type DriverCategory = 'Conforto' | 'Econômico' | 'Executivo'
@@ -56,6 +56,14 @@ type DriverStatus = 'Online' | 'Offline' | 'Pendente' | 'Bloqueado'
 type DriverSubscription = 'Pro' | 'Básico' | 'Premium' | 'Trial'
 type DriverSortKey = 'category' | 'status' | 'rides' | 'rating' | 'subscription' | 'monthlyEarnings'
 type SortDirection = 'asc' | 'desc'
+
+type DriversLocationState = {
+  openNewDriverDialog?: boolean
+  expandedRequestId?: string
+  selectedDriverId?: string
+  selectedDriverName?: string
+  selectedDriverTab?: number
+}
 
 type Driver = {
   id: string
@@ -243,6 +251,66 @@ const drivers: Driver[] = [
     subscription: 'Básico',
     monthlyEarnings: 3810,
   },
+  {
+    id: 'DRV-4211',
+    name: 'Rafael Souza',
+    initials: 'RS',
+    phone: '(11) 98421-4402',
+    category: 'Conforto',
+    status: 'Online',
+    rides: 684,
+    rating: 4.9,
+    subscription: 'Pro',
+    monthlyEarnings: 8120,
+  },
+  {
+    id: 'DRV-4210',
+    name: 'Bianca Costa',
+    initials: 'BC',
+    phone: '(11) 98420-4402',
+    category: 'Conforto',
+    status: 'Online',
+    rides: 438,
+    rating: 4.8,
+    subscription: 'Premium',
+    monthlyEarnings: 6760,
+  },
+  {
+    id: 'DRV-4209',
+    name: 'Luis Prado',
+    initials: 'LP',
+    phone: '(11) 98409-4402',
+    category: 'Executivo',
+    status: 'Offline',
+    rides: 512,
+    rating: 4.7,
+    subscription: 'Pro',
+    monthlyEarnings: 7340,
+  },
+  {
+    id: 'DRV-4208',
+    name: 'Clara Alves',
+    initials: 'CA',
+    phone: '(11) 98408-4402',
+    category: 'Conforto',
+    status: 'Online',
+    rides: 361,
+    rating: 4.85,
+    subscription: 'Premium',
+    monthlyEarnings: 5890,
+  },
+  {
+    id: 'DRV-4207',
+    name: 'Andre Mota',
+    initials: 'AM',
+    phone: '(11) 98407-4402',
+    category: 'Executivo',
+    status: 'Online',
+    rides: 729,
+    rating: 4.75,
+    subscription: 'Pro',
+    monthlyEarnings: 9270,
+  },
 ]
 
 const driverRequests: DriverRequest[] = [
@@ -297,6 +365,32 @@ const driverRequests: DriverRequest[] = [
       { name: 'comprovante-residencia.png', type: 'Comprovante' },
     ],
   },
+  {
+    requestId: 'REQ-2026-0428-03',
+    id: 'DRV-1013',
+    name: 'Carla Teixeira',
+    initials: 'CT',
+    phone: '(31) 98418-5530',
+    category: 'Econômico',
+    status: 'Pendente',
+    rides: 0,
+    rating: 0,
+    subscription: 'Trial',
+    monthlyEarnings: 0,
+    cpf: '501.738.920-44',
+    email: 'carla.teixeira@email.com',
+    city: 'Belo Horizonte, MG',
+    vehicle: 'Toyota Corolla 2021',
+    plate: 'CTE-7H21',
+    joinedAt: '29/04/2026',
+    lastOnline: 'Ainda não aprovado',
+    requestedAt: 'Ontem às 18:40',
+    attachments: [
+      { name: 'cnh-carla.pdf', type: 'CNH' },
+      { name: 'crlv-corolla.pdf', type: 'Documento' },
+      { name: 'selfie-carla.jpg', type: 'Foto' },
+    ],
+  },
 ]
 
 const driverDetailsById: Record<string, DriverDetails> = {
@@ -342,6 +436,86 @@ const driverDetailsById: Record<string, DriverDetails> = {
       rating: 4.8,
       cancellationRate: 1.9,
     },
+  },
+  'DRV-4211': {
+    photoLabel: 'Foto do motorista Rafael Souza',
+    cpf: '118.421.100-11',
+    email: 'rafael.souza@email.com',
+    city: 'Sao Paulo, SP',
+    vehicle: 'Toyota Corolla 2022',
+    plate: 'BRL-11A',
+    joinedAt: '14/02/2024',
+    lastOnline: 'Agora',
+    rideHistory: [
+      { id: 'BRL-84211', date: '01/05/2026', from: 'Av. Paulista, 1578', to: 'Centro Historico', value: 48.9, status: 'Finalizada' },
+      { id: 'BRL-84172', date: '30/04/2026', from: 'Jardins', to: 'Vila Mariana', value: 34, status: 'Finalizada' },
+    ],
+    complaints: [],
+    monthlyAverage: { rides: 137, earnings: 8120, rating: 4.9, cancellationRate: 2.2 },
+  },
+  'DRV-4210': {
+    photoLabel: 'Foto da motorista Bianca Costa',
+    cpf: '118.421.000-10',
+    email: 'bianca.costa@email.com',
+    city: 'Sao Paulo, SP',
+    vehicle: 'Honda City 2021',
+    plate: 'BRL-10A',
+    joinedAt: '03/09/2024',
+    lastOnline: 'Hoje as 15:10',
+    rideHistory: [
+      { id: 'BRL-84210', date: '01/05/2026', from: 'Moema', to: 'Aeroporto de Congonhas', value: 36.5, status: 'Finalizada' },
+      { id: 'BRL-84163', date: '30/04/2026', from: 'Ibirapuera', to: 'Brooklin', value: 29, status: 'Finalizada' },
+    ],
+    complaints: [],
+    monthlyAverage: { rides: 88, earnings: 6760, rating: 4.8, cancellationRate: 2.6 },
+  },
+  'DRV-4209': {
+    photoLabel: 'Foto do motorista Luis Prado',
+    cpf: '118.420.900-09',
+    email: 'luis.prado@email.com',
+    city: 'Sao Paulo, SP',
+    vehicle: 'Toyota Corolla 2022',
+    plate: 'BRL-09A',
+    joinedAt: '21/05/2024',
+    lastOnline: 'Hoje as 13:52',
+    rideHistory: [
+      { id: 'BRL-84209', date: '01/05/2026', from: 'Pinheiros', to: 'Itaim Bibi', value: 29.8, status: 'Finalizada com alerta' },
+      { id: 'BRL-84158', date: '29/04/2026', from: 'Lapa', to: 'Perdizes', value: 31, status: 'Finalizada' },
+    ],
+    complaints: [{ id: 'OCC-84209-1', date: '01/05/2026', title: 'Desvio de rota reportado', status: 'Em analise' }],
+    monthlyAverage: { rides: 102, earnings: 7340, rating: 4.7, cancellationRate: 3.4 },
+  },
+  'DRV-4208': {
+    photoLabel: 'Foto da motorista Clara Alves',
+    cpf: '118.420.800-08',
+    email: 'clara.alves@email.com',
+    city: 'Sao Paulo, SP',
+    vehicle: 'Honda City 2021',
+    plate: 'BRL-08A',
+    joinedAt: '10/11/2024',
+    lastOnline: 'Agora',
+    rideHistory: [
+      { id: 'BRL-84208', date: '01/05/2026', from: 'Vila Madalena', to: 'Se', value: 42.2, status: 'Finalizada' },
+      { id: 'BRL-84149', date: '29/04/2026', from: 'Sumare', to: 'Paulista', value: 25, status: 'Finalizada' },
+    ],
+    complaints: [],
+    monthlyAverage: { rides: 72, earnings: 5890, rating: 4.85, cancellationRate: 2.1 },
+  },
+  'DRV-4207': {
+    photoLabel: 'Foto do motorista Andre Mota',
+    cpf: '118.420.700-07',
+    email: 'andre.mota@email.com',
+    city: 'Sao Paulo, SP',
+    vehicle: 'Toyota Corolla 2022',
+    plate: 'BRL-07A',
+    joinedAt: '08/01/2024',
+    lastOnline: 'Hoje as 14:44',
+    rideHistory: [
+      { id: 'BRL-84207', date: '01/05/2026', from: 'Tatuape', to: 'Jardins', value: 64.7, status: 'Finalizada com ocorrencia' },
+      { id: 'BRL-84131', date: '28/04/2026', from: 'Mooca', to: 'Vila Olimpia', value: 52, status: 'Finalizada' },
+    ],
+    complaints: [{ id: 'OCC-84207-1', date: '01/05/2026', title: 'Discussao no desembarque', status: 'Encaminhada' }],
+    monthlyAverage: { rides: 146, earnings: 9270, rating: 4.75, cancellationRate: 3.8 },
   },
 }
 
@@ -547,6 +721,8 @@ function getInitials(name: string) {
 
 export default function DriversPage() {
   const theme = useTheme()
+  const location = useLocation()
+  const locationState = location.state as DriversLocationState | null
   const [driverRows, setDriverRows] = useState(drivers)
   const [driverDetailsOverrides, setDriverDetailsOverrides] = useState<Record<string, Partial<DriverDetails>>>({})
   const [search, setSearch] = useState('')
@@ -562,6 +738,36 @@ export default function DriversPage() {
   const [pendingDriverRequests, setPendingDriverRequests] = useState(driverRequests)
   const [driverDetailsTab, setDriverDetailsTab] = useState(0)
   const rowsPerPage = 5
+
+  useEffect(() => {
+    if (locationState?.openNewDriverDialog) {
+      setShowNewDriverDialog(true)
+    }
+  }, [locationState?.openNewDriverDialog])
+
+  useEffect(() => {
+    const initialSearch = new URLSearchParams(location.search).get('search')
+
+    if (initialSearch) {
+      setSearch(initialSearch)
+      setPage(1)
+    }
+  }, [location.search])
+
+  useEffect(() => {
+    if (!locationState?.selectedDriverId && !locationState?.selectedDriverName) {
+      return
+    }
+
+    const targetDriver = driverRows.find((driver) => {
+      return driver.id === locationState.selectedDriverId || driver.name === locationState.selectedDriverName
+    })
+
+    if (targetDriver) {
+      setSelectedDriver(targetDriver)
+      setDriverDetailsTab(locationState.selectedDriverTab ?? 0)
+    }
+  }, [driverRows, locationState?.selectedDriverId, locationState?.selectedDriverName, locationState?.selectedDriverTab])
 
   const filteredDrivers = useMemo(() => {
     const normalizedSearch = normalizeSearch(search).trim()
@@ -1051,6 +1257,7 @@ export default function DriversPage() {
       <NewDriverDialog
         open={showNewDriverDialog}
         requests={pendingDriverRequests}
+        initialExpandedRequestId={locationState?.expandedRequestId}
         onClose={() => setShowNewDriverDialog(false)}
         onCreateManual={createManualDriverDraft}
         onApprove={approveDriverRequest}
@@ -1649,12 +1856,14 @@ function SortableHeader({
 function NewDriverDialog({
   open,
   requests,
+  initialExpandedRequestId,
   onClose,
   onCreateManual,
   onApprove,
 }: {
   open: boolean
   requests: DriverRequest[]
+  initialExpandedRequestId?: string
   onClose: () => void
   onCreateManual: () => void
   onApprove: (request: DriverRequest) => void
@@ -1664,9 +1873,9 @@ function NewDriverDialog({
 
   useEffect(() => {
     if (open) {
-      setExpandedRequest(null)
+      setExpandedRequest(initialExpandedRequestId ?? null)
     }
-  }, [open])
+  }, [initialExpandedRequestId, open])
 
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="lg">
