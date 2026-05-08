@@ -1,5 +1,6 @@
 import { useState } from 'react'
-import { Box, Chip, Dialog, DialogContent, DialogTitle, Stack, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography } from '@mui/material'
+import { Box, ButtonBase, Chip, Dialog, DialogContent, DialogTitle, Stack, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography } from '@mui/material'
+import { useNavigate } from 'react-router'
 import { activeRides } from '../../data/mockDashboardData'
 import type { ActiveRide } from '../../types'
 import { currencyFormatter } from '../../utils/formatters'
@@ -8,6 +9,19 @@ import { RideRouteMap } from '../RideRouteMap'
 
 export function ActiveRidesDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
   const [selectedRide, setSelectedRide] = useState<ActiveRide | null>(null)
+  const navigate = useNavigate()
+
+  function openDriverProfile(name: string) {
+    onClose()
+    setSelectedRide(null)
+    navigate('/drivers', { state: { selectedDriverName: name, selectedDriverTab: 0 } })
+  }
+
+  function openPassengerProfile(name: string) {
+    onClose()
+    setSelectedRide(null)
+    navigate('/passengers', { state: { selectedPassengerName: name, selectedPassengerTab: 0 } })
+  }
 
   return (
     <>
@@ -64,12 +78,27 @@ export function ActiveRidesDialog({ open, onClose }: { open: boolean; onClose: (
           </TableContainer>
         </DialogContent>
       </Dialog>
-      <ActiveRideMapDialog ride={selectedRide} onClose={() => setSelectedRide(null)} />
+      <ActiveRideMapDialog
+        ride={selectedRide}
+        onClose={() => setSelectedRide(null)}
+        onOpenDriver={openDriverProfile}
+        onOpenPassenger={openPassengerProfile}
+      />
     </>
   )
 }
 
-function ActiveRideMapDialog({ ride, onClose }: { ride: ActiveRide | null; onClose: () => void }) {
+function ActiveRideMapDialog({
+  ride,
+  onClose,
+  onOpenDriver,
+  onOpenPassenger,
+}: {
+  ride: ActiveRide | null
+  onClose: () => void
+  onOpenDriver: (name: string) => void
+  onOpenPassenger: (name: string) => void
+}) {
   if (!ride) {
     return null
   }
@@ -90,8 +119,8 @@ function ActiveRideMapDialog({ ride, onClose }: { ride: ActiveRide | null; onClo
       <DialogContent dividers>
         <Stack spacing={2}>
           <Box sx={{ display: 'grid', gap: 2, gridTemplateColumns: { xs: '1fr', md: 'repeat(3, minmax(0, 1fr))' } }}>
-            <ApplicationDetail label="Motorista" value={ride.driver} />
-            <ApplicationDetail label="Passageiro" value={ride.passenger} />
+            <ClickableApplicationDetail label="Motorista" value={ride.driver} onClick={() => onOpenDriver(ride.driver)} />
+            <ClickableApplicationDetail label="Passageiro" value={ride.passenger} onClick={() => onOpenPassenger(ride.passenger)} />
             <ApplicationDetail label="Status" value="Em andamento" />
           </Box>
           <RideRouteMap
@@ -108,5 +137,45 @@ function ActiveRideMapDialog({ ride, onClose }: { ride: ActiveRide | null; onClo
         </Stack>
       </DialogContent>
     </Dialog>
+  )
+}
+
+function ClickableApplicationDetail({ label, value, onClick }: { label: string; value: string; onClick: () => void }) {
+  return (
+    <ButtonBase
+      onClick={onClick}
+      sx={{
+        display: 'block',
+        width: '100%',
+        textAlign: 'left',
+        borderRadius: 2,
+        '&:focus-visible': {
+          outline: '3px solid',
+          outlineColor: 'primary.main',
+          outlineOffset: 2,
+        },
+      }}
+    >
+      <Box
+        sx={{
+          border: '1px solid',
+          borderColor: 'divider',
+          borderRadius: 2,
+          p: 2,
+          transition: 'border-color 160ms ease, background-color 160ms ease',
+          '&:hover': {
+            borderColor: 'primary.main',
+            bgcolor: 'action.hover',
+          },
+        }}
+      >
+        <Typography color="text.secondary" fontWeight={600}>
+          {label}
+        </Typography>
+        <Typography variant="h4" sx={{ mt: 0.75, color: 'primary.main' }}>
+          {value}
+        </Typography>
+      </Box>
+    </ButtonBase>
   )
 }
