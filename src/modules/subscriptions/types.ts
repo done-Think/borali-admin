@@ -1,0 +1,83 @@
+import type { ReactElement } from 'react'
+
+export type SubscriptionPlan = 'Básico' | 'Pro' | 'Premium'
+
+export type SubscriptionKpiCard = {
+  id: string
+  title: string
+  value: string
+  helper: string
+  icon: ReactElement
+  color: string
+  details?: {
+    label: string
+    value: string
+    color?: 'default' | 'primary' | 'secondary' | 'success' | 'warning' | 'error' | 'info'
+  }[]
+}
+
+export type MonthlyMrrPoint = {
+  month: string
+  mrr: number
+}
+
+export type PlanDistributionPoint = {
+  plan: SubscriptionPlan
+  total: number
+  color: string
+}
+
+export type TrialExpiration = {
+  id: string
+  driverId: string
+  driverName: string
+  plan: SubscriptionPlan
+  expiresInDays: number
+  city: string
+  monthlyValue: number
+}
+
+export type SubscriptionRenewalStatus = 'Pago' | 'Pendente' | 'Falhou'
+
+export type SubscriptionRenewal = {
+  id: string
+  date: string
+  plan: SubscriptionPlan
+  value: number
+  status: SubscriptionRenewalStatus
+  method: string
+}
+
+export type SubscriptionStatus = 'ATIVO' | 'TRIAL' | 'ATRASADO' | 'EXPIRADO'
+
+export type DriverSubscription = {
+  id: string
+  driverId: string
+  driverName: string
+  driverPhone: string
+  plan: SubscriptionPlan
+  status: SubscriptionStatus
+  nextBillingAt: string
+  monthlyValue: number
+}
+
+export type SubscriptionPaymentMethod = 'Cartão' | 'Pix' | 'Dinheiro'
+
+export type SubscriptionPaymentRecord = {
+  id: string
+  date: string
+  dueDate: string
+  plan: SubscriptionPlan
+  value: number
+  status: SubscriptionRenewalStatus
+  method: SubscriptionPaymentMethod
+  paidWith: string
+  delayDays: number
+}
+
+export type SubscriptionMovementSummary = {
+  averageRides: number
+  averageRevenue: number
+  averageOnlineHours: number
+  planUsage: number
+}
