@@ -1,6 +1,7 @@
 import { Box, Card, CardContent, Stack, Typography, useTheme } from '@mui/material'
-import { Circle, MapContainer, Marker, Polyline, TileLayer, Tooltip } from 'react-leaflet'
-import { heatZones, mapMarkers, rideLine, secondRideLine } from '../data/mockDashboardData'
+import { Circle, CircleMarker, MapContainer, Marker, Polyline, TileLayer, Tooltip } from 'react-leaflet'
+import { useNavigate } from 'react-router'
+import { activeRides, heatZones, mapMarkers, rideLine, secondRideLine } from '../data/mockDashboardData'
 import type { HeatZone } from '../types'
 import { getMapTileLayer } from '../utils/mapConfig'
 import { driverIcon, passengerIcon } from '../utils/mapIcons'
@@ -9,8 +10,14 @@ import { MapLegend } from './MapLegend'
 
 export function DashboardLiveMap() {
   const theme = useTheme()
+  const navigate = useNavigate()
   const activeMode = useActivePaletteMode()
   const tileLayer = getMapTileLayer(activeMode)
+  const alertRide = activeRides[2]
+
+  function openAlertRide() {
+    navigate('/rides', { state: { selectedTab: 'active', selectedRideId: alertRide.id, highlightAlert: true } })
+  }
 
   return (
     <Card variant="outlined" sx={{ overflow: 'hidden' }}>
@@ -23,6 +30,7 @@ export function DashboardLiveMap() {
             </Typography>
           </Box>
           <Stack direction="row" spacing={1.25} alignItems="center" sx={{ flexShrink: 0 }}>
+            <MapLegend color="#EF4444" label="Alerta" />
             <MapLegend color="#F97316" label="Chamadas" />
             <MapLegend color="#2563EB" label="Motorista" />
             <MapLegend color="#22D3EE" label="Passageiro" />
@@ -41,6 +49,16 @@ export function DashboardLiveMap() {
             ))}
             <Polyline positions={rideLine} pathOptions={{ color: '#0ABEE9', weight: 5, opacity: 0.88 }} />
             <Polyline positions={secondRideLine} pathOptions={{ color: '#2DD4A0', weight: 4, opacity: 0.76, dashArray: '8 10' }} />
+            <CircleMarker
+              center={alertRide.passengerPosition}
+              radius={13}
+              pathOptions={{ color: '#FFFFFF', weight: 3, fillColor: '#EF4444', fillOpacity: 0.95 }}
+              eventHandlers={{ click: openAlertRide }}
+            >
+              <Tooltip direction="top" offset={[0, -8]} opacity={0.98}>
+                Alerta ativo - {alertRide.id}
+              </Tooltip>
+            </CircleMarker>
             {mapMarkers.map((marker) => (
               <Marker key={marker.id} position={marker.position} icon={marker.type === 'driver' ? driverIcon : passengerIcon} title={marker.label} />
             ))}
