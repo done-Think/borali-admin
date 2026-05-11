@@ -281,9 +281,12 @@ export function ExpiringTrialsPanel({ trials }: ExpiringTrialsPanelProps) {
                       variant="text"
                       onClick={(event) => openDriverSummary(event, trial)}
                       sx={{
-                        color: theme.palette.text.primary,
+                        color: 'text.primary',
                         fontWeight: 800,
                         textTransform: 'none',
+                        '[data-toolpad-color-scheme="dark"] &': {
+                          color: '#FFFFFF',
+                        },
                       }}
                     >
                       Ver perfil
