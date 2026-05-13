@@ -1,7 +1,9 @@
-import { useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Box, Card, CardContent, Chip, GlobalStyles, Stack, Typography, useTheme } from '@mui/material'
 import { alpha } from '@mui/material/styles'
+import { useQuery } from '@tanstack/react-query'
 import 'leaflet/dist/leaflet.css'
+import { getAdminDashboardMetrics, listAdminActiveRides } from '@shared/services'
 import { activities, kpiCards } from '../data/mockDashboardData'
 import type { KpiCard } from '../types'
 import { ActivityList } from './ActivityList'
@@ -27,6 +29,49 @@ export default function DashboardPage() {
   const [alertRidesOpen, setAlertRidesOpen] = useState(false)
   const [onlineDriversOpen, setOnlineDriversOpen] = useState(false)
   const [selectedActivity, setSelectedActivity] = useState<Activity | null>(null)
+
+  const dashboardQuery = useQuery({
+    queryKey: ['admin', 'dashboard'],
+    queryFn: async () => {
+      const [metrics, activeRides] = await Promise.all([getAdminDashboardMetrics(), listAdminActiveRides()])
+      return {
+        activeRides: activeRides.length,
+        onlineDrivers: metrics.activeDrivers,
+        revenueToday: metrics.revenue.today,
+      }
+    },
+    refetchInterval: 30_000,
+  })
+
+  useEffect(() => {
+    if (!dashboardQuery.error) return
+    console.warn('Nao foi possivel carregar metricas da API. Usando mocks locais.', dashboardQuery.error)
+  }, [dashboardQuery.error])
+
+  const visibleKpiCards = useMemo(() => {
+    const liveKpis = dashboardQuery.data
+    if (!liveKpis) return kpiCards
+
+    return kpiCards.map((card) => {
+      if (card.id === 'active-rides' && liveKpis.activeRides != null) {
+        return { ...card, value: String(liveKpis.activeRides), subtitle: 'corridas ativas na API' }
+      }
+
+      if (card.id === 'online-drivers' && liveKpis.onlineDrivers != null) {
+        return { ...card, value: String(liveKpis.onlineDrivers), subtitle: 'motoristas online na API' }
+      }
+
+      if (card.id === 'daily-revenue' && liveKpis.revenueToday != null) {
+        return {
+          ...card,
+          value: new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(liveKpis.revenueToday),
+          subtitle: 'receita confirmada hoje',
+        }
+      }
+
+      return card
+    })
+  }, [dashboardQuery.data])
 
   function handleKpiClick(card: KpiCard) {
     if (card.id === 'active-rides') setActiveRidesOpen(true)
@@ -73,7 +118,7 @@ export default function DashboardPage() {
           },
         }}
       >
-        {kpiCards.map((card) => (
+        {visibleKpiCards.map((card) => (
           <KpiCardButton key={card.id} card={card} onClick={() => handleKpiClick(card)} />
         ))}
       </Box>

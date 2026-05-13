@@ -4,7 +4,9 @@ import EditOutlinedIcon from '@mui/icons-material/EditOutlined'
 import LockOpenOutlinedIcon from '@mui/icons-material/LockOpenOutlined'
 import SearchIcon from '@mui/icons-material/Search'
 import { Avatar, Box, Button, Card, CardContent, FormControl, IconButton, InputAdornment, InputLabel, MenuItem, Pagination, Select, Stack, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField, ToggleButton, ToggleButtonGroup, Tooltip, Typography, useTheme } from '@mui/material'
+import { useQuery } from '@tanstack/react-query'
 import { useLocation } from 'react-router'
+import { listAdminPassengers } from '@shared/services'
 import { passengers } from '../data/mockPassengers'
 import type { Passenger, PassengerDetails, PassengerEditForm, PassengerFilter, PassengersLocationState, PassengerSortKey, PassengerStatus, PassengerTierFilter, SortDirection } from '../types'
 import { currencyFormatter, filters, getInitials, getPassengerDetails, getPassengerSortValue, numberFormatter, normalizeSearch, statusPalette, tierPalette } from '../utils/passengers'
@@ -26,6 +28,22 @@ export default function PassengersPage() {
   const [passengerDetailsTab, setPassengerDetailsTab] = useState(0)
   const rowsPerPage = 5
   const locationState = location.state as PassengersLocationState | null
+
+  const passengersQuery = useQuery({
+    queryKey: ['admin', 'passengers', { page: 1, limit: 100 }],
+    queryFn: () => listAdminPassengers(1, 100),
+  })
+
+  useEffect(() => {
+    if (!passengersQuery.data || passengersQuery.data.rows.length === 0) return
+    setPassengerRows(passengersQuery.data.rows)
+    setPassengerDetailsOverrides(passengersQuery.data.details)
+  }, [passengersQuery.data])
+
+  useEffect(() => {
+    if (!passengersQuery.error) return
+    console.warn('Nao foi possivel carregar passageiros da API. Usando mocks locais.', passengersQuery.error)
+  }, [passengersQuery.error])
 
   useEffect(() => {
     const initialSearch = new URLSearchParams(location.search).get('search')

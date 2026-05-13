@@ -4,7 +4,9 @@ import EditOutlinedIcon from '@mui/icons-material/EditOutlined'
 import LockOpenOutlinedIcon from '@mui/icons-material/LockOpenOutlined'
 import SearchIcon from '@mui/icons-material/Search'
 import { Avatar, Box, Button, Card, CardContent, FormControl, IconButton, InputAdornment, InputLabel, MenuItem, Pagination, Select, Stack, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField, ToggleButton, ToggleButtonGroup, Tooltip, Typography, useTheme } from '@mui/material'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useLocation } from 'react-router'
+import { listAdminDrivers, suspendAdminDriver } from '@shared/services'
 import { drivers } from '../data/mockDrivers'
 import type { Driver, DriverCategoryFilter, DriverDetails, DriverEditForm, DriverFilter, DriversLocationState, DriverSortKey, DriverStatus, SortDirection } from '../types'
 import { categoryPalette, statusPalette, subscriptionPalette } from '../utils/driverPalettes'
@@ -27,6 +29,34 @@ export default function DriversPage() {
   const [editingDriver, setEditingDriver] = useState<Driver | null>(null)
   const [driverDetailsTab, setDriverDetailsTab] = useState(0)
   const rowsPerPage = 5
+  const queryClient = useQueryClient()
+
+  const driversQuery = useQuery({
+    queryKey: ['admin', 'drivers', { page: 1, limit: 100 }],
+    queryFn: () => listAdminDrivers(1, 100),
+  })
+
+  const suspendDriverMutation = useMutation({
+    mutationFn: (driverId: string) => suspendAdminDriver(driverId),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['admin', 'drivers'] })
+      void queryClient.invalidateQueries({ queryKey: ['admin', 'dashboard'] })
+    },
+    onError: (error: unknown) => {
+      console.warn('Nao foi possivel suspender motorista na API.', error)
+    },
+  })
+
+  useEffect(() => {
+    if (!driversQuery.data || driversQuery.data.rows.length === 0) return
+    setDriverRows(driversQuery.data.rows)
+    setDriverDetailsOverrides(driversQuery.data.details)
+  }, [driversQuery.data])
+
+  useEffect(() => {
+    if (!driversQuery.error) return
+    console.warn('Nao foi possivel carregar motoristas da API. Usando mocks locais.', driversQuery.error)
+  }, [driversQuery.error])
 
   useEffect(() => {
     const initialSearch = new URLSearchParams(location.search).get('search')
@@ -170,6 +200,10 @@ export default function DriversPage() {
 
   function handleToggleBlocked(driver: Driver) {
     const updatedStatus: DriverStatus = driver.status === 'Bloqueado' ? 'Offline' : 'Bloqueado'
+
+    if (updatedStatus === 'Bloqueado') {
+      suspendDriverMutation.mutate(driver.id)
+    }
 
     setDriverRows((currentRows) =>
       currentRows.map((currentDriver) =>
@@ -425,7 +459,7 @@ export default function DriversPage() {
                 Exibindo {visibleDrivers.length} de {filteredDrivers.length} motoristas
               </Typography>
               <Pagination
-                count={5}
+                count={Math.max(1, Math.ceil(filteredDrivers.length / rowsPerPage))}
                 page={page}
                 onChange={(_, value) => setPage(value)}
                 color="primary"

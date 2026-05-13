@@ -1,12 +1,14 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Box, Card, CardContent, GlobalStyles, Tab, Tabs, Typography, useTheme } from '@mui/material'
 import { alpha } from '@mui/material/styles'
+import { useQuery } from '@tanstack/react-query'
 import 'leaflet/dist/leaflet.css'
 import { useSnackbar } from 'notistack'
 import { useLocation } from 'react-router'
 import { io } from 'socket.io-client'
 import { getMapTileLayer } from '@modules/dashboard/utils/mapConfig'
 import { useActivePaletteMode } from '@modules/dashboard/utils/useActivePaletteMode'
+import { listAdminActiveRides } from '@shared/services'
 import { historyRides, initialActiveRides, initialScheduledRides } from '../data/mockRides'
 import type { ActiveMapLimit, ActiveRideView, HistoryStatusFilter, RideTab, ScheduledRide } from '../types'
 import { normalizeRide, prioritizeActiveRides } from '../utils/rides'
@@ -38,10 +40,29 @@ export default function RidesPage() {
   const [historyStatus, setHistoryStatus] = useState<HistoryStatusFilter>('all')
   const [, setNow] = useState(() => Date.now())
 
+  const activeRidesQuery = useQuery({
+    queryKey: ['admin', 'rides', 'active'],
+    queryFn: listAdminActiveRides,
+    refetchInterval: 30_000,
+  })
+
   useEffect(() => {
     const timer = window.setInterval(() => setNow(Date.now()), 30_000)
     return () => window.clearInterval(timer)
   }, [])
+
+  useEffect(() => {
+    const rides = activeRidesQuery.data
+    if (!rides || rides.length === 0) return
+    setActiveRides(rides.map(normalizeRide))
+    setSelectedActiveRideId(rides[0]?.id ?? '')
+    setExpandedActiveRideId(rides[0]?.id ?? '')
+  }, [activeRidesQuery.data])
+
+  useEffect(() => {
+    if (!activeRidesQuery.error) return
+    console.warn('Nao foi possivel carregar corridas ativas da API. Usando mocks locais.', activeRidesQuery.error)
+  }, [activeRidesQuery.error])
 
   useEffect(() => {
     const navigationState = location.state as RidesNavigationState | null
