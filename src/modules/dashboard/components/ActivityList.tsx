@@ -51,7 +51,7 @@ export function ActivityList({ items, compact = false, onItemClick }: ActivityLi
                   }
                 : undefined,
               '[data-toolpad-color-scheme="dark"] &': {
-                bgcolor: alpha(theme.palette.background.default, 0.5),
+                bgcolor: '#111827',
               },
             }}
           >
