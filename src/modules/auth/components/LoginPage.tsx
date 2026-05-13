@@ -24,12 +24,21 @@ import { useNavigate } from 'react-router'
 import loginMapBg from '@/assets/login-map-bg.png'
 import logo from '@/assets/logo.png'
 
+const ADMIN_EMAIL = 'admin@borali.app'
+
 export function LoginPage() {
   const theme = useTheme()
   const navigate = useNavigate()
+  const [email, setEmail] = useState('')
+  const [loginError, setLoginError] = useState('')
   const [showPassword, setShowPassword] = useState(false)
 
   function handleEnterAdmin() {
+    if (email.trim().toLowerCase() !== ADMIN_EMAIL) {
+      setLoginError(`E-mail inválido.`)
+      return
+    }
+
     navigate('/')
   }
 
@@ -125,15 +134,22 @@ export function LoginPage() {
                 fullWidth
                 size="small"
                 label="Login"
-                placeholder="admin@borali.com"
+                value={email}
+                placeholder={ADMIN_EMAIL}
                 autoComplete="username"
+                error={Boolean(loginError)}
+                helperText={loginError || ' '}
+                onChange={(event) => {
+                  setEmail(event.target.value)
+                  if (loginError) setLoginError('')
+                }}
               />
               <TextField
                 fullWidth
                 size="small"
                 label="Senha"
                 type={showPassword ? 'text' : 'password'}
-                placeholder="Digite sua senha"
+                placeholder="Sem senha por enquanto"
                 autoComplete="current-password"
                 slotProps={{
                   input: {
