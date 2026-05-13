@@ -1,14 +1,32 @@
 import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings'
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward'
 import ShieldOutlinedIcon from '@mui/icons-material/ShieldOutlined'
-import { Box, Button, Card, CardContent, Chip, Stack, TextField, Typography, useTheme } from '@mui/material'
+import VisibilityIcon from '@mui/icons-material/Visibility'
+import VisibilityOffIcon from '@mui/icons-material/VisibilityOff'
+import {
+  Box,
+  Button,
+  Card,
+  CardContent,
+  Chip,
+  IconButton,
+  InputAdornment,
+  Link,
+  Stack,
+  TextField,
+  Tooltip,
+  Typography,
+  useTheme,
+} from '@mui/material'
 import { alpha } from '@mui/material/styles'
+import { useState } from 'react'
 import { useNavigate } from 'react-router'
 import logo from '@/assets/logo.png'
 
 export function LoginPage() {
   const theme = useTheme()
   const navigate = useNavigate()
+  const [showPassword, setShowPassword] = useState(false)
 
   function handleEnterAdmin() {
     navigate('/')
@@ -86,17 +104,48 @@ export function LoginPage() {
             >
               <TextField
                 fullWidth
+                size="small"
                 label="Login"
                 placeholder="admin@borali.com"
                 autoComplete="username"
               />
               <TextField
                 fullWidth
+                size="small"
                 label="Senha"
-                type="password"
+                type={showPassword ? 'text' : 'password'}
                 placeholder="Digite sua senha"
                 autoComplete="current-password"
+                slotProps={{
+                  input: {
+                    endAdornment: (
+                      <InputAdornment position="end">
+                        <Tooltip title={showPassword ? 'Ocultar senha' : 'Mostrar senha'}>
+                          <IconButton
+                            aria-label={showPassword ? 'Ocultar senha' : 'Mostrar senha'}
+                            edge="end"
+                            onClick={() => setShowPassword((current) => !current)}
+                            onMouseDown={(event) => event.preventDefault()}
+                          >
+                            {showPassword ? <VisibilityOffIcon /> : <VisibilityIcon />}
+                          </IconButton>
+                        </Tooltip>
+                      </InputAdornment>
+                    ),
+                  },
+                }}
               />
+              <Typography color="text.secondary" sx={{ fontSize: 13, textAlign: 'center' }}>
+                Esqueceu a Senha{' '}
+                <Link
+                  component="button"
+                  type="button"
+                  underline="hover"
+                  sx={{ fontWeight: 800, verticalAlign: 'baseline' }}
+                >
+                  Clique Aqui
+                </Link>
+              </Typography>
 
               <Button
                 type="submit"
