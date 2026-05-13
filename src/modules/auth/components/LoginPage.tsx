@@ -21,6 +21,7 @@ import {
 import { alpha } from '@mui/material/styles'
 import { useState } from 'react'
 import { useNavigate } from 'react-router'
+import loginMapBg from '@/assets/login-map-bg.png'
 import logo from '@/assets/logo.png'
 
 export function LoginPage() {
@@ -36,21 +37,39 @@ export function LoginPage() {
     <Box
       sx={{
         minHeight: '100vh',
+        position: 'relative',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
         bgcolor: 'background.default',
         px: 2,
         py: 4,
+        overflow: 'hidden',
+        '&::before': {
+          content: '""',
+          position: 'absolute',
+          inset: 0,
+          backgroundImage: `linear-gradient(${alpha(theme.palette.common.black, 0.52)}, ${alpha(
+            theme.palette.common.black,
+            0.42,
+          )}), url(${loginMapBg})`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          opacity: 0.72,
+        },
       }}
     >
       <Card
         variant="outlined"
         sx={{
+          position: 'relative',
+          zIndex: 1,
           width: '100%',
           maxWidth: 440,
           borderColor: alpha(theme.palette.secondary.main, 0.18),
-          boxShadow: `0 22px 70px ${alpha(theme.palette.common.black, 0.08)}`,
+          bgcolor: alpha(theme.palette.background.paper, 0.9),
+          backdropFilter: 'blur(10px)',
+          boxShadow: `0 22px 70px ${alpha(theme.palette.common.black, 0.24)}`,
         }}
       >
         <CardContent sx={{ p: { xs: 3, sm: 4 } }}>
