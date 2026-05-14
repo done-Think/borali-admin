@@ -143,9 +143,19 @@ async function listAllPages<T extends { total: number }>(
   return [firstPage, ...remainingPages]
 }
 
-function unwrap<T>(response: { data: ApiEnvelope<T> | T }) {
+function isApiEnvelope<T>(payload: ApiEnvelope<T> | T): payload is ApiEnvelope<T> {
+  return Boolean(
+    payload &&
+    typeof payload === 'object' &&
+    'data' in payload &&
+    'timestamp' in payload &&
+    typeof payload.timestamp === 'string',
+  )
+}
+
+function unwrap<T>(response: { data: ApiEnvelope<T> | T }): T {
   const payload = response.data
-  return payload && typeof payload === 'object' && 'data' in payload ? payload.data : payload
+  return isApiEnvelope(payload) ? payload.data : payload
 }
 
 function toNumber(value: string | number | null | undefined) {
@@ -277,6 +287,16 @@ function passengerMonthlySpend(user: ApiUser) {
   }, 0)
 }
 
+function passengerCancellationRate(user: ApiUser) {
+  const rides = user.ridesAsPassenger ?? []
+  if (rides.length === 0) {
+    return user.totalRidesAsPassenger && user.totalRidesAsPassenger > 0 ? null : 0
+  }
+
+  const cancelledRides = rides.filter((ride) => ride.status === 'CANCELLED').length
+  return (cancelledRides / rides.length) * 100
+}
+
 function mapPassenger(user: ApiUser): Passenger {
   const payments = Array.from(new Set((user.ridesAsPassenger ?? []).map((ride) => mapPayment(ride.payment?.method ?? ride.paymentMethod))))
 
@@ -317,7 +337,7 @@ function mapPassengerDetails(user: ApiUser): Partial<PassengerDetails> {
       rides: rides.length,
       spend: passengerMonthlySpend(user),
       rating: user.passengerRating ?? 5,
-      cancellationRate: 0,
+      cancellationRate: passengerCancellationRate(user),
     },
   }
 }

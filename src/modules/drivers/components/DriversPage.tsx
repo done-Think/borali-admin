@@ -5,6 +5,7 @@ import LockOpenOutlinedIcon from '@mui/icons-material/LockOpenOutlined'
 import SearchIcon from '@mui/icons-material/Search'
 import { Avatar, Box, Button, Card, CardContent, FormControl, IconButton, InputAdornment, InputLabel, MenuItem, Pagination, Select, Stack, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField, ToggleButton, ToggleButtonGroup, Tooltip, Typography, useTheme } from '@mui/material'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useSnackbar } from 'notistack'
 import { useLocation } from 'react-router'
 import { listAllAdminDrivers, suspendAdminDriver } from '@shared/services'
 import { drivers } from '../data/mockDrivers'
@@ -15,9 +16,15 @@ import { DriverBadge, DriverDetailsDialog, DriverEditDialog, SortableHeader } fr
 
 const emptyDriverDetails: Record<string, Partial<DriverDetails>> = {}
 
+type SuspendDriverVariables = {
+  driverId: string
+  previousDriver: Driver
+}
+
 export default function DriversPage() {
   const theme = useTheme()
   const location = useLocation()
+  const { enqueueSnackbar } = useSnackbar()
   const locationState = location.state as DriversLocationState | null
   const [driverOverrides, setDriverOverrides] = useState<Record<string, Driver>>({})
   const [driverDetailsOverrides, setDriverDetailsOverrides] = useState<Record<string, Partial<DriverDetails>>>({})
@@ -60,13 +67,22 @@ export default function DriversPage() {
   }, [driverDetailsOverrides, driverQueryDetails])
 
   const suspendDriverMutation = useMutation({
-    mutationFn: (driverId: string) => suspendAdminDriver(driverId),
-    onSuccess: () => {
+    mutationFn: ({ driverId }: SuspendDriverVariables) => suspendAdminDriver(driverId),
+    onSuccess: (_, variables) => {
+      enqueueSnackbar(`${variables.previousDriver.name} bloqueado com sucesso.`, { variant: 'success' })
       void queryClient.invalidateQueries({ queryKey: ['admin', 'drivers'] })
       void queryClient.invalidateQueries({ queryKey: ['admin', 'dashboard'] })
     },
-    onError: (error: unknown) => {
+    onError: (error: unknown, variables) => {
       console.warn('Nao foi possivel suspender motorista na API.', error)
+      setDriverOverrides((currentOverrides) => ({
+        ...currentOverrides,
+        [variables.driverId]: variables.previousDriver,
+      }))
+      setSelectedDriver((currentDriver) =>
+        currentDriver?.id === variables.driverId ? variables.previousDriver : currentDriver,
+      )
+      enqueueSnackbar(`Nao foi possivel bloquear ${variables.previousDriver.name}. Tente novamente.`, { variant: 'error' })
     },
   })
 
@@ -211,10 +227,6 @@ export default function DriversPage() {
   function handleToggleBlocked(driver: Driver) {
     const updatedStatus: DriverStatus = driver.status === 'Bloqueado' ? 'Offline' : 'Bloqueado'
 
-    if (updatedStatus === 'Bloqueado') {
-      suspendDriverMutation.mutate(driver.id)
-    }
-
     setDriverOverrides((currentOverrides) => ({
       ...currentOverrides,
       [driver.id]: {
@@ -229,8 +241,15 @@ export default function DriversPage() {
             ...currentDriver,
             status: updatedStatus,
           }
-        : currentDriver,
+          : currentDriver,
     )
+
+    if (updatedStatus === 'Bloqueado') {
+      suspendDriverMutation.mutate({ driverId: driver.id, previousDriver: driver })
+      return
+    }
+
+    enqueueSnackbar(`${driver.name} desbloqueado localmente.`, { variant: 'success' })
   }
 
   return (
