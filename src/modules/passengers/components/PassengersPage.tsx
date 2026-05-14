@@ -6,7 +6,7 @@ import SearchIcon from '@mui/icons-material/Search'
 import { Avatar, Box, Button, Card, CardContent, FormControl, IconButton, InputAdornment, InputLabel, MenuItem, Pagination, Select, Stack, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField, ToggleButton, ToggleButtonGroup, Tooltip, Typography, useTheme } from '@mui/material'
 import { useQuery } from '@tanstack/react-query'
 import { useLocation } from 'react-router'
-import { listAdminPassengers } from '@shared/services'
+import { listAllAdminPassengers } from '@shared/services'
 import { passengers } from '../data/mockPassengers'
 import type { Passenger, PassengerDetails, PassengerEditForm, PassengerFilter, PassengersLocationState, PassengerSortKey, PassengerStatus, PassengerTierFilter, SortDirection } from '../types'
 import { currencyFormatter, filters, getInitials, getPassengerDetails, getPassengerSortValue, numberFormatter, normalizeSearch, statusPalette, tierPalette } from '../utils/passengers'
@@ -32,10 +32,10 @@ export default function PassengersPage() {
   const locationState = location.state as PassengersLocationState | null
 
   const passengersQuery = useQuery({
-    queryKey: ['admin', 'passengers', { page: 1, limit: 100 }],
+    queryKey: ['admin', 'passengers', 'all'],
     queryFn: async () => {
       try {
-        return await listAdminPassengers(1, 100)
+        return await listAllAdminPassengers()
       } catch (error) {
         console.warn('Nao foi possivel carregar passageiros da API. Usando mocks locais.', error)
         return { rows: passengers, details: {}, total: passengers.length }
