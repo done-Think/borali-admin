@@ -12,10 +12,12 @@ import type { Passenger, PassengerDetails, PassengerEditForm, PassengerFilter, P
 import { currencyFormatter, filters, getInitials, getPassengerDetails, getPassengerSortValue, numberFormatter, normalizeSearch, statusPalette, tierPalette } from '../utils/passengers'
 import { PassengerBadge, PassengerDetailsDialog, PassengerEditDialog, PaymentBadges, SortableHeader } from './PassengerManagementComponents'
 
+const emptyPassengerDetails: Record<string, Partial<PassengerDetails>> = {}
+
 export default function PassengersPage() {
   const theme = useTheme()
   const location = useLocation()
-  const [passengerRows, setPassengerRows] = useState(passengers)
+  const [passengerOverrides, setPassengerOverrides] = useState<Record<string, Passenger>>({})
   const [passengerDetailsOverrides, setPassengerDetailsOverrides] = useState<Record<string, Partial<PassengerDetails>>>({})
   const [search, setSearch] = useState('')
   const [selectedFilter, setSelectedFilter] = useState<PassengerFilter>('all')
@@ -31,19 +33,29 @@ export default function PassengersPage() {
 
   const passengersQuery = useQuery({
     queryKey: ['admin', 'passengers', { page: 1, limit: 100 }],
-    queryFn: () => listAdminPassengers(1, 100),
+    queryFn: async () => {
+      try {
+        return await listAdminPassengers(1, 100)
+      } catch (error) {
+        console.warn('Nao foi possivel carregar passageiros da API. Usando mocks locais.', error)
+        return { rows: passengers, details: {}, total: passengers.length }
+      }
+    },
+    placeholderData: { rows: passengers, details: {}, total: passengers.length },
   })
-
-  useEffect(() => {
-    if (!passengersQuery.data || passengersQuery.data.rows.length === 0) return
-    setPassengerRows(passengersQuery.data.rows)
-    setPassengerDetailsOverrides(passengersQuery.data.details)
-  }, [passengersQuery.data])
-
-  useEffect(() => {
-    if (!passengersQuery.error) return
-    console.warn('Nao foi possivel carregar passageiros da API. Usando mocks locais.', passengersQuery.error)
-  }, [passengersQuery.error])
+  const passengerQueryRows = passengersQuery.data?.rows ?? passengers
+  const passengerQueryDetails = passengersQuery.data?.details ?? emptyPassengerDetails
+  const passengerRows = useMemo(
+    () => passengerQueryRows.map((passenger) => passengerOverrides[passenger.id] ?? passenger),
+    [passengerOverrides, passengerQueryRows],
+  )
+  const passengerDetailsById = useMemo(() => {
+    const details = { ...passengerQueryDetails }
+    Object.entries(passengerDetailsOverrides).forEach(([passengerId, override]) => {
+      details[passengerId] = { ...details[passengerId], ...override }
+    })
+    return details
+  }, [passengerDetailsOverrides, passengerQueryDetails])
 
   useEffect(() => {
     const initialSearch = new URLSearchParams(location.search).get('search')
@@ -73,7 +85,7 @@ export default function PassengersPage() {
     const normalizedSearch = normalizeSearch(search).trim()
 
     const matchingPassengers = passengerRows.filter((passenger) => {
-      const details = getPassengerDetails(passenger, passengerDetailsOverrides[passenger.id])
+      const details = getPassengerDetails(passenger, passengerDetailsById[passenger.id])
       const matchesSearch =
         !normalizedSearch ||
         normalizeSearch(
@@ -114,7 +126,7 @@ export default function PassengersPage() {
 
       return sortDirection === 'asc' ? comparison : -comparison
     })
-  }, [passengerDetailsOverrides, passengerRows, search, selectedFilter, selectedTier, sortDirection, sortKey])
+  }, [passengerDetailsById, passengerRows, search, selectedFilter, selectedTier, sortDirection, sortKey])
 
   const visiblePassengers = useMemo(() => {
     const start = (page - 1) * rowsPerPage
@@ -152,16 +164,13 @@ export default function PassengersPage() {
   function handleToggleBlocked(passenger: Passenger) {
     const updatedStatus: PassengerStatus = passenger.status === 'Bloqueado' ? 'Inativo' : 'Bloqueado'
 
-    setPassengerRows((currentRows) =>
-      currentRows.map((currentPassenger) =>
-        currentPassenger.id === passenger.id
-          ? {
-              ...currentPassenger,
-              status: updatedStatus,
-            }
-          : currentPassenger,
-      ),
-    )
+    setPassengerOverrides((currentOverrides) => ({
+      ...currentOverrides,
+      [passenger.id]: {
+        ...passenger,
+        status: updatedStatus,
+      },
+    }))
 
     setSelectedPassenger((currentPassenger) =>
       currentPassenger?.id === passenger.id
@@ -187,9 +196,7 @@ export default function PassengersPage() {
       monthlySpend: form.monthlySpend,
     }
 
-    setPassengerRows((currentRows) =>
-      currentRows.map((passenger) => (passenger.id === updatedPassenger.id ? updatedPassenger : passenger)),
-    )
+    setPassengerOverrides((currentOverrides) => ({ ...currentOverrides, [updatedPassenger.id]: updatedPassenger }))
     setPassengerDetailsOverrides((currentOverrides) => ({
       ...currentOverrides,
       [updatedPassenger.id]: {
@@ -429,7 +436,7 @@ export default function PassengersPage() {
 
       <PassengerDetailsDialog
         passenger={selectedPassenger}
-        detailsOverride={selectedPassenger ? passengerDetailsOverrides[selectedPassenger.id] : undefined}
+        detailsOverride={selectedPassenger ? passengerDetailsById[selectedPassenger.id] : undefined}
         tab={passengerDetailsTab}
         onTabChange={setPassengerDetailsTab}
         onClose={() => setSelectedPassenger(null)}
@@ -437,7 +444,7 @@ export default function PassengersPage() {
 
       <PassengerEditDialog
         passenger={editingPassenger}
-        detailsOverride={editingPassenger ? passengerDetailsOverrides[editingPassenger.id] : undefined}
+        detailsOverride={editingPassenger ? passengerDetailsById[editingPassenger.id] : undefined}
         onClose={() => setEditingPassenger(null)}
         onSave={handleSavePassenger}
       />

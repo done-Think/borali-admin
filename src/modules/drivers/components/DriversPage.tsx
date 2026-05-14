@@ -13,11 +13,13 @@ import { categoryPalette, statusPalette, subscriptionPalette } from '../utils/dr
 import { currencyFormatter, filters, getDriverSortValue, getInitials, normalizeSearch, numberFormatter } from '../utils/drivers'
 import { DriverBadge, DriverDetailsDialog, DriverEditDialog, SortableHeader } from './DriverManagementComponents'
 
+const emptyDriverDetails: Record<string, Partial<DriverDetails>> = {}
+
 export default function DriversPage() {
   const theme = useTheme()
   const location = useLocation()
   const locationState = location.state as DriversLocationState | null
-  const [driverRows, setDriverRows] = useState(drivers)
+  const [driverOverrides, setDriverOverrides] = useState<Record<string, Driver>>({})
   const [driverDetailsOverrides, setDriverDetailsOverrides] = useState<Record<string, Partial<DriverDetails>>>({})
   const [search, setSearch] = useState('')
   const [selectedFilter, setSelectedFilter] = useState<DriverFilter>('all')
@@ -33,8 +35,29 @@ export default function DriversPage() {
 
   const driversQuery = useQuery({
     queryKey: ['admin', 'drivers', { page: 1, limit: 100 }],
-    queryFn: () => listAdminDrivers(1, 100),
+    queryFn: async () => {
+      try {
+        return await listAdminDrivers(1, 100)
+      } catch (error) {
+        console.warn('Nao foi possivel carregar motoristas da API. Usando mocks locais.', error)
+        return { rows: drivers, details: {}, total: drivers.length }
+      }
+    },
+    placeholderData: { rows: drivers, details: {}, total: drivers.length },
   })
+  const driverQueryRows = driversQuery.data?.rows ?? drivers
+  const driverQueryDetails = driversQuery.data?.details ?? emptyDriverDetails
+  const driverRows = useMemo(
+    () => driverQueryRows.map((driver) => driverOverrides[driver.id] ?? driver),
+    [driverOverrides, driverQueryRows],
+  )
+  const driverDetailsById = useMemo(() => {
+    const details = { ...driverQueryDetails }
+    Object.entries(driverDetailsOverrides).forEach(([driverId, override]) => {
+      details[driverId] = { ...details[driverId], ...override }
+    })
+    return details
+  }, [driverDetailsOverrides, driverQueryDetails])
 
   const suspendDriverMutation = useMutation({
     mutationFn: (driverId: string) => suspendAdminDriver(driverId),
@@ -46,17 +69,6 @@ export default function DriversPage() {
       console.warn('Nao foi possivel suspender motorista na API.', error)
     },
   })
-
-  useEffect(() => {
-    if (!driversQuery.data || driversQuery.data.rows.length === 0) return
-    setDriverRows(driversQuery.data.rows)
-    setDriverDetailsOverrides(driversQuery.data.details)
-  }, [driversQuery.data])
-
-  useEffect(() => {
-    if (!driversQuery.error) return
-    console.warn('Nao foi possivel carregar motoristas da API. Usando mocks locais.', driversQuery.error)
-  }, [driversQuery.error])
 
   useEffect(() => {
     const initialSearch = new URLSearchParams(location.search).get('search')
@@ -177,9 +189,7 @@ export default function DriversPage() {
       monthlyEarnings: form.monthlyEarnings,
     }
 
-    setDriverRows((currentRows) =>
-      currentRows.map((driver) => (driver.id === updatedDriver.id ? updatedDriver : driver)),
-    )
+    setDriverOverrides((currentOverrides) => ({ ...currentOverrides, [updatedDriver.id]: updatedDriver }))
     setDriverDetailsOverrides((currentOverrides) => ({
       ...currentOverrides,
       [updatedDriver.id]: {
@@ -205,16 +215,13 @@ export default function DriversPage() {
       suspendDriverMutation.mutate(driver.id)
     }
 
-    setDriverRows((currentRows) =>
-      currentRows.map((currentDriver) =>
-        currentDriver.id === driver.id
-          ? {
-              ...currentDriver,
-              status: updatedStatus,
-            }
-          : currentDriver,
-      ),
-    )
+    setDriverOverrides((currentOverrides) => ({
+      ...currentOverrides,
+      [driver.id]: {
+        ...driver,
+        status: updatedStatus,
+      },
+    }))
 
     setSelectedDriver((currentDriver) =>
       currentDriver?.id === driver.id
@@ -472,14 +479,14 @@ export default function DriversPage() {
 
       <DriverDetailsDialog
         driver={selectedDriver}
-        detailsOverride={selectedDriver ? driverDetailsOverrides[selectedDriver.id] : undefined}
+        detailsOverride={selectedDriver ? driverDetailsById[selectedDriver.id] : undefined}
         tab={driverDetailsTab}
         onTabChange={setDriverDetailsTab}
         onClose={() => setSelectedDriver(null)}
       />
       <DriverEditDialog
         driver={editingDriver}
-        detailsOverride={editingDriver ? driverDetailsOverrides[editingDriver.id] : undefined}
+        detailsOverride={editingDriver ? driverDetailsById[editingDriver.id] : undefined}
         onClose={() => setEditingDriver(null)}
         onSave={handleSaveDriver}
       />
