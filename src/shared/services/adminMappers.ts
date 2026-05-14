@@ -131,6 +131,12 @@ export function driverMonthlyEarnings(driver: Pick<ApiDriver, 'earnings' | 'ride
   return (driver.rides ?? []).reduce((total, ride) => total + toNumber(ride.payment?.amount ?? ride.fare), 0)
 }
 
+function rideCancellationRate(rides: ApiRide[]) {
+  if (rides.length === 0) return 0
+  const cancelledRides = rides.filter((ride) => ride.status === 'CANCELLED').length
+  return (cancelledRides / rides.length) * 100
+}
+
 export function mapDriver(driver: ApiDriver): Driver {
   const vehicle = driver.vehicles?.[0]
 
@@ -172,7 +178,7 @@ export function mapDriverDetails(driver: ApiDriver): Partial<DriverDetails> {
       rides: rides.length,
       earnings: driverMonthlyEarnings(driver),
       rating: driver.rating,
-      cancellationRate: 0,
+      cancellationRate: rideCancellationRate(rides),
     },
   }
 }
@@ -200,8 +206,7 @@ export function passengerCancellationRate(user: Pick<ApiUser, 'ridesAsPassenger'
     return user.totalRidesAsPassenger && user.totalRidesAsPassenger > 0 ? null : 0
   }
 
-  const cancelledRides = rides.filter((ride) => ride.status === 'CANCELLED').length
-  return (cancelledRides / rides.length) * 100
+  return rideCancellationRate(rides)
 }
 
 export function mapPassenger(user: ApiUser): Passenger {

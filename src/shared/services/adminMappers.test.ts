@@ -140,7 +140,7 @@ describe('admin mappers', () => {
           rides: 2,
           earnings: 64.5,
           rating: 4.8,
-          cancellationRate: 0,
+          cancellationRate: 50,
         },
       })
       expect(mapDriverDetails(apiDriver).rideHistory).toHaveLength(2)
