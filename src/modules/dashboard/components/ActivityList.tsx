@@ -1,4 +1,4 @@
-import { Box, ButtonBase, Stack, Typography, useTheme } from '@mui/material'
+import { Box, ButtonBase, Stack, Typography } from '@mui/material'
 import { alpha } from '@mui/material/styles'
 import { activityStyles } from '../data/mockDashboardData'
 import type { Activity } from '../types'
@@ -10,8 +10,6 @@ type ActivityListProps = {
 }
 
 export function ActivityList({ items, compact = false, onItemClick }: ActivityListProps) {
-  const theme = useTheme()
-
   return (
     <Stack
       spacing={1.25}

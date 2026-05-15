@@ -1,10 +1,8 @@
 import { useMemo, useState } from 'react'
 import { Box, Card, CardContent, Chip, GlobalStyles, Stack, Typography, useTheme } from '@mui/material'
 import { alpha } from '@mui/material/styles'
-import { useQuery } from '@tanstack/react-query'
 import 'leaflet/dist/leaflet.css'
-import { listAdminActiveRides } from '@modules/rides/services'
-import { getAdminDashboardMetrics } from '../services'
+import { useGetDashboardAccess } from '../queries'
 import { activities, kpiCards } from '../data/mockDashboardData'
 import type { KpiCard } from '../types'
 import { ActivityList } from './ActivityList'
@@ -31,23 +29,7 @@ export default function DashboardPage() {
   const [onlineDriversOpen, setOnlineDriversOpen] = useState(false)
   const [selectedActivity, setSelectedActivity] = useState<Activity | null>(null)
 
-  const dashboardQuery = useQuery({
-    queryKey: ['admin', 'dashboard'],
-    queryFn: async () => {
-      try {
-        const [metrics, activeRides] = await Promise.all([getAdminDashboardMetrics(), listAdminActiveRides()])
-        return {
-          activeRides: activeRides.length,
-          onlineDrivers: metrics.activeDrivers,
-          revenueToday: metrics.revenue.today,
-        }
-      } catch (error) {
-        console.warn('Nao foi possivel carregar metricas da API. Usando mocks locais.', error)
-        return null
-      }
-    },
-    refetchInterval: 30_000,
-  })
+  const dashboardQuery = useGetDashboardAccess()
 
   const visibleKpiCards = useMemo(() => {
     const liveKpis = dashboardQuery.data

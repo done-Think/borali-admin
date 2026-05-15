@@ -1,14 +1,14 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Box, Card, CardContent, GlobalStyles, Tab, Tabs, Typography, useTheme } from '@mui/material'
 import { alpha } from '@mui/material/styles'
-import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { useQueryClient } from '@tanstack/react-query'
 import 'leaflet/dist/leaflet.css'
 import { useSnackbar } from 'notistack'
 import { useLocation } from 'react-router'
 import { io } from 'socket.io-client'
 import { getMapTileLayer } from '@modules/dashboard/utils/mapConfig'
 import { useActivePaletteMode } from '@modules/dashboard/utils/useActivePaletteMode'
-import { listAdminActiveRides } from '../services'
+import { ridesQueryKeys, useGetActiveRidesAccess } from '../queries'
 import { historyRides, initialActiveRides, initialScheduledRides } from '../data/mockRides'
 import type { ActiveMapLimit, ActiveRideView, HistoryStatusFilter, RideTab, ScheduledRide } from '../types'
 import { normalizeRide, prioritizeActiveRides } from '../utils/rides'
@@ -40,19 +40,7 @@ export default function RidesPage() {
   const [historyStatus, setHistoryStatus] = useState<HistoryStatusFilter>('all')
   const [, setNow] = useState(() => Date.now())
 
-  const activeRidesQuery = useQuery({
-    queryKey: ['admin', 'rides', 'active'],
-    queryFn: async () => {
-      try {
-        return await listAdminActiveRides()
-      } catch (error) {
-        console.warn('Nao foi possivel carregar corridas ativas da API. Usando mocks locais.', error)
-        return initialActiveRides
-      }
-    },
-    placeholderData: initialActiveRides,
-    refetchInterval: 30_000,
-  })
+  const activeRidesQuery = useGetActiveRidesAccess()
   const activeRidesData = activeRidesQuery.data ?? initialActiveRides
   const activeRides = useMemo(() => activeRidesData.map(normalizeRide), [activeRidesData])
 
@@ -87,17 +75,17 @@ export default function RidesPage() {
     })
 
     const replaceActiveRides = (rides: ActiveRideView[]) => {
-      queryClient.setQueryData<ActiveRideView[]>(['admin', 'rides', 'active'], rides.map(normalizeRide))
+      queryClient.setQueryData<ActiveRideView[]>(ridesQueryKeys.active(), rides.map(normalizeRide))
     }
     const upsertRide = (ride: ActiveRideView) => {
-      queryClient.setQueryData<ActiveRideView[]>(['admin', 'rides', 'active'], (current = initialActiveRides) => {
+      queryClient.setQueryData<ActiveRideView[]>(ridesQueryKeys.active(), (current = initialActiveRides) => {
         const nextRide = normalizeRide(ride)
         const exists = current.some((item) => item.id === nextRide.id)
         return exists ? current.map((item) => (item.id === nextRide.id ? { ...item, ...nextRide } : item)) : [nextRide, ...current]
       })
     }
     const removeRide = (ride: ActiveRideView | { id: string }) => {
-      queryClient.setQueryData<ActiveRideView[]>(['admin', 'rides', 'active'], (current = initialActiveRides) => current.filter((item) => item.id !== ride.id))
+      queryClient.setQueryData<ActiveRideView[]>(ridesQueryKeys.active(), (current = initialActiveRides) => current.filter((item) => item.id !== ride.id))
       setSelectedActiveRideId((current) => (current === ride.id ? '' : current))
       setExpandedActiveRideId((current) => (current === ride.id ? '' : current))
     }

@@ -48,7 +48,6 @@ function getDocumentIcon(document: ApprovalDocument) {
 }
 
 export default function ApprovalsPage() {
-  const theme = useTheme()
   const location = useLocation()
   const { enqueueSnackbar } = useSnackbar()
   const locationState = location.state as { selectedApprovalDriverId?: string; selectedApprovalDriverName?: string } | null

@@ -4,10 +4,12 @@ import EditOutlinedIcon from '@mui/icons-material/EditOutlined'
 import LockOpenOutlinedIcon from '@mui/icons-material/LockOpenOutlined'
 import SearchIcon from '@mui/icons-material/Search'
 import { Avatar, Box, Button, Card, CardContent, FormControl, IconButton, InputAdornment, InputLabel, MenuItem, Pagination, Select, Stack, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField, ToggleButton, ToggleButtonGroup, Tooltip, Typography, useTheme } from '@mui/material'
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useSnackbar } from 'notistack'
 import { useLocation } from 'react-router'
-import { listAllAdminDrivers, suspendAdminDriver } from '../services'
+import { dashboardQueryKeys } from '@modules/dashboard/queries'
+import { driversQueryKeys, useGetAllDriversAccess } from '../queries'
+import { suspendAdminDriver } from '../services'
 import { drivers } from '../data/mockDrivers'
 import type { Driver, DriverCategoryFilter, DriverDetails, DriverEditForm, DriverFilter, DriversLocationState, DriverSortKey, DriverStatus, SortDirection } from '../types'
 import { categoryPalette, statusPalette, subscriptionPalette } from '../utils/driverPalettes'
@@ -40,18 +42,7 @@ export default function DriversPage() {
   const rowsPerPage = 5
   const queryClient = useQueryClient()
 
-  const driversQuery = useQuery({
-    queryKey: ['admin', 'drivers', 'all'],
-    queryFn: async () => {
-      try {
-        return await listAllAdminDrivers()
-      } catch (error) {
-        console.warn('Nao foi possivel carregar motoristas da API. Usando mocks locais.', error)
-        return { rows: drivers, details: {}, total: drivers.length }
-      }
-    },
-    placeholderData: { rows: drivers, details: {}, total: drivers.length },
-  })
+  const driversQuery = useGetAllDriversAccess()
   const driverQueryRows = driversQuery.data?.rows ?? drivers
   const driverQueryDetails = driversQuery.data?.details ?? emptyDriverDetails
   const driverRows = useMemo(
@@ -70,8 +61,8 @@ export default function DriversPage() {
     mutationFn: ({ driverId }: SuspendDriverVariables) => suspendAdminDriver(driverId),
     onSuccess: (_, variables) => {
       enqueueSnackbar(`${variables.previousDriver.name} bloqueado com sucesso.`, { variant: 'success' })
-      void queryClient.invalidateQueries({ queryKey: ['admin', 'drivers'] })
-      void queryClient.invalidateQueries({ queryKey: ['admin', 'dashboard'] })
+      void queryClient.invalidateQueries({ queryKey: driversQueryKeys.access })
+      void queryClient.invalidateQueries({ queryKey: dashboardQueryKeys.access })
     },
     onError: (error: unknown, variables) => {
       console.warn('Nao foi possivel suspender motorista na API.', error)
