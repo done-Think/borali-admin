@@ -6,7 +6,7 @@ import {
   getSubscriptionKpiCards,
   monthlyMrrGrowth,
   planDistribution,
-} from '../data/mockSubscriptions'
+} from '../services'
 import type { DriverSubscription } from '../types'
 import { ExpiringTrialsPanel } from './ExpiringTrialsPanel'
 import { SubscriptionCharts } from './SubscriptionCharts'

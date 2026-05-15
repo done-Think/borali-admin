@@ -28,7 +28,7 @@ import {
 import CloseIcon from '@mui/icons-material/Close'
 import { useSnackbar } from 'notistack'
 import { useLocation } from 'react-router'
-import { pendingApprovalDrivers, recentApprovalHistory } from '../data/mockApprovals'
+import { pendingApprovalDrivers, recentApprovalHistory } from '../services'
 import type { ApprovalDocument, ApprovalDriver, ApprovalHistoryItem } from '../types'
 
 function getFaceCheckColor(status: ApprovalDriver['faceCheck']['status']) {

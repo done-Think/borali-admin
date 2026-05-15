@@ -3,7 +3,6 @@ import ArrowForwardIcon from '@mui/icons-material/ArrowForward'
 import ShieldOutlinedIcon from '@mui/icons-material/ShieldOutlined'
 import VisibilityIcon from '@mui/icons-material/Visibility'
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff'
-import { api } from '@shared/services'
 import { useAuthStore } from '@shared/store'
 import {
   Box,
@@ -25,6 +24,7 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router'
 import loginMapBg from '@/assets/login-map-bg.png'
 import logo from '@/assets/logo.png'
+import { requestAdminDevToken } from '../services'
 
 const ADMIN_EMAIL = 'admin@borali.app'
 
@@ -44,11 +44,7 @@ export function LoginPage() {
   }
 
   try {
-    const response = await api.post('/auth/dev-token', {
-      email: normalizedEmail,
-    })
-
-    const { accessToken } = response.data.data
+    const { accessToken } = await requestAdminDevToken(normalizedEmail)
 
     useAuthStore.getState().setAuth(
       {

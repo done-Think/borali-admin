@@ -1,7 +1,7 @@
 import AttachMoneyIcon from '@mui/icons-material/AttachMoney'
 import { Box, Card, CardContent, Chip, Divider, Stack, Switch, TextField, Typography } from '@mui/material'
 import { alpha } from '@mui/material/styles'
-import { rideCategoryDescriptions, rideCategoryLabels } from '../data/mockSettings'
+import { rideCategoryDescriptions, rideCategoryLabels } from '../services'
 import type { CategoryFareSettings, CitySettings, RideCategory } from '../types'
 import { sanitizeNumber } from '../utils/settings'
 

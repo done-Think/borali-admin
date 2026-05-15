@@ -31,7 +31,7 @@ import {
   Typography,
 } from '@mui/material'
 import { useColorScheme, useTheme } from '@mui/material/styles'
-import { analyticsByRange, chartShortcuts, churnByMonth, demandMeta, demandRegions, ratingDistribution, revenueByMonth, rideCategories, timeRanges } from '../data/mockAnalytics'
+import { analyticsByRange, chartShortcuts, churnByMonth, demandMeta, demandRegions, ratingDistribution, revenueByMonth, rideCategories, timeRanges } from '../services'
 import type { ChurnPoint, DemandLevel, TimeRange } from '../types'
 import { currencyFormatter, formatChartValue, formatCurrencyValue, numberFormatter, percentFormatter } from '../utils/formatters'
 import { AnalyticsMetricCards } from './AnalyticsMetricCards'

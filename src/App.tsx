@@ -13,7 +13,7 @@ import { Outlet } from 'react-router'
 import { ReactRouterAppProvider } from '@toolpad/core/react-router'
 import theme from './theme/themeProvider'
 import logo from '@/assets/logo.png'
-import { pendingApprovalDrivers } from '@modules/approvals/data/mockApprovals'
+import { pendingApprovalDrivers } from '@modules/approvals/services'
 
 function createNavigation(pendingApprovalsCount: number) {
   return [
