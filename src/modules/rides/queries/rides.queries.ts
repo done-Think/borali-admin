@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
+import { ADMIN_LIVE_REFETCH_INTERVAL, withMockFallback } from '@shared/services'
 import { initialActiveRides } from '../data/mockRides'
 import { listAdminActiveRides } from '../services'
 
@@ -10,15 +11,12 @@ export const ridesQueryKeys = {
 export function useGetActiveRidesAccess() {
   return useQuery({
     queryKey: ridesQueryKeys.active(),
-    queryFn: async () => {
-      try {
-        return await listAdminActiveRides()
-      } catch (error) {
-        console.warn('Nao foi possivel carregar corridas ativas da API. Usando mocks locais.', error)
-        return initialActiveRides
-      }
-    },
+    queryFn: () =>
+      withMockFallback(listAdminActiveRides, {
+        fallback: initialActiveRides,
+        warning: 'Nao foi possivel carregar corridas ativas da API. Usando mocks locais.',
+      }),
     placeholderData: initialActiveRides,
-    refetchInterval: 30_000,
+    refetchInterval: ADMIN_LIVE_REFETCH_INTERVAL,
   })
 }
