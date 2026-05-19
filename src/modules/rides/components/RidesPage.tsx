@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Box, Card, CardContent, GlobalStyles, Tab, Tabs, Typography, useTheme } from '@mui/material'
+import { Alert, Box, Card, CardContent, GlobalStyles, LinearProgress, Tab, Tabs, Typography, useTheme } from '@mui/material'
 import { alpha } from '@mui/material/styles'
 import { useQueryClient } from '@tanstack/react-query'
 import 'leaflet/dist/leaflet.css'
@@ -185,6 +185,13 @@ export default function RidesPage() {
       </Box>
 
       <Card variant="outlined">
+        {activeRidesQuery.isFetching && <LinearProgress />}
+        {activeRidesQuery.isError && (
+          <Alert severity="error" sx={{ m: 2, mb: 0 }}>
+            Nao foi possivel atualizar as corridas ativas. Verifique a conexao com a API.
+          </Alert>
+        )}
+
         <Tabs value={selectedTab} onChange={(_, value) => setSelectedTab(value as RideTab)} aria-label="Abas de corridas" sx={{ px: 2, borderBottom: '1px solid', borderColor: 'divider' }}>
           <Tab value="active" label={`Ativas (${activeRides.length})`} />
           <Tab value="history" label="Historico" />
