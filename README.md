@@ -28,7 +28,7 @@ VITE_API_URL=http://localhost:3000
 VITE_SOCKET_URL=http://localhost:3000
 
 # Logto — App ID da Application "Single Page App (React)" criada no Logto Admin
-VITE_LOGTO_ENDPOINT=http://localhost:3001
+VITE_LOGTO_ENDPOINT=https://localhost:3001
 VITE_LOGTO_APP_ID=seu_app_id_aqui
 ```
 
@@ -82,15 +82,3 @@ npx tsc --noEmit # Type-check sem compilar
 - **Assinaturas** — gestão de planos e pagamentos
 - **Configurações** — categorias de veículos e tarifas por região
 
-## Path aliases
-
-O projeto usa aliases para importações:
-
-| Alias | Caminho |
-|---|---|
-| `@/*` | `src/*` |
-| `@shared/*` | `src/shared/*` |
-| `@modules/*` | `src/modules/*` |
-| `@layouts/*` | `src/layouts/*` |
-| `@theme/*` | `src/theme/*` |
-| `@routes/*` | `src/routes/*` |
