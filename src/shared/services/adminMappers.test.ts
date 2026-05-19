@@ -12,7 +12,7 @@ import {
   mapPassengerDetails,
   mapSubscription,
   passengerCancellationRate,
-} from './adminMappers'
+} from './mappers'
 
 function ride(overrides: Partial<ApiRide> = {}): ApiRide {
   return {
