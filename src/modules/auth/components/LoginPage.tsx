@@ -25,6 +25,7 @@ import { useNavigate } from 'react-router'
 import loginMapBg from '@/assets/login-map-bg.png'
 import logo from '@/assets/logo.png'
 import { requestAdminDevToken } from '../services'
+import { ApiRequestError } from '@shared/services/api'
 
 const ADMIN_EMAIL = 'admin@borali.app'
 
@@ -59,7 +60,11 @@ export function LoginPage() {
     navigate('/')
   } catch (error) {
     console.warn('Não foi possível autenticar admin.', error)
-    setLoginError('Não foi possível autenticar. Verifique se a API está rodando e se o usuário admin existe.')
+    setLoginError(
+      error instanceof ApiRequestError
+        ? error.message
+        : 'Não foi possível autenticar. Verifique se a API está rodando e se o usuário admin existe.',
+    )
   }
 }
 
