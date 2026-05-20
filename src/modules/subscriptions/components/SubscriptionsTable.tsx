@@ -866,9 +866,6 @@ export function CanceledSubscriptionsPanel({
   const [selectedSubscription, setSelectedSubscription] = useState<DriverSubscription | null>(null)
   const [historySubscription, setHistorySubscription] = useState<DriverSubscription | null>(null)
   const menuOpen = Boolean(anchorEl)
-  const historyPayments = historySubscription
-    ? subscriptionPaymentHistoryBySubscriptionId[historySubscription.id] ?? []
-    : []
   const historyRenewals = historySubscription
     ? subscriptionRenewalsByDriverId[historySubscription.driverId] ?? []
     : []

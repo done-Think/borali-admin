@@ -1,5 +1,6 @@
 export type { User } from './types'
-export { AuthProvider, useAuth } from './context'
+export { AuthProvider } from './context'
+export { useAuth } from './hooks/useAuth'
 export { LoginPage } from './components/LoginPage'
 export { ProtectedRoute } from './components/ProtectedRoute'
 export * from './services'
