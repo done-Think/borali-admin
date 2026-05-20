@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Box, Card, CardContent, GlobalStyles, Tab, Tabs, Typography, useTheme } from '@mui/material'
 import { alpha } from '@mui/material/styles'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import 'leaflet/dist/leaflet.css'
 import { useSnackbar } from 'notistack'
 import { useLocation } from 'react-router'
@@ -28,9 +28,9 @@ export default function RidesPage() {
   const location = useLocation()
   const activeMode = useActivePaletteMode()
   const tileLayer = getMapTileLayer(activeMode)
+  const queryClient = useQueryClient()
   const [selectedTab, setSelectedTab] = useState<RideTab>('active')
   const [activeMapLimit, setActiveMapLimit] = useState<ActiveMapLimit>(5)
-  const [activeRides, setActiveRides] = useState<ActiveRideView[]>(initialActiveRides)
   const [selectedActiveRideId, setSelectedActiveRideId] = useState(initialActiveRides[0]?.id ?? '')
   const [expandedActiveRideId, setExpandedActiveRideId] = useState(initialActiveRides[0]?.id ?? '')
   const [activeRideSearch, setActiveRideSearch] = useState('')
@@ -42,27 +42,24 @@ export default function RidesPage() {
 
   const activeRidesQuery = useQuery({
     queryKey: ['admin', 'rides', 'active'],
-    queryFn: listAdminActiveRides,
+    queryFn: async () => {
+      try {
+        return await listAdminActiveRides()
+      } catch (error) {
+        console.warn('Nao foi possivel carregar corridas ativas da API. Usando mocks locais.', error)
+        return initialActiveRides
+      }
+    },
+    placeholderData: initialActiveRides,
     refetchInterval: 30_000,
   })
+  const activeRidesData = activeRidesQuery.data ?? initialActiveRides
+  const activeRides = useMemo(() => activeRidesData.map(normalizeRide), [activeRidesData])
 
   useEffect(() => {
     const timer = window.setInterval(() => setNow(Date.now()), 30_000)
     return () => window.clearInterval(timer)
   }, [])
-
-  useEffect(() => {
-    const rides = activeRidesQuery.data
-    if (!rides || rides.length === 0) return
-    setActiveRides(rides.map(normalizeRide))
-    setSelectedActiveRideId(rides[0]?.id ?? '')
-    setExpandedActiveRideId(rides[0]?.id ?? '')
-  }, [activeRidesQuery.data])
-
-  useEffect(() => {
-    if (!activeRidesQuery.error) return
-    console.warn('Nao foi possivel carregar corridas ativas da API. Usando mocks locais.', activeRidesQuery.error)
-  }, [activeRidesQuery.error])
 
   useEffect(() => {
     const navigationState = location.state as RidesNavigationState | null
@@ -89,16 +86,18 @@ export default function RidesPage() {
       reconnectionAttempts: 5,
     })
 
-    const replaceActiveRides = (rides: ActiveRideView[]) => setActiveRides(rides.map(normalizeRide))
+    const replaceActiveRides = (rides: ActiveRideView[]) => {
+      queryClient.setQueryData<ActiveRideView[]>(['admin', 'rides', 'active'], rides.map(normalizeRide))
+    }
     const upsertRide = (ride: ActiveRideView) => {
-      setActiveRides((current) => {
+      queryClient.setQueryData<ActiveRideView[]>(['admin', 'rides', 'active'], (current = initialActiveRides) => {
         const nextRide = normalizeRide(ride)
         const exists = current.some((item) => item.id === nextRide.id)
         return exists ? current.map((item) => (item.id === nextRide.id ? { ...item, ...nextRide } : item)) : [nextRide, ...current]
       })
     }
     const removeRide = (ride: ActiveRideView | { id: string }) => {
-      setActiveRides((current) => current.filter((item) => item.id !== ride.id))
+      queryClient.setQueryData<ActiveRideView[]>(['admin', 'rides', 'active'], (current = initialActiveRides) => current.filter((item) => item.id !== ride.id))
       setSelectedActiveRideId((current) => (current === ride.id ? '' : current))
       setExpandedActiveRideId((current) => (current === ride.id ? '' : current))
     }
@@ -130,7 +129,7 @@ export default function RidesPage() {
     return () => {
       socket.disconnect()
     }
-  }, [])
+  }, [queryClient])
 
   const mapCenter = useMemo<[number, number]>(() => activeRides[0]?.driverPosition ?? [-23.5573, -46.6412], [activeRides])
   const selectedActiveRide = useMemo(

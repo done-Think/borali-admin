@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { Box, Card, CardContent, Chip, GlobalStyles, Stack, Typography, useTheme } from '@mui/material'
 import { alpha } from '@mui/material/styles'
 import { useQuery } from '@tanstack/react-query'
@@ -33,20 +33,20 @@ export default function DashboardPage() {
   const dashboardQuery = useQuery({
     queryKey: ['admin', 'dashboard'],
     queryFn: async () => {
-      const [metrics, activeRides] = await Promise.all([getAdminDashboardMetrics(), listAdminActiveRides()])
-      return {
-        activeRides: activeRides.length,
-        onlineDrivers: metrics.activeDrivers,
-        revenueToday: metrics.revenue.today,
+      try {
+        const [metrics, activeRides] = await Promise.all([getAdminDashboardMetrics(), listAdminActiveRides()])
+        return {
+          activeRides: activeRides.length,
+          onlineDrivers: metrics.activeDrivers,
+          revenueToday: metrics.revenue.today,
+        }
+      } catch (error) {
+        console.warn('Nao foi possivel carregar metricas da API. Usando mocks locais.', error)
+        return null
       }
     },
     refetchInterval: 30_000,
   })
-
-  useEffect(() => {
-    if (!dashboardQuery.error) return
-    console.warn('Nao foi possivel carregar metricas da API. Usando mocks locais.', dashboardQuery.error)
-  }, [dashboardQuery.error])
 
   const visibleKpiCards = useMemo(() => {
     const liveKpis = dashboardQuery.data
