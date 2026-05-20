@@ -1,7 +1,7 @@
 import { createBrowserRouter } from 'react-router'
 import App from '@/App'
 import Layout from '@layouts/dashboard'
-import { LoginPage } from '@modules/auth'
+import { LoginPage, ProtectedRoute } from '@modules/auth'
 import DashboardPage from '@modules/dashboard'
 import ApprovalsPage from '@modules/approvals'
 import DriversPage from '@modules/drivers'
@@ -19,17 +19,22 @@ export const router = createBrowserRouter([
       { path: '/login', Component: LoginPage },
       {
         path: '/',
-        Component: Layout,
+        Component: ProtectedRoute,
         children: [
-          { index: true, Component: DashboardPage },
-          { path: 'approvals', Component: ApprovalsPage },
-          { path: 'drivers', Component: DriversPage },
-          { path: 'passengers', Component: PassengersPage },
-          { path: 'rides', Component: RidesPage },
-          { path: 'support', Component: SupportPage },
-          { path: 'subscriptions', Component: SubscriptionsPage },
-          { path: 'analytics', Component: AnalyticsPage },
-          { path: 'settings', Component: SettingsPage },
+          {
+            Component: Layout,
+            children: [
+              { index: true, Component: DashboardPage },
+              { path: 'approvals', Component: ApprovalsPage },
+              { path: 'drivers', Component: DriversPage },
+              { path: 'passengers', Component: PassengersPage },
+              { path: 'rides', Component: RidesPage },
+              { path: 'support', Component: SupportPage },
+              { path: 'subscriptions', Component: SubscriptionsPage },
+              { path: 'analytics', Component: AnalyticsPage },
+              { path: 'settings', Component: SettingsPage },
+            ],
+          },
         ],
       },
     ],
