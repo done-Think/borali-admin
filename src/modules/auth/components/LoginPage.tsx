@@ -3,6 +3,8 @@ import ArrowForwardIcon from '@mui/icons-material/ArrowForward'
 import ShieldOutlinedIcon from '@mui/icons-material/ShieldOutlined'
 import VisibilityIcon from '@mui/icons-material/Visibility'
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff'
+import { api } from '@shared/services'
+import { useAuthStore } from '@shared/store'
 import {
   Box,
   Button,
@@ -33,14 +35,38 @@ export function LoginPage() {
   const [loginError, setLoginError] = useState('')
   const [showPassword, setShowPassword] = useState(false)
 
-  function handleEnterAdmin() {
-    if (email.trim().toLowerCase() !== ADMIN_EMAIL) {
-      setLoginError(`E-mail inválido.`)
-      return
-    }
+  async function handleEnterAdmin() {
+  const normalizedEmail = email.trim().toLowerCase()
+
+  if (normalizedEmail !== ADMIN_EMAIL) {
+    setLoginError('E-mail inválido.')
+    return
+  }
+
+  try {
+    const response = await api.post('/auth/dev-token', {
+      email: normalizedEmail,
+    })
+
+    const { accessToken } = response.data.data
+
+    useAuthStore.getState().setAuth(
+      {
+        id: 'admin',
+        name: 'Admin',
+        email: normalizedEmail,
+        role: 'admin',
+      },
+      accessToken,
+    )
 
     navigate('/')
+  } catch (error) {
+    console.warn('Não foi possível autenticar admin.', error)
+    setLoginError('Não foi possível autenticar. Verifique se a API está rodando e se o usuário admin existe.')
   }
+}
+
 
   return (
     <Box
