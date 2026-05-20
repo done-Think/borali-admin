@@ -1,4 +1,4 @@
-import { supportTickets } from '@shared/mocks/supportTickets'
+import { supportTickets } from '@modules/support/services'
 import { currencyFormatter, numberFormatter } from '@shared/utils/formatters'
 import { formatCpf, getInitials, normalizeSearch } from '@shared/utils/text'
 import { driverDetailsById } from '../data/mockDrivers'

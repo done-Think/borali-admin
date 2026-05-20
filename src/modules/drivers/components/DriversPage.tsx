@@ -7,7 +7,7 @@ import { Avatar, Box, Button, Card, CardContent, FormControl, IconButton, InputA
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useSnackbar } from 'notistack'
 import { useLocation } from 'react-router'
-import { listAllAdminDrivers, suspendAdminDriver } from '@shared/services'
+import { listAllAdminDrivers, suspendAdminDriver } from '../services'
 import { drivers } from '../data/mockDrivers'
 import type { Driver, DriverCategoryFilter, DriverDetails, DriverEditForm, DriverFilter, DriversLocationState, DriverSortKey, DriverStatus, SortDirection } from '../types'
 import { categoryPalette, statusPalette, subscriptionPalette } from '../utils/driverPalettes'

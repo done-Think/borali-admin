@@ -37,12 +37,12 @@ import {
 import { useSnackbar } from 'notistack'
 import { useNavigate } from 'react-router'
 import { driverDetailsById, drivers } from '../../drivers/data/mockDrivers'
-import { supportTickets } from '../../../shared/mocks/supportTickets'
+import { supportTickets } from '@modules/support/services'
 import {
   subscriptionRenewalsByDriverId,
   subscriptionMovementBySubscriptionId,
   subscriptionPaymentHistoryBySubscriptionId,
-} from '../data/mockSubscriptions'
+} from '../services'
 import type { DriverSubscription, SubscriptionPaymentRecord, SubscriptionPlan, SubscriptionStatus } from '../types'
 
 type SubscriptionsTableProps = {

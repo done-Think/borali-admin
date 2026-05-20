@@ -33,7 +33,7 @@ import {
   useTheme,
 } from '@mui/material'
 import CloseIcon from '@mui/icons-material/Close'
-import { supportTickets, type SupportTicket } from '@shared/mocks/supportTickets'
+import { supportTickets, type SupportTicket } from '../services'
 import { useSearchParams } from 'react-router'
 
 type SupportFilter = 'all' | 'drivers' | 'passengers'

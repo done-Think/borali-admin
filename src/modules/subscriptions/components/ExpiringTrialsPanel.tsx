@@ -26,7 +26,7 @@ import {
 } from '@mui/material'
 import { useNavigate } from 'react-router'
 import { driverDetailsById, drivers } from '../../drivers/data/mockDrivers'
-import { subscriptionRenewalsByDriverId } from '../data/mockSubscriptions'
+import { subscriptionRenewalsByDriverId } from '../services'
 import type { SubscriptionRenewal, TrialExpiration } from '../types'
 
 type ExpiringTrialsPanelProps = {
