@@ -6,7 +6,7 @@ import SearchIcon from '@mui/icons-material/Search'
 import { Avatar, Box, Button, Card, CardContent, FormControl, IconButton, InputAdornment, InputLabel, MenuItem, Pagination, Select, Stack, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField, ToggleButton, ToggleButtonGroup, Tooltip, Typography, useTheme } from '@mui/material'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useLocation } from 'react-router'
-import { listAdminDrivers, suspendAdminDriver } from '@shared/services'
+import { listAllAdminDrivers, suspendAdminDriver } from '@shared/services'
 import { drivers } from '../data/mockDrivers'
 import type { Driver, DriverCategoryFilter, DriverDetails, DriverEditForm, DriverFilter, DriversLocationState, DriverSortKey, DriverStatus, SortDirection } from '../types'
 import { categoryPalette, statusPalette, subscriptionPalette } from '../utils/driverPalettes'
@@ -34,10 +34,10 @@ export default function DriversPage() {
   const queryClient = useQueryClient()
 
   const driversQuery = useQuery({
-    queryKey: ['admin', 'drivers', { page: 1, limit: 100 }],
+    queryKey: ['admin', 'drivers', 'all'],
     queryFn: async () => {
       try {
-        return await listAdminDrivers(1, 100)
+        return await listAllAdminDrivers()
       } catch (error) {
         console.warn('Nao foi possivel carregar motoristas da API. Usando mocks locais.', error)
         return { rows: drivers, details: {}, total: drivers.length }
