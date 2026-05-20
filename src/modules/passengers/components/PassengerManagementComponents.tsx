@@ -31,6 +31,10 @@ export function PassengerDetailsDialog({
   }
 
   const details = getPassengerDetails(passenger, detailsOverride)
+  const cancellationRateLabel =
+    details.monthlyAverage.cancellationRate == null
+      ? 'Sem historico suficiente'
+      : `${details.monthlyAverage.cancellationRate.toFixed(1)}%`
 
   return (
     <Dialog open={Boolean(passenger)} onClose={onClose} fullWidth maxWidth="lg">
@@ -223,7 +227,7 @@ export function PassengerDetailsDialog({
             <PassengerMetric title="Corridas/mês" value={numberFormatter.format(details.monthlyAverage.rides)} />
             <PassengerMetric title="Gasto/mês" value={currencyFormatter.format(details.monthlyAverage.spend)} />
             <PassengerMetric title="Avaliação média" value={details.monthlyAverage.rating.toFixed(1)} />
-            <PassengerMetric title="Cancelamentos" value={`${details.monthlyAverage.cancellationRate.toFixed(1)}%`} />
+            <PassengerMetric title="Cancelamentos" value={cancellationRateLabel} />
           </Box>
         )}
       </DialogContent>

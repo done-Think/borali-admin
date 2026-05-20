@@ -45,7 +45,7 @@ export type PassengerDetails = {
     rides: number
     spend: number
     rating: number
-    cancellationRate: number
+    cancellationRate: number | null
   }
 }
 
