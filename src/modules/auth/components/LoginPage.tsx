@@ -3,7 +3,6 @@ import ArrowForwardIcon from '@mui/icons-material/ArrowForward'
 import ShieldOutlinedIcon from '@mui/icons-material/ShieldOutlined'
 import VisibilityIcon from '@mui/icons-material/Visibility'
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff'
-import { useAuthStore } from '@shared/store'
 import {
   Box,
   Button,
@@ -20,54 +19,74 @@ import {
   useTheme,
 } from '@mui/material'
 import { alpha } from '@mui/material/styles'
-import { useState } from 'react'
-import { useNavigate } from 'react-router'
+import { ApiRequestError } from '@shared/services/api'
+import { useAuthStore } from '@shared/store'
+import { useEffect, useState } from 'react'
+import { useLocation, useNavigate } from 'react-router'
 import loginMapBg from '@/assets/login-map-bg.png'
 import logo from '@/assets/logo.png'
 import { requestAdminDevToken } from '../services'
-import { ApiRequestError } from '@shared/services/api'
 
 const ADMIN_EMAIL = 'admin@borali.app'
+
+type LoginLocationState = {
+  from?: {
+    pathname?: string
+    search?: string
+    hash?: string
+  }
+}
 
 export function LoginPage() {
   const theme = useTheme()
   const navigate = useNavigate()
+  const location = useLocation()
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
   const [email, setEmail] = useState('')
   const [loginError, setLoginError] = useState('')
   const [showPassword, setShowPassword] = useState(false)
+  const locationState = location.state as LoginLocationState | null
+  const redirectPath = locationState?.from
+    ? `${locationState.from.pathname ?? '/'}${locationState.from.search ?? ''}${locationState.from.hash ?? ''}`
+    : '/'
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate(redirectPath, { replace: true })
+    }
+  }, [isAuthenticated, navigate, redirectPath])
 
   async function handleEnterAdmin() {
-  const normalizedEmail = email.trim().toLowerCase()
+    const normalizedEmail = email.trim().toLowerCase()
 
-  if (normalizedEmail !== ADMIN_EMAIL) {
-    setLoginError('E-mail inválido.')
-    return
+    if (normalizedEmail !== ADMIN_EMAIL) {
+      setLoginError('E-mail inválido.')
+      return
+    }
+
+    try {
+      const { accessToken } = await requestAdminDevToken(normalizedEmail)
+
+      useAuthStore.getState().setAuth(
+        {
+          id: 'admin',
+          name: 'Admin',
+          email: normalizedEmail,
+          role: 'admin',
+        },
+        accessToken,
+      )
+
+      navigate(redirectPath, { replace: true })
+    } catch (error) {
+      console.warn('Não foi possível autenticar admin.', error)
+      setLoginError(
+        error instanceof ApiRequestError
+          ? error.message
+          : 'Não foi possível autenticar. Verifique se a API está rodando e se o usuário admin existe.',
+      )
+    }
   }
-
-  try {
-    const { accessToken } = await requestAdminDevToken(normalizedEmail)
-
-    useAuthStore.getState().setAuth(
-      {
-        id: 'admin',
-        name: 'Admin',
-        email: normalizedEmail,
-        role: 'admin',
-      },
-      accessToken,
-    )
-
-    navigate('/')
-  } catch (error) {
-    console.warn('Não foi possível autenticar admin.', error)
-    setLoginError(
-      error instanceof ApiRequestError
-        ? error.message
-        : 'Não foi possível autenticar. Verifique se a API está rodando e se o usuário admin existe.',
-    )
-  }
-}
-
 
   return (
     <Box
@@ -146,7 +165,6 @@ export function LoginPage() {
               <Typography variant="h2" sx={{ fontSize: { xs: '1.75rem', sm: '2rem' } }}>
                 Acesso administrativo
               </Typography>
-
             </Stack>
 
             <Stack

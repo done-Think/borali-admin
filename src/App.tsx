@@ -14,6 +14,7 @@ import { ReactRouterAppProvider } from '@toolpad/core/react-router'
 import theme from './theme/themeProvider'
 import logo from '@/assets/logo.png'
 import { pendingApprovalDrivers } from '@modules/approvals/services'
+import { useAuthStore } from '@shared/store'
 
 function createNavigation(pendingApprovalsCount: number) {
   return [
@@ -74,16 +75,18 @@ const branding = {
   homeUrl: '/',
 }
 
-const session = {
-  user: {
-    name: 'Admin',
-    email: 'Console',
-  },
-}
-
 export default function App() {
+  const user = useAuthStore((state) => state.user)
   const [pendingApprovalsCount, setPendingApprovalsCount] = useState(pendingApprovalDrivers.length)
   const navigation = createNavigation(pendingApprovalsCount)
+  const session = user
+    ? {
+        user: {
+          name: user.name,
+          email: user.email,
+        },
+      }
+    : null
 
   useEffect(() => {
     function handlePendingCount(event: Event) {
@@ -107,6 +110,7 @@ export default function App() {
       authentication={{
         signIn: () => {},
         signOut: () => {
+          useAuthStore.getState().clearAuth()
           window.location.assign('/login')
         },
       }}
