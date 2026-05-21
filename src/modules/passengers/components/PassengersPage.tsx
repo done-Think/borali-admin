@@ -3,11 +3,12 @@ import BlockIcon from '@mui/icons-material/Block'
 import EditOutlinedIcon from '@mui/icons-material/EditOutlined'
 import LockOpenOutlinedIcon from '@mui/icons-material/LockOpenOutlined'
 import SearchIcon from '@mui/icons-material/Search'
-import { Avatar, Box, Button, Card, CardContent, FormControl, IconButton, InputAdornment, InputLabel, MenuItem, Pagination, Select, Stack, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField, ToggleButton, ToggleButtonGroup, Tooltip, Typography, useTheme } from '@mui/material'
+import { Alert, Avatar, Box, Button, Card, CardContent, FormControl, IconButton, InputAdornment, InputLabel, LinearProgress, MenuItem, Pagination, Select, Stack, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField, ToggleButton, ToggleButtonGroup, Tooltip, Typography, useTheme } from '@mui/material'
+import { useSnackbar } from 'notistack'
 import { useLocation } from 'react-router'
 import { useGetAllPassengersAccess } from '../queries'
 import { passengers } from '../data/mockPassengers'
-import type { Passenger, PassengerDetails, PassengerEditForm, PassengerFilter, PassengersLocationState, PassengerSortKey, PassengerStatus, PassengerTierFilter, SortDirection } from '../types'
+import type { Passenger, PassengerDetails, PassengerEditForm, PassengerFilter, PassengersLocationState, PassengerSortKey, PassengerTierFilter, SortDirection } from '../types'
 import { currencyFormatter, filters, getInitials, getPassengerDetails, getPassengerSortValue, numberFormatter, normalizeSearch, statusPalette, tierPalette } from '../utils/passengers'
 import { PassengerBadge, PassengerDetailsDialog, PassengerEditDialog, PaymentBadges, SortableHeader } from './PassengerManagementComponents'
 
@@ -16,6 +17,7 @@ const emptyPassengerDetails: Record<string, Partial<PassengerDetails>> = {}
 export default function PassengersPage() {
   const theme = useTheme()
   const location = useLocation()
+  const { enqueueSnackbar } = useSnackbar()
   const [passengerOverrides, setPassengerOverrides] = useState<Record<string, Passenger>>({})
   const [passengerDetailsOverrides, setPassengerDetailsOverrides] = useState<Record<string, Partial<PassengerDetails>>>({})
   const [search, setSearch] = useState('')
@@ -150,23 +152,11 @@ export default function PassengersPage() {
   }
 
   function handleToggleBlocked(passenger: Passenger) {
-    const updatedStatus: PassengerStatus = passenger.status === 'Bloqueado' ? 'Inativo' : 'Bloqueado'
-
-    setPassengerOverrides((currentOverrides) => ({
-      ...currentOverrides,
-      [passenger.id]: {
-        ...passenger,
-        status: updatedStatus,
-      },
-    }))
-
-    setSelectedPassenger((currentPassenger) =>
-      currentPassenger?.id === passenger.id
-        ? {
-            ...currentPassenger,
-            status: updatedStatus,
-          }
-        : currentPassenger,
+    enqueueSnackbar(
+      passenger.status === 'Bloqueado'
+        ? 'Desbloqueio de passageiro ainda precisa de endpoint na API.'
+        : 'Bloqueio de passageiro ainda precisa de endpoint na API.',
+      { variant: 'info' },
     )
   }
 
@@ -225,6 +215,13 @@ export default function PassengersPage() {
       <Card variant="outlined">
         <CardContent>
           <Stack spacing={2.5}>
+            {passengersQuery.isFetching && <LinearProgress />}
+            {passengersQuery.isError && (
+              <Alert severity="error">
+                Nao foi possivel atualizar a lista de passageiros. Verifique a conexao com a API.
+              </Alert>
+            )}
+
             <Stack
               direction={{ xs: 'column', lg: 'row' }}
               spacing={2}
