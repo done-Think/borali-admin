@@ -23,7 +23,7 @@ export function mapSubscription(driver: Pick<ApiDriver, 'subscription'>): Driver
 
 function vehicleLabel(driver: ApiDriver) {
   const vehicle = driver.vehicles?.[0]
-  if (!vehicle) return 'VeÃƒÂ­culo nÃƒÂ£o informado'
+  if (!vehicle) return 'Veículo não informado'
   return `${vehicle.brand} ${vehicle.model} ${vehicle.year}`
 }
 
@@ -57,11 +57,11 @@ export function mapDriverDetails(driver: ApiDriver): Partial<DriverDetails> {
 
   return {
     photoLabel: `Foto do motorista ${driver.user.name}`,
-    cpf: 'NÃƒÂ£o informado',
+    cpf: 'Não informado',
     email: driver.user.email,
-    city: 'NÃƒÂ£o informado',
+    city: 'Não informado',
     vehicle: vehicleLabel(driver),
-    plate: driver.vehicles?.[0]?.plate ?? 'NÃƒÂ£o informado',
+    plate: driver.vehicles?.[0]?.plate ?? 'Não informado',
     joinedAt: formatDate(driver.createdAt),
     lastOnline: driver.isOnline ? 'Agora' : formatDate(driver.lastSeenAt),
     rideHistory: rides.map((ride) => ({
