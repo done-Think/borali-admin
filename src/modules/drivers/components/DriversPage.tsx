@@ -1,17 +1,18 @@
 import { useEffect, useMemo, useState } from 'react'
 import BlockIcon from '@mui/icons-material/Block'
+import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline'
 import EditOutlinedIcon from '@mui/icons-material/EditOutlined'
 import LockOpenOutlinedIcon from '@mui/icons-material/LockOpenOutlined'
 import SearchIcon from '@mui/icons-material/Search'
-import { Avatar, Box, Button, Card, CardContent, FormControl, IconButton, InputAdornment, InputLabel, MenuItem, Pagination, Select, Stack, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField, ToggleButton, ToggleButtonGroup, Tooltip, Typography, useTheme } from '@mui/material'
+import { Alert, Avatar, Box, Button, Card, CardContent, FormControl, IconButton, InputAdornment, InputLabel, LinearProgress, MenuItem, Pagination, Select, Stack, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField, ToggleButton, ToggleButtonGroup, Tooltip, Typography, useTheme } from '@mui/material'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useSnackbar } from 'notistack'
 import { useLocation } from 'react-router'
 import { dashboardQueryKeys } from '@modules/dashboard/queries'
 import { driversQueryKeys, useGetAllDriversAccess } from '../queries'
-import { suspendAdminDriver } from '../services'
+import { approveAdminDriver, suspendAdminDriver } from '../services'
 import { drivers } from '../data/mockDrivers'
-import type { Driver, DriverCategoryFilter, DriverDetails, DriverEditForm, DriverFilter, DriversLocationState, DriverSortKey, DriverStatus, SortDirection } from '../types'
+import type { Driver, DriverCategoryFilter, DriverDetails, DriverEditForm, DriverFilter, DriversLocationState, DriverSortKey, SortDirection } from '../types'
 import { categoryPalette, statusPalette, subscriptionPalette } from '../utils/driverPalettes'
 import { currencyFormatter, filters, getDriverSortValue, getInitials, normalizeSearch, numberFormatter } from '../utils/drivers'
 import { DriverBadge, DriverDetailsDialog, DriverEditDialog, SortableHeader } from './DriverManagementComponents'
@@ -19,6 +20,11 @@ import { DriverBadge, DriverDetailsDialog, DriverEditDialog, SortableHeader } fr
 const emptyDriverDetails: Record<string, Partial<DriverDetails>> = {}
 
 type SuspendDriverVariables = {
+  driverId: string
+  previousDriver: Driver
+}
+
+type ApproveDriverVariables = {
   driverId: string
   previousDriver: Driver
 }
@@ -59,6 +65,15 @@ export default function DriversPage() {
 
   const suspendDriverMutation = useMutation({
     mutationFn: ({ driverId }: SuspendDriverVariables) => suspendAdminDriver(driverId),
+    onMutate: ({ driverId, previousDriver }) => {
+      const blockedDriver: Driver = { ...previousDriver, status: 'Bloqueado' }
+
+      setDriverOverrides((currentOverrides) => ({
+        ...currentOverrides,
+        [driverId]: blockedDriver,
+      }))
+      setSelectedDriver((currentDriver) => (currentDriver?.id === driverId ? blockedDriver : currentDriver))
+    },
     onSuccess: (_, variables) => {
       enqueueSnackbar(`${variables.previousDriver.name} bloqueado com sucesso.`, { variant: 'success' })
       void queryClient.invalidateQueries({ queryKey: driversQueryKeys.access })
@@ -74,6 +89,35 @@ export default function DriversPage() {
         currentDriver?.id === variables.driverId ? variables.previousDriver : currentDriver,
       )
       enqueueSnackbar(`Nao foi possivel bloquear ${variables.previousDriver.name}. Tente novamente.`, { variant: 'error' })
+    },
+  })
+
+  const approveDriverMutation = useMutation({
+    mutationFn: ({ driverId }: ApproveDriverVariables) => approveAdminDriver(driverId),
+    onMutate: ({ driverId, previousDriver }) => {
+      const approvedDriver: Driver = { ...previousDriver, status: 'Offline' }
+
+      setDriverOverrides((currentOverrides) => ({
+        ...currentOverrides,
+        [driverId]: approvedDriver,
+      }))
+      setSelectedDriver((currentDriver) => (currentDriver?.id === driverId ? approvedDriver : currentDriver))
+    },
+    onSuccess: (_, variables) => {
+      enqueueSnackbar(`${variables.previousDriver.name} aprovado com sucesso.`, { variant: 'success' })
+      void queryClient.invalidateQueries({ queryKey: driversQueryKeys.access })
+      void queryClient.invalidateQueries({ queryKey: dashboardQueryKeys.access })
+    },
+    onError: (error: unknown, variables) => {
+      console.warn('Nao foi possivel aprovar motorista na API.', error)
+      setDriverOverrides((currentOverrides) => ({
+        ...currentOverrides,
+        [variables.driverId]: variables.previousDriver,
+      }))
+      setSelectedDriver((currentDriver) =>
+        currentDriver?.id === variables.driverId ? variables.previousDriver : currentDriver,
+      )
+      enqueueSnackbar(`Nao foi possivel aprovar ${variables.previousDriver.name}. Tente novamente.`, { variant: 'error' })
     },
   })
 
@@ -216,31 +260,16 @@ export default function DriversPage() {
   }
 
   function handleToggleBlocked(driver: Driver) {
-    const updatedStatus: DriverStatus = driver.status === 'Bloqueado' ? 'Offline' : 'Bloqueado'
-
-    setDriverOverrides((currentOverrides) => ({
-      ...currentOverrides,
-      [driver.id]: {
-        ...driver,
-        status: updatedStatus,
-      },
-    }))
-
-    setSelectedDriver((currentDriver) =>
-      currentDriver?.id === driver.id
-        ? {
-            ...currentDriver,
-            status: updatedStatus,
-          }
-          : currentDriver,
-    )
-
-    if (updatedStatus === 'Bloqueado') {
-      suspendDriverMutation.mutate({ driverId: driver.id, previousDriver: driver })
+    if (driver.status === 'Bloqueado') {
+      enqueueSnackbar('Desbloqueio ainda precisa de endpoint na API.', { variant: 'info' })
       return
     }
 
-    enqueueSnackbar(`${driver.name} desbloqueado localmente.`, { variant: 'success' })
+    suspendDriverMutation.mutate({ driverId: driver.id, previousDriver: driver })
+  }
+
+  function handleApproveDriver(driver: Driver) {
+    approveDriverMutation.mutate({ driverId: driver.id, previousDriver: driver })
   }
 
   return (
@@ -265,6 +294,13 @@ export default function DriversPage() {
       <Card variant="outlined">
         <CardContent>
           <Stack spacing={2.5}>
+            {driversQuery.isFetching && <LinearProgress />}
+            {driversQuery.isError && (
+              <Alert severity="error">
+                Nao foi possivel atualizar a lista de motoristas. Verifique a conexao com a API.
+              </Alert>
+            )}
+
             <Stack
               direction={{ xs: 'column', lg: 'row' }}
               spacing={2}
@@ -440,23 +476,40 @@ export default function DriversPage() {
                       <TableCell>{currencyFormatter.format(driver.monthlyEarnings)}</TableCell>
                       <TableCell align="right">
                         <Stack direction="row" spacing={0.5} justifyContent="flex-end">
+                          {driver.status === 'Pendente' && (
+                            <Tooltip title="Aprovar">
+                              <span>
+                                <IconButton
+                                  size="small"
+                                  aria-label={`Aprovar ${driver.name}`}
+                                  disabled={approveDriverMutation.isPending}
+                                  onClick={() => handleApproveDriver(driver)}
+                                >
+                                  <CheckCircleOutlineIcon fontSize="small" />
+                                </IconButton>
+                              </span>
+                            </Tooltip>
+                          )}
                           <Tooltip title="Editar">
                             <IconButton size="small" aria-label={`Editar ${driver.name}`} onClick={() => setEditingDriver(driver)}>
                               <EditOutlinedIcon fontSize="small" />
                             </IconButton>
                           </Tooltip>
-                          <Tooltip title={driver.status === 'Bloqueado' ? 'Desbloquear' : 'Bloquear'}>
-                            <IconButton
-                              size="small"
-                              aria-label={`${driver.status === 'Bloqueado' ? 'Desbloquear' : 'Bloquear'} ${driver.name}`}
-                              onClick={() => handleToggleBlocked(driver)}
-                            >
-                              {driver.status === 'Bloqueado' ? (
-                                <LockOpenOutlinedIcon fontSize="small" />
-                              ) : (
-                                <BlockIcon fontSize="small" />
-                              )}
-                            </IconButton>
+                          <Tooltip title={driver.status === 'Bloqueado' ? 'Desbloqueio indisponivel' : 'Bloquear'}>
+                            <span>
+                              <IconButton
+                                size="small"
+                                aria-label={`${driver.status === 'Bloqueado' ? 'Desbloqueio indisponivel para' : 'Bloquear'} ${driver.name}`}
+                                disabled={suspendDriverMutation.isPending}
+                                onClick={() => handleToggleBlocked(driver)}
+                              >
+                                {driver.status === 'Bloqueado' ? (
+                                  <LockOpenOutlinedIcon fontSize="small" />
+                                ) : (
+                                  <BlockIcon fontSize="small" />
+                                )}
+                              </IconButton>
+                            </span>
                           </Tooltip>
                         </Stack>
                       </TableCell>

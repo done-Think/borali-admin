@@ -4,11 +4,12 @@ import { RouterProvider } from 'react-router'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { SnackbarProvider } from 'notistack'
 import { router } from './routes'
+import { ADMIN_QUERY_STALE_TIME } from '@shared/services'
 
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 1000 * 60,
+      staleTime: ADMIN_QUERY_STALE_TIME,
       retry: 1,
     },
   },
