@@ -10,13 +10,13 @@ export const revenueByMonth: RevenuePoint[] = [
 ]
 
 export const demandRegions: DemandRegion[] = [
-  { name: 'Centro', demand: 'high', rides: 184, x: 52, y: 48 },
-  { name: 'Zona Norte', demand: 'medium', rides: 96, x: 47, y: 24 },
-  { name: 'Zona Sul', demand: 'high', rides: 152, x: 58, y: 74 },
-  { name: 'Zona Leste', demand: 'medium', rides: 108, x: 74, y: 45 },
-  { name: 'Zona Oeste', demand: 'low', rides: 54, x: 27, y: 52 },
-  { name: 'Aeroporto', demand: 'high', rides: 139, x: 78, y: 70 },
-  { name: 'Universidades', demand: 'low', rides: 43, x: 35, y: 77 },
+  { name: 'Centro', demand: 'high', rides: 184, position: [-23.5505, -46.6333], x: 52, y: 48 },
+  { name: 'Zona Norte', demand: 'medium', rides: 96, position: [-23.5027, -46.6245], x: 47, y: 24 },
+  { name: 'Zona Sul', demand: 'high', rides: 152, position: [-23.6107, -46.6677], x: 58, y: 74 },
+  { name: 'Zona Leste', demand: 'medium', rides: 108, position: [-23.5428, -46.4756], x: 74, y: 45 },
+  { name: 'Zona Oeste', demand: 'low', rides: 54, position: [-23.5615, -46.7019], x: 27, y: 52 },
+  { name: 'Aeroporto', demand: 'high', rides: 139, position: [-23.6261, -46.6566], x: 78, y: 70 },
+  { name: 'Universidades', demand: 'low', rides: 43, position: [-23.5596, -46.7317], x: 35, y: 77 },
 ]
 
 export const demandMeta: Record<DemandLevel, { label: string; color: string; background: string }> = {

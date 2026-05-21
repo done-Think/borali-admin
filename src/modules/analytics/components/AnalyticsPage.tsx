@@ -20,6 +20,8 @@ import {
   XAxis,
   YAxis,
 } from 'recharts'
+import { Circle, CircleMarker, MapContainer, TileLayer, Tooltip as MapTooltip } from 'react-leaflet'
+import 'leaflet/dist/leaflet.css'
 import {
   Box,
   Card,
@@ -31,8 +33,9 @@ import {
   Typography,
 } from '@mui/material'
 import { useColorScheme, useTheme } from '@mui/material/styles'
+import { getMapTileLayer } from '@modules/dashboard/utils/mapConfig'
 import { analyticsByRange, chartShortcuts, churnByMonth, demandMeta, demandRegions, ratingDistribution, revenueByMonth, rideCategories, timeRanges } from '../services'
-import type { ChurnPoint, DemandLevel, TimeRange } from '../types'
+import type { ChurnPoint, DemandLevel, DemandRegion, TimeRange } from '../types'
 import { currencyFormatter, formatChartValue, formatCurrencyValue, numberFormatter, percentFormatter } from '../utils/formatters'
 import { AnalyticsMetricCards } from './AnalyticsMetricCards'
 import { AnalyticsShortcutNavigation } from './AnalyticsShortcutNavigation'
@@ -42,6 +45,8 @@ export default function AnalyticsPage() {
   const { mode, systemMode } = useColorScheme()
   const colorMode = mode === 'system' ? systemMode : mode
   const isDarkMode = colorMode === 'dark'
+  const activeMapMode = isDarkMode ? 'dark' : 'light'
+  const tileLayer = getMapTileLayer(activeMapMode)
   const [selectedRange, setSelectedRange] = useState<TimeRange>('today')
   const snapshot = analyticsByRange[selectedRange]
 
@@ -324,85 +329,67 @@ export default function AnalyticsPage() {
                 position: 'relative',
                 width: '100%',
                 maxWidth: 720,
-                minHeight: { xs: 360, sm: 420 },
+                height: { xs: 360, sm: 420 },
                 borderRadius: 2,
                 overflow: 'hidden',
                 border: `1px solid ${theme.palette.divider}`,
                 backgroundColor: 'background.default',
-                backgroundImage: `
-                  linear-gradient(${theme.palette.divider} 1px, transparent 1px),
-                  linear-gradient(90deg, ${theme.palette.divider} 1px, transparent 1px)
-                `,
-                backgroundSize: '48px 48px',
               }}
             >
-              <Box
-                sx={{
-                  position: 'absolute',
-                  inset: '9% 12%',
-                  borderRadius: '44% 56% 48% 52% / 42% 44% 56% 58%',
-                  border: `2px solid ${theme.palette.divider}`,
-                  background:
-                    'linear-gradient(135deg, rgba(255,255,255,0.84), rgba(10,190,233,0.08)), radial-gradient(circle at 54% 48%, rgba(239,68,68,0.16), transparent 26%), radial-gradient(circle at 74% 45%, rgba(245,158,11,0.15), transparent 18%), radial-gradient(circle at 28% 54%, rgba(34,197,94,0.14), transparent 18%)',
-                }}
-              />
+              <MapContainer
+                center={[-23.5573, -46.6412]}
+                zoom={11}
+                scrollWheelZoom={false}
+                style={{ width: '100%', height: '100%' }}
+              >
+                <TileLayer key={activeMapMode} attribution={tileLayer.attribution} url={tileLayer.url} />
+                {demandRegions.map((region) => {
+                  const meta = demandMeta[region.demand]
 
-              <Box
-                sx={{
-                  position: 'absolute',
-                  left: '17%',
-                  right: '15%',
-                  top: '50%',
-                  height: 2,
-                  backgroundColor: theme.palette.divider,
-                  transform: 'rotate(-8deg)',
-                }}
-              />
-              <Box
-                sx={{
-                  position: 'absolute',
-                  left: '48%',
-                  top: '15%',
-                  bottom: '14%',
-                  width: 2,
-                  backgroundColor: theme.palette.divider,
-                  transform: 'rotate(7deg)',
-                }}
-              />
+                  return (
+                    <Circle
+                      key={region.name}
+                      center={region.position}
+                      radius={getDemandRadius(region)}
+                      pathOptions={{
+                        color: meta.color,
+                        weight: region.demand === 'high' ? 2 : 1,
+                        fillColor: meta.color,
+                        fillOpacity: getDemandOpacity(region.demand, isDarkMode),
+                      }}
+                    >
+                      <MapTooltip direction="top" offset={[0, -8]} opacity={0.96}>
+                        <Box>
+                          <Typography fontWeight={700}>{region.name}</Typography>
+                          <Typography variant="body2">{numberFormatter.format(region.rides)} chamadas</Typography>
+                          <Typography variant="caption">{meta.label}</Typography>
+                        </Box>
+                      </MapTooltip>
+                    </Circle>
+                  )
+                })}
+                {demandRegions.map((region) => {
+                  const meta = demandMeta[region.demand]
 
-              {demandRegions.map((region) => {
-                const meta = demandMeta[region.demand]
-
-                return (
-                  <Box
-                    key={region.name}
-                    sx={{
-                      position: 'absolute',
-                      left: `${region.x}%`,
-                      top: `${region.y}%`,
-                      transform: 'translate(-50%, -50%)',
-                      width: region.demand === 'high' ? 118 : 102,
-                      minHeight: region.demand === 'high' ? 118 : 102,
-                      borderRadius: '50%',
-                      display: 'grid',
-                      placeItems: 'center',
-                      textAlign: 'center',
-                      color: meta.color,
-                      border: `2px solid ${meta.color}`,
-                      backgroundColor: meta.background,
-                      boxShadow: `0 0 0 12px ${meta.background}`,
-                      p: 1.5,
-                    }}
-                  >
-                    <Typography fontWeight={700} sx={{ lineHeight: 1.1 }}>
-                      {region.name}
-                    </Typography>
-                    <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5 }}>
-                      {numberFormatter.format(region.rides)} chamadas
-                    </Typography>
-                  </Box>
-                )
-              })}
+                  return (
+                    <CircleMarker
+                      key={`${region.name}-marker`}
+                      center={region.position}
+                      radius={6}
+                      pathOptions={{
+                        color: '#FFFFFF',
+                        weight: 2,
+                        fillColor: meta.color,
+                        fillOpacity: 0.95,
+                      }}
+                    >
+                      <MapTooltip direction="top" offset={[0, -8]} opacity={0.96}>
+                        {region.name}
+                      </MapTooltip>
+                    </CircleMarker>
+                  )
+                })}
+              </MapContainer>
             </Box>
           </Stack>
         </CardContent>
@@ -589,4 +576,14 @@ export default function AnalyticsPage() {
       </Box>
     </Stack>
   )
+}
+
+function getDemandRadius(region: DemandRegion) {
+  const baseRadius = region.demand === 'high' ? 1450 : region.demand === 'medium' ? 1150 : 900
+  return baseRadius + region.rides * 8
+}
+
+function getDemandOpacity(demand: DemandLevel, isDarkMode: boolean) {
+  const baseOpacity = demand === 'high' ? 0.3 : demand === 'medium' ? 0.24 : 0.2
+  return isDarkMode ? baseOpacity + 0.1 : baseOpacity
 }

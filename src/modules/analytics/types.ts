@@ -23,6 +23,7 @@ export type DemandRegion = {
   name: string
   demand: DemandLevel
   rides: number
+  position: [number, number]
   x: number
   y: number
 }
