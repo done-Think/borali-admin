@@ -4,7 +4,7 @@ import {
   type ApiDriver,
   mapDriver,
   mapDriverDetails,
-} from '@shared/services/adminMappers'
+} from '@shared/services/mappers'
 import type { Driver, DriverDetails } from '../types'
 
 type PaginatedDrivers = {

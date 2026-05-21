@@ -4,7 +4,7 @@ import {
   type ApiUser,
   mapPassenger,
   mapPassengerDetails,
-} from '@shared/services/adminMappers'
+} from '@shared/services/mappers'
 import type { Passenger, PassengerDetails } from '../types'
 
 type PaginatedPassengers = {
