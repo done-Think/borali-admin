@@ -57,12 +57,12 @@ export function mapPassengerDetails(user: ApiUser): Partial<PassengerDetails> {
 
   return {
     photoLabel: `Foto do passageiro ${user.name}`,
-    cpf: 'NÃƒÂ£o informado',
+    cpf: 'Não informado',
     email: user.email,
-    city: 'NÃƒÂ£o informado',
+    city: 'Não informado',
     joinedAt: formatDate(user.createdAt),
     lastRide: rides[0] ? formatDate(rides[0].createdAt) : 'Sem corrida recente',
-    preferredRegion: 'NÃƒÂ£o informado',
+    preferredRegion: 'Não informado',
     rideHistory: rides.map((ride) => ({
       id: ride.id,
       date: formatDate(ride.completedAt ?? ride.createdAt),
