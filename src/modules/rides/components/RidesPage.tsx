@@ -38,16 +38,9 @@ export default function RidesPage() {
   const [historyStartDate, setHistoryStartDate] = useState('')
   const [historyEndDate, setHistoryEndDate] = useState('')
   const [historyStatus, setHistoryStatus] = useState<HistoryStatusFilter>('all')
-  const [, setNow] = useState(() => Date.now())
-
   const activeRidesQuery = useGetActiveRidesAccess()
   const activeRidesData = activeRidesQuery.data ?? initialActiveRides
   const activeRides = useMemo(() => activeRidesData.map(normalizeRide), [activeRidesData])
-
-  useEffect(() => {
-    const timer = window.setInterval(() => setNow(Date.now()), 30_000)
-    return () => window.clearInterval(timer)
-  }, [])
 
   useEffect(() => {
     const navigationState = location.state as RidesNavigationState | null

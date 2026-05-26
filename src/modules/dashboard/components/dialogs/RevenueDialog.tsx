@@ -51,7 +51,7 @@ export function RevenueDialog({ open, onClose }: { open: boolean; onClose: () =>
                 Valores acumulados em {comparison.data.length} pontos do periodo.
               </Typography>
               <Box sx={{ height: 360 }}>
-                <ResponsiveContainer width="100%" height="100%">
+                <ResponsiveContainer width="100%" height={360}>
                   <BarChart data={comparison.data} margin={{ top: 12, right: 16, bottom: 0, left: 4 }}>
                     <CartesianGrid stroke={theme.palette.divider} vertical={false} />
                     <XAxis dataKey="label" tick={{ fill: theme.palette.text.secondary, fontSize: 12 }} axisLine={false} tickLine={false} />

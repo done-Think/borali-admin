@@ -11,8 +11,9 @@ export interface AdminUser {
 interface AuthState {
   user: AdminUser | null
   accessToken: string | null
+  refreshToken: string | null
   isAuthenticated: boolean
-  setAuth: (user: AdminUser, accessToken: string) => void
+  setAuth: (user: AdminUser, accessToken: string, refreshToken?: string) => void
   clearAuth: () => void
 }
 
@@ -22,17 +23,23 @@ export const useAuthStore = create<AuthState>()(
       (set) => ({
         user: null,
         accessToken: null,
+        refreshToken: null,
         isAuthenticated: false,
-        setAuth: (user, accessToken) =>
-          set({ user, accessToken, isAuthenticated: true }, false, 'setAuth'),
+        setAuth: (user, accessToken, refreshToken) =>
+          set(
+            { user, accessToken, refreshToken: refreshToken ?? null, isAuthenticated: true },
+            false,
+            'setAuth',
+          ),
         clearAuth: () =>
           set(
-            { user: null, accessToken: null, isAuthenticated: false },
+            { user: null, accessToken: null, refreshToken: null, isAuthenticated: false },
             false,
             'clearAuth',
           ),
       }),
-      { name: 'borali-auth' },
+      // Only persist the user profile — tokens live in memory only (XSS safety)
+      { name: 'borali-auth', partialize: (state) => ({ user: state.user }) },
     ),
     { name: 'AuthStore' },
   ),

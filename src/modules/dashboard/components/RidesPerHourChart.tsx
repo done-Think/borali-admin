@@ -21,7 +21,7 @@ export function RidesPerHourChart() {
         </Stack>
 
         <Box sx={{ height: 320 }}>
-          <ResponsiveContainer width="100%" height="100%">
+          <ResponsiveContainer width="100%" height={320}>
             <BarChart data={ridesPerHour} margin={{ top: 12, right: 8, bottom: 0, left: -24 }}>
               <CartesianGrid stroke={theme.palette.divider} vertical={false} />
               <XAxis dataKey="hour" tick={{ fill: theme.palette.text.secondary, fontSize: 11 }} axisLine={false} tickLine={false} interval={2} />

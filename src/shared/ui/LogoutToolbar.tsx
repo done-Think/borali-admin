@@ -1,13 +1,14 @@
 import { type MouseEvent, useState } from 'react'
 import * as O from 'fp-ts/Option'
 import { pipe } from 'fp-ts/function'
-import { useNavigate } from 'react-router-dom'
+import { useLogto } from '@logto/react'
 import { Logout } from '@mui/icons-material'
 import { Avatar, IconButton, ListItemIcon, Menu, MenuItem } from '@mui/material'
 import { ThemeSwitcher } from '@toolpad/core/DashboardLayout'
+import { useAuthStore } from '@shared/store'
 
 export function LogoutToolbar() {
-  const navigate = useNavigate()
+  const { signOut } = useLogto()
   const [anchorEl, setAnchorEl] = useState<O.Option<HTMLElement>>(O.none)
 
   const handleOpen = (event: MouseEvent<HTMLElement>) =>
@@ -17,7 +18,8 @@ export function LogoutToolbar() {
 
   const handleLogout = () => {
     handleClose()
-    navigate('/login')
+    useAuthStore.getState().clearAuth()
+    signOut(`${window.location.origin}/login`)
   }
 
   return (

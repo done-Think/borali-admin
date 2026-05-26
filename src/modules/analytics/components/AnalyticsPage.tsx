@@ -23,7 +23,7 @@ import {
 import { Circle, CircleMarker, MapContainer, TileLayer, Tooltip as MapTooltip } from 'react-leaflet'
 import 'leaflet/dist/leaflet.css'
 import {
-  Box,
+  Box,
   Card,
   CardContent,
   Chip,
@@ -169,7 +169,7 @@ export default function AnalyticsPage() {
           </Stack>
 
           <Box sx={{ width: '100%', height: 340 }}>
-            <ResponsiveContainer>
+            <ResponsiveContainer width="100%" height={340}>
               <AreaChart data={snapshot.activity} margin={{ top: 10, right: 16, left: -12, bottom: 0 }}>
                 <defs>
                   <linearGradient id="usersEntering" x1="0" y1="0" x2="0" y2="1">
@@ -227,7 +227,7 @@ export default function AnalyticsPage() {
           </Stack>
 
           <Box sx={{ width: '100%', height: 320 }}>
-            <ResponsiveContainer>
+            <ResponsiveContainer width="100%" height={320}>
               <LineChart data={snapshot.ridesAverage} margin={{ top: 10, right: 16, left: -12, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={theme.palette.divider} />
                 <XAxis dataKey="label" tickLine={false} axisLine={false} />
@@ -269,7 +269,7 @@ export default function AnalyticsPage() {
           </Stack>
 
           <Box sx={{ width: '100%', height: 320 }}>
-            <ResponsiveContainer>
+            <ResponsiveContainer width="100%" height={320}>
               <BarChart data={revenueByMonth} margin={{ top: 10, right: 16, left: -4, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={theme.palette.divider} />
                 <XAxis dataKey="label" tickLine={false} axisLine={false} />
@@ -412,7 +412,7 @@ export default function AnalyticsPage() {
           </Stack>
 
           <Box sx={{ width: '100%', height: 320 }}>
-            <ResponsiveContainer>
+            <ResponsiveContainer width="100%" height={320}>
               <LineChart data={churnByMonth} margin={{ top: 10, right: 16, left: -12, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={theme.palette.divider} />
                 <XAxis dataKey="label" tickLine={false} axisLine={false} />

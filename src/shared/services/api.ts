@@ -1,5 +1,6 @@
-import axios, { type AxiosError, type AxiosInstance } from 'axios'
+import axios, { type AxiosError, type AxiosInstance, type InternalAxiosRequestConfig } from 'axios'
 import { useAuthStore } from '@shared/store'
+import { unwrap, type ApiEnvelope } from './apiResponse'
 
 const apiBaseUrl = import.meta.env.VITE_API_URL ?? 'http://localhost:3000/api/v1'
 
@@ -21,20 +22,27 @@ export class ApiRequestError extends Error {
   }
 }
 
+/** Registered by App.tsx so the Axios interceptor can redirect without a hard reload */
+export function registerLoginNavigator(fn: () => void) {
+  _navigateToLogin = fn
+}
+let _navigateToLogin: (() => void) | null = null
+
 class ApiClient {
   public readonly client: AxiosInstance
+  private refreshPromise: Promise<string | undefined> | null = null
+  private redirecting = false
 
   constructor() {
     this.client = axios.create({
       baseURL: this.normalizeBaseUrl(apiBaseUrl),
       headers: { 'Content-Type': 'application/json' },
     })
-
     this.setupInterceptors()
   }
 
-  private normalizeBaseUrl(baseUrl: string) {
-    return baseUrl.endsWith('/api/v1') ? baseUrl : `${baseUrl.replace(/\/$/, '')}/api/v1`
+  private normalizeBaseUrl(url: string) {
+    return url.endsWith('/api/v1') ? url : `${url.replace(/\/$/, '')}/api/v1`
   }
 
   private setupInterceptors() {
@@ -46,17 +54,77 @@ class ApiClient {
 
     this.client.interceptors.response.use(
       (res) => res,
-      (err) => {
+      async (err: AxiosError) => {
         const apiError = this.toApiError(err)
+        const config = err.config as (InternalAxiosRequestConfig & { _isRetry?: boolean }) | undefined
 
-        if (apiError.status === 401) {
+        // _isRetry prevents the retried request from re-entering this branch and looping infinitely
+        if (apiError.status === 401 && !config?._isRetry) {
+          try {
+            const newToken = await this.refreshBoraLiToken()
+            if (newToken && config) {
+              config.headers.Authorization = `Bearer ${newToken}`
+              config._isRetry = true
+              return this.client(config)
+            }
+          } catch {
+            // Refresh failed — fall through to clear auth
+          }
+
+          // Clear the local token — ProtectedRoute's reactive subscription will render
+          // <Navigate to="/login"> automatically. Calling redirectToLogin() here would
+          // create a double-redirect race with ProtectedRoute's own navigation.
           useAuthStore.getState().clearAuth()
-          this.redirectToLogin()
         }
 
         return Promise.reject(apiError)
       },
     )
+  }
+
+  /** Exchanges the stored BoraLi refresh token for a new access token. Deduplicates concurrent calls. */
+  private refreshBoraLiToken(): Promise<string | undefined> {
+    if (this.refreshPromise) return this.refreshPromise
+
+    this.refreshPromise = (async () => {
+      try {
+        const { refreshToken } = useAuthStore.getState()
+        if (!refreshToken) return undefined
+
+        // Use bare axios to avoid re-entering the interceptor
+        type TokenPair = { accessToken: string; refreshToken: string }
+        const response = await axios.post<TokenPair | ApiEnvelope<TokenPair>>(
+          `${this.client.defaults.baseURL}/auth/refresh`,
+          { refreshToken },
+          { headers: { 'Content-Type': 'application/json' } },
+        )
+        const { accessToken, refreshToken: newRefreshToken } = unwrap<TokenPair>(response)
+        const user = useAuthStore.getState().user
+        if (user) useAuthStore.getState().setAuth(user, accessToken, newRefreshToken)
+        return accessToken
+      } catch {
+        return undefined
+      } finally {
+        this.refreshPromise = null
+      }
+    })()
+
+    return this.refreshPromise
+  }
+
+  private redirectToLogin() {
+    if (typeof window === 'undefined') return
+    if (window.location.pathname === '/login') return
+    if (this.redirecting) return
+    this.redirecting = true
+
+    if (_navigateToLogin) {
+      _navigateToLogin()
+    } else {
+      window.location.assign('/login')
+    }
+
+    setTimeout(() => { this.redirecting = false }, 2000)
   }
 
   private toApiError(error: unknown) {
@@ -77,13 +145,6 @@ class ApiClient {
   private getErrorMessage(payload: ApiErrorPayload | undefined, fallback: string) {
     if (Array.isArray(payload?.message)) return payload.message.join(', ')
     return payload?.message ?? payload?.error ?? fallback
-  }
-
-  private redirectToLogin() {
-    if (typeof window === 'undefined') return
-    if (window.location.pathname === '/login') return
-
-    window.location.assign('/login')
   }
 }
 

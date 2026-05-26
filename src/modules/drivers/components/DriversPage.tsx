@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import BlockIcon from '@mui/icons-material/Block'
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline'
 import EditOutlinedIcon from '@mui/icons-material/EditOutlined'
@@ -47,6 +47,7 @@ export default function DriversPage() {
   const [driverDetailsTab, setDriverDetailsTab] = useState(0)
   const rowsPerPage = 5
   const queryClient = useQueryClient()
+  const handledNavStateRef = useRef(false)
 
   const driversQuery = useGetAllDriversAccess()
   const driverQueryRows = driversQuery.data?.rows ?? drivers
@@ -131,15 +132,15 @@ export default function DriversPage() {
   }, [location.search])
 
   useEffect(() => {
-    if (!locationState?.selectedDriverId && !locationState?.selectedDriverName) {
-      return
-    }
+    if (handledNavStateRef.current) return
+    if (!locationState?.selectedDriverId && !locationState?.selectedDriverName) return
 
     const targetDriver = driverRows.find((driver) => {
       return driver.id === locationState.selectedDriverId || driver.name === locationState.selectedDriverName
     })
 
     if (targetDriver) {
+      handledNavStateRef.current = true
       setSelectedDriver(targetDriver)
       setDriverDetailsTab(locationState.selectedDriverTab ?? 0)
     }

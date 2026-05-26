@@ -65,7 +65,7 @@ export function SubscriptionCharts({ mrrGrowth, planDistribution }: Subscription
           </Stack>
 
           <Box sx={{ height: 320 }}>
-            <ResponsiveContainer width="100%" height="100%">
+            <ResponsiveContainer width="100%" height={320}>
               <BarChart data={mrrGrowth} margin={{ top: 12, right: 12, bottom: 0, left: -12 }}>
                 <CartesianGrid stroke={theme.palette.divider} vertical={false} />
                 <XAxis
@@ -100,7 +100,7 @@ export function SubscriptionCharts({ mrrGrowth, planDistribution }: Subscription
           </Stack>
 
           <Box sx={{ height: 260, position: 'relative' }}>
-            <ResponsiveContainer width="100%" height="100%">
+            <ResponsiveContainer width="100%" height={260}>
               <PieChart>
                 <Tooltip
                   formatter={(value, name) => [numberFormatter.format(Number(value)), name]}

@@ -9,8 +9,9 @@ import RouteIcon from '@mui/icons-material/Route'
 import SettingsIcon from '@mui/icons-material/Settings'
 import { Badge, CssBaseline, GlobalStyles } from '@mui/material'
 import { ReactRouterAppProvider } from '@toolpad/core/react-router'
-import { pendingApprovalDrivers } from '@modules/approvals/services'
+import { useLogto } from '@logto/react'
 import { useAuthStore } from '@shared/store'
+import { registerLoginNavigator } from '@shared/services/api'
 import { useEffect, useMemo, useState } from 'react'
 import { Outlet, useNavigate } from 'react-router'
 import logo from '@/assets/logo.png'
@@ -77,9 +78,15 @@ const branding = {
 
 export default function App() {
   const navigate = useNavigate()
+  const { signOut } = useLogto()
   const user = useAuthStore((state) => state.user)
-  const [pendingApprovalsCount, setPendingApprovalsCount] = useState(pendingApprovalDrivers.length)
+  const [pendingApprovalsCount, setPendingApprovalsCount] = useState(0)
   const navigation = useMemo(() => createNavigation(pendingApprovalsCount), [pendingApprovalsCount])
+
+  useEffect(() => {
+    registerLoginNavigator(() => navigate('/login', { replace: true }))
+  }, [navigate])
+
   const session = useMemo(
     () =>
       user
@@ -118,7 +125,7 @@ export default function App() {
         },
         signOut: () => {
           useAuthStore.getState().clearAuth()
-          navigate('/login', { replace: true })
+          signOut(`${window.location.origin}/login`)
         },
       }}
       localeText={{

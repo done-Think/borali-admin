@@ -15,7 +15,7 @@ export type ApiDriver = {
   status: 'PENDING' | 'APPROVED' | 'REJECTED' | 'SUSPENDED'
   isOnline: boolean
   lastSeenAt?: string | null
-  rating: number
+  rating: number | null
   totalRides: number
   createdAt: string
   user: ApiUser

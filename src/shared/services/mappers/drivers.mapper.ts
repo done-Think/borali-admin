@@ -46,7 +46,7 @@ export function mapDriver(driver: ApiDriver): Driver {
     category: mapDriverCategory(vehicle?.category),
     status: mapDriverStatus(driver),
     rides: driver.totalRides,
-    rating: driver.rating,
+    rating: driver.rating ?? 0,
     subscription: mapSubscription(driver),
     monthlyEarnings: driverMonthlyEarnings(driver),
   }
@@ -75,7 +75,7 @@ export function mapDriverDetails(driver: ApiDriver): Partial<DriverDetails> {
     monthlyAverage: {
       rides: rides.length,
       earnings: driverMonthlyEarnings(driver),
-      rating: driver.rating,
+      rating: driver.rating ?? 0,
       cancellationRate: rideCancellationRate(rides),
     },
   }

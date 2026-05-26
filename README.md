@@ -15,6 +15,8 @@ Painel administrativo da plataforma BoraLí. React 19 + Vite + Material-UI + Tan
 
 Veja o passo a passo completo de criação em [borali-infra/README.md](../borali-infra/README.md#logto--configuração-inicial).
 
+> **Redirect URI obrigatório no Logto:** ao criar a Application, adicione `http://localhost:5173/callback` em *Redirect URIs* e `http://localhost:5173` em *Post Sign-Out Redirect URIs*. Em produção, troque pelo domínio real.
+
 ## Configuração
 
 ```bash

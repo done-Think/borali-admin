@@ -1,33 +1,23 @@
 import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings'
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward'
 import ShieldOutlinedIcon from '@mui/icons-material/ShieldOutlined'
-import VisibilityIcon from '@mui/icons-material/Visibility'
-import VisibilityOffIcon from '@mui/icons-material/VisibilityOff'
 import {
   Box,
   Button,
   Card,
   CardContent,
   Chip,
-  IconButton,
-  InputAdornment,
-  Link,
   Stack,
-  TextField,
-  Tooltip,
   Typography,
   useTheme,
 } from '@mui/material'
 import { alpha } from '@mui/material/styles'
-import { ApiRequestError } from '@shared/services/api'
+import { useLogto } from '@logto/react'
 import { useAuthStore } from '@shared/store'
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
 import { useLocation, useNavigate } from 'react-router'
 import loginMapBg from '@/assets/login-map-bg.png'
 import logo from '@/assets/logo.png'
-import { requestAdminDevToken } from '../services'
-
-const ADMIN_EMAIL = 'admin@borali.app'
 
 type LoginLocationState = {
   from?: {
@@ -41,51 +31,24 @@ export function LoginPage() {
   const theme = useTheme()
   const navigate = useNavigate()
   const location = useLocation()
-  const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
-  const [email, setEmail] = useState('')
-  const [loginError, setLoginError] = useState('')
-  const [showPassword, setShowPassword] = useState(false)
+  const { signIn, isAuthenticated, isLoading } = useLogto()
+  // Only redirect if BOTH Logto AND the BoraLi token are present — prevents the redirect
+  // loop that occurs when clearAuth() clears the Zustand token but Logto stays authenticated
+  const accessToken = useAuthStore((state) => state.accessToken)
   const locationState = location.state as LoginLocationState | null
   const redirectPath = locationState?.from
     ? `${locationState.from.pathname ?? '/'}${locationState.from.search ?? ''}${locationState.from.hash ?? ''}`
     : '/'
 
   useEffect(() => {
-    if (isAuthenticated) {
+    if (isLoading) return
+    if (isAuthenticated && accessToken) {
       navigate(redirectPath, { replace: true })
     }
-  }, [isAuthenticated, navigate, redirectPath])
+  }, [isAuthenticated, isLoading, accessToken, navigate, redirectPath])
 
-  async function handleEnterAdmin() {
-    const normalizedEmail = email.trim().toLowerCase()
-
-    if (normalizedEmail !== ADMIN_EMAIL) {
-      setLoginError('E-mail inválido.')
-      return
-    }
-
-    try {
-      const { accessToken } = await requestAdminDevToken(normalizedEmail)
-
-      useAuthStore.getState().setAuth(
-        {
-          id: 'admin',
-          name: 'Admin',
-          email: normalizedEmail,
-          role: 'admin',
-        },
-        accessToken,
-      )
-
-      navigate(redirectPath, { replace: true })
-    } catch (error) {
-      console.warn('Não foi possível autenticar admin.', error)
-      setLoginError(
-        error instanceof ApiRequestError
-          ? error.message
-          : 'Não foi possível autenticar. Verifique se a API está rodando e se o usuário admin existe.',
-      )
-    }
+  function handleSignIn() {
+    signIn(`${window.location.origin}/callback`)
   }
 
   return (
@@ -165,84 +128,26 @@ export function LoginPage() {
               <Typography variant="h2" sx={{ fontSize: { xs: '1.75rem', sm: '2rem' } }}>
                 Acesso administrativo
               </Typography>
+              <Typography variant="body2" color="text.secondary">
+                Autenticação via Logto — apenas usuários com perfil de admin têm acesso.
+              </Typography>
             </Stack>
 
-            <Stack
-              component="form"
-              spacing={2}
-              onSubmit={(event) => {
-                event.preventDefault()
-                handleEnterAdmin()
+            <Button
+              fullWidth
+              size="large"
+              variant="contained"
+              color="secondary"
+              endIcon={<ArrowForwardIcon />}
+              onClick={handleSignIn}
+              sx={{
+                minHeight: 48,
+                fontWeight: 800,
+                boxShadow: 'none',
               }}
             >
-              <TextField
-                fullWidth
-                size="small"
-                label="Login"
-                value={email}
-                placeholder={ADMIN_EMAIL}
-                autoComplete="username"
-                error={Boolean(loginError)}
-                helperText={loginError || ' '}
-                onChange={(event) => {
-                  setEmail(event.target.value)
-                  if (loginError) setLoginError('')
-                }}
-              />
-              <TextField
-                fullWidth
-                size="small"
-                label="Senha"
-                type={showPassword ? 'text' : 'password'}
-                placeholder="Sem senha por enquanto"
-                autoComplete="current-password"
-                slotProps={{
-                  input: {
-                    endAdornment: (
-                      <InputAdornment position="end">
-                        <Tooltip title={showPassword ? 'Ocultar senha' : 'Mostrar senha'}>
-                          <IconButton
-                            aria-label={showPassword ? 'Ocultar senha' : 'Mostrar senha'}
-                            edge="end"
-                            onClick={() => setShowPassword((current) => !current)}
-                            onMouseDown={(event) => event.preventDefault()}
-                          >
-                            {showPassword ? <VisibilityOffIcon /> : <VisibilityIcon />}
-                          </IconButton>
-                        </Tooltip>
-                      </InputAdornment>
-                    ),
-                  },
-                }}
-              />
-              <Typography color="text.secondary" sx={{ fontSize: 13, textAlign: 'center' }}>
-                Esqueceu a Senha{' '}
-                <Link
-                  component="button"
-                  type="button"
-                  underline="hover"
-                  sx={{ fontWeight: 800, verticalAlign: 'baseline' }}
-                >
-                  Clique Aqui
-                </Link>
-              </Typography>
-
-              <Button
-                type="submit"
-                fullWidth
-                size="large"
-                variant="contained"
-                color="secondary"
-                endIcon={<ArrowForwardIcon />}
-                sx={{
-                  minHeight: 48,
-                  fontWeight: 800,
-                  boxShadow: 'none',
-                }}
-              >
-                Entrar
-              </Button>
-            </Stack>
+              Entrar
+            </Button>
           </Stack>
         </CardContent>
       </Card>
