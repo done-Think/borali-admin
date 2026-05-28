@@ -5,7 +5,7 @@ Painel administrativo da plataforma BoraLí. React 19 + Vite + Material-UI + Tan
 ## Pré-requisitos
 
 - Node.js 20+
-- A [API](../borali-api/README.md) rodando em `localhost:3000` (ou configure `VITE_API_URL`)
+- A [API](../BoraLi-API/README.md) rodando em `localhost:3000` (ou configure `VITE_API_URL`)
 
 ## Chaves necessárias
 
