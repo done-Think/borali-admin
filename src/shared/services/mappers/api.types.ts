@@ -6,8 +6,20 @@ export type ApiUser = {
   passengerRating?: number
   totalRidesAsPassenger?: number
   cancelCount?: number
+  faceCheckStatus?: 'PENDING' | 'VERIFIED' | 'REJECTED' | null
+  faceCheckUrl?: string | null
+  cpf?: string | null
+  documentUrl?: string | null
   createdAt: string
   ridesAsPassenger?: ApiRide[]
+  zipCode?: string | null
+  street?: string | null
+  number?: string | null
+  complement?: string | null
+  neighborhood?: string | null
+  city?: string | null
+  state?: string | null
+  referencePoint?: string | null
 }
 
 export type ApiDriver = {

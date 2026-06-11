@@ -9,8 +9,7 @@ import { io } from 'socket.io-client'
 import { getMapTileLayer } from '@modules/dashboard/utils/mapConfig'
 import { useActivePaletteMode } from '@modules/dashboard/utils/useActivePaletteMode'
 import { ridesQueryKeys, useGetActiveRidesAccess } from '../queries'
-import { historyRides, initialActiveRides, initialScheduledRides } from '../data/mockRides'
-import type { ActiveMapLimit, ActiveRideView, HistoryStatusFilter, RideTab, ScheduledRide } from '../types'
+import type { ActiveMapLimit, ActiveRideView, HistoryRide, HistoryStatusFilter, RideTab, ScheduledRide } from '../types'
 import { normalizeRide, prioritizeActiveRides } from '../utils/rides'
 import { ActiveRidesPanel } from './ActiveRidesPanel'
 import { HistoryRidesPanel } from './HistoryRidesPanel'
@@ -31,15 +30,15 @@ export default function RidesPage() {
   const queryClient = useQueryClient()
   const [selectedTab, setSelectedTab] = useState<RideTab>('active')
   const [activeMapLimit, setActiveMapLimit] = useState<ActiveMapLimit>(5)
-  const [selectedActiveRideId, setSelectedActiveRideId] = useState(initialActiveRides[0]?.id ?? '')
-  const [expandedActiveRideId, setExpandedActiveRideId] = useState(initialActiveRides[0]?.id ?? '')
+  const [selectedActiveRideId, setSelectedActiveRideId] = useState('')
+  const [expandedActiveRideId, setExpandedActiveRideId] = useState('')
   const [activeRideSearch, setActiveRideSearch] = useState('')
-  const [scheduledRides, setScheduledRides] = useState<ScheduledRide[]>(initialScheduledRides)
+  const [scheduledRides, setScheduledRides] = useState<ScheduledRide[]>([])
   const [historyStartDate, setHistoryStartDate] = useState('')
   const [historyEndDate, setHistoryEndDate] = useState('')
   const [historyStatus, setHistoryStatus] = useState<HistoryStatusFilter>('all')
   const activeRidesQuery = useGetActiveRidesAccess()
-  const activeRidesData = activeRidesQuery.data ?? initialActiveRides
+  const activeRidesData = activeRidesQuery.data ?? []
   const activeRides = useMemo(() => activeRidesData.map(normalizeRide), [activeRidesData])
 
   useEffect(() => {
@@ -71,14 +70,14 @@ export default function RidesPage() {
       queryClient.setQueryData<ActiveRideView[]>(ridesQueryKeys.active(), rides.map(normalizeRide))
     }
     const upsertRide = (ride: ActiveRideView) => {
-      queryClient.setQueryData<ActiveRideView[]>(ridesQueryKeys.active(), (current = initialActiveRides) => {
+      queryClient.setQueryData<ActiveRideView[]>(ridesQueryKeys.active(), (current = []) => {
         const nextRide = normalizeRide(ride)
         const exists = current.some((item) => item.id === nextRide.id)
         return exists ? current.map((item) => (item.id === nextRide.id ? { ...item, ...nextRide } : item)) : [nextRide, ...current]
       })
     }
     const removeRide = (ride: ActiveRideView | { id: string }) => {
-      queryClient.setQueryData<ActiveRideView[]>(ridesQueryKeys.active(), (current = initialActiveRides) => current.filter((item) => item.id !== ride.id))
+      queryClient.setQueryData<ActiveRideView[]>(ridesQueryKeys.active(), (current = []) => current.filter((item) => item.id !== ride.id))
       setSelectedActiveRideId((current) => (current === ride.id ? '' : current))
       setExpandedActiveRideId((current) => (current === ride.id ? '' : current))
     }
@@ -112,7 +111,7 @@ export default function RidesPage() {
     }
   }, [queryClient])
 
-  const mapCenter = useMemo<[number, number]>(() => activeRides[0]?.driverPosition ?? [-23.5573, -46.6412], [activeRides])
+  const mapCenter = useMemo<[number, number]>(() => activeRides[0]?.driverPosition ?? [-22.4256, -45.4528], [activeRides])
   const selectedActiveRide = useMemo(
     () => activeRides.find((ride) => ride.id === selectedActiveRideId) ?? activeRides[0] ?? null,
     [activeRides, selectedActiveRideId],
@@ -131,15 +130,7 @@ export default function RidesPage() {
     if (!selectedActiveRide || limitedRides.some((ride) => ride.id === selectedActiveRide.id)) return limitedRides
     return [...limitedRides, selectedActiveRide]
   }, [activeMapLimit, prioritizedActiveRides, selectedActiveRide])
-  const filteredHistoryRides = useMemo(() => {
-    return historyRides.filter((ride) => {
-      const rideDate = ride.completedAt.slice(0, 10)
-      const matchesStartDate = !historyStartDate || rideDate >= historyStartDate
-      const matchesEndDate = !historyEndDate || rideDate <= historyEndDate
-      const matchesOccurrences = historyStatus === 'all' || (historyStatus === 'with-alert' ? Boolean(ride.alert) : !ride.alert)
-      return matchesStartDate && matchesEndDate && matchesOccurrences
-    })
-  }, [historyEndDate, historyStartDate, historyStatus])
+  const filteredHistoryRides = useMemo<HistoryRide[]>(() => [], [])
 
   function cancelScheduledRide(rideId: string) {
     setScheduledRides((current) => current.filter((ride) => ride.id !== rideId))

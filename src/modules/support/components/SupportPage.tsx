@@ -317,6 +317,17 @@ export default function SupportPage() {
       />
 
       <Stack spacing={2}>
+        {filteredTickets.length === 0 && (
+          <Card variant="outlined">
+            <CardContent sx={{ py: 6, textAlign: 'center' }}>
+              <SupportAgentIcon sx={{ fontSize: 48, color: 'text.disabled', mb: 1.5, display: 'block', mx: 'auto' }} />
+              <Typography fontWeight={800}>Nenhum chamado encontrado</Typography>
+              <Typography color="text.secondary" sx={{ mt: 0.5 }}>
+                {searchInput ? 'Tente buscar por outro termo.' : 'Novos chamados de suporte aparecerão aqui.'}
+              </Typography>
+            </CardContent>
+          </Card>
+        )}
         {filteredTickets.map((ticket) => (
           <SupportTicketCard
             key={ticket.protocol}

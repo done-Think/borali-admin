@@ -2,9 +2,13 @@ import { useMemo, useState } from 'react'
 import { Box, Card, CardContent, Chip, GlobalStyles, Stack, Typography, useTheme } from '@mui/material'
 import { alpha } from '@mui/material/styles'
 import 'leaflet/dist/leaflet.css'
+import DirectionsCarIcon from '@mui/icons-material/DirectionsCar'
+import LocalTaxiIcon from '@mui/icons-material/LocalTaxi'
+import MonetizationOnIcon from '@mui/icons-material/MonetizationOn'
+import PendingActionsIcon from '@mui/icons-material/PendingActions'
+import WarningAmberIcon from '@mui/icons-material/WarningAmber'
 import { useGetDashboardAccess } from '../queries'
-import { activities, kpiCards } from '../data/mockDashboardData'
-import type { KpiCard } from '../types'
+import type { Activity, KpiCard } from '../types'
 import { ActivityList } from './ActivityList'
 import { DashboardLiveMap } from './DashboardLiveMap'
 import { KpiCardButton } from './KpiCardButton'
@@ -17,7 +21,14 @@ import { OnlineDriversDialog } from './dialogs/OnlineDriversDialog'
 import { PendingApprovalsDialog } from './dialogs/PendingApprovalsDialog'
 import { RevenueDialog } from './dialogs/RevenueDialog'
 import { useActivePaletteMode } from '../utils/useActivePaletteMode'
-import type { Activity } from '../types'
+
+const baseKpiCards: KpiCard[] = [
+  { id: 'active-rides', title: 'Corridas ativas', value: '—', subtitle: 'aguardando dados', icon: <LocalTaxiIcon />, color: '#0ABEE9' },
+  { id: 'online-drivers', title: 'Motoristas online', value: '—', subtitle: 'aguardando dados', icon: <DirectionsCarIcon />, color: '#2DD4A0' },
+  { id: 'daily-revenue', title: 'Receita do dia', value: '—', subtitle: 'aguardando dados', icon: <MonetizationOnIcon />, color: '#F59E0B' },
+  { id: 'pending-approvals', title: 'Aprovações pend.', value: '—', subtitle: 'aguardando dados', icon: <PendingActionsIcon />, color: '#8B5CF6' },
+  { id: 'alert-rides', title: 'Corrida em Alerta', value: '—', subtitle: 'aguardando dados', icon: <WarningAmberIcon />, color: '#EF4444' },
+]
 
 export default function DashboardPage() {
   const theme = useTheme()
@@ -28,14 +39,15 @@ export default function DashboardPage() {
   const [alertRidesOpen, setAlertRidesOpen] = useState(false)
   const [onlineDriversOpen, setOnlineDriversOpen] = useState(false)
   const [selectedActivity, setSelectedActivity] = useState<Activity | null>(null)
+  const activities: Activity[] = []
 
   const dashboardQuery = useGetDashboardAccess()
 
   const visibleKpiCards = useMemo(() => {
     const liveKpis = dashboardQuery.data
-    if (!liveKpis) return kpiCards
+    if (!liveKpis) return baseKpiCards
 
-    return kpiCards.map((card) => {
+    return baseKpiCards.map((card) => {
       if (card.id === 'active-rides' && liveKpis.activeRides != null) {
         return { ...card, value: String(liveKpis.activeRides), subtitle: 'corridas ativas na API' }
       }
@@ -121,7 +133,13 @@ export default function DashboardPage() {
               <Typography variant="h4">Feed de Atividade em tempo real</Typography>
               <Chip label="tempo real" size="small" sx={{ fontWeight: 800 }} />
             </Stack>
+            {activities.length === 0 ? (
+            <Box sx={{ py: 4, textAlign: 'center' }}>
+              <Typography color="text.secondary" variant="body2">Nenhuma atividade recente.</Typography>
+            </Box>
+          ) : (
             <ActivityList items={activities} compact onItemClick={setSelectedActivity} />
+          )}
           </CardContent>
         </Card>
       </Box>

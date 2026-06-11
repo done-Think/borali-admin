@@ -2,13 +2,13 @@ import { supportTickets } from '@modules/support/services'
 import { currencyFormatter, numberFormatter } from '@shared/utils/formatters'
 import { formatCpf, getInitials, normalizeSearch } from '@shared/utils/text'
 import { driverDetailsById } from '../data/mockDrivers'
-import type { Driver, DriverCategory, DriverDetails, DriverFilter, DriverRide, DriverSortKey, DriverStatus, DriverSubscription } from '../types'
+import type { Driver, DriverCategory, DriverDetails, DriverFilter, DriverRide, DriverSituation, DriverSortKey, DriverStatus, DriverSubscription } from '../types'
 
 export { currencyFormatter, formatCpf, getInitials, normalizeSearch, numberFormatter }
 
 export const filters: Array<{ value: DriverFilter; label: string }> = [
   { value: 'all', label: 'Todos' },
-  { value: 'online', label: 'Online (31)' },
+  { value: 'online', label: 'Online' },
   { value: 'approved', label: 'Aprovados' },
   { value: 'pending', label: 'Pendentes' },
   { value: 'blocked', label: 'Bloqueados' },
@@ -23,8 +23,13 @@ export const categorySortOrder: Record<DriverCategory, number> = {
 export const statusSortOrder: Record<DriverStatus, number> = {
   Online: 1,
   Offline: 2,
-  Pendente: 3,
-  Bloqueado: 4,
+}
+
+export const situationSortOrder: Record<DriverSituation, number> = {
+  Aprovado: 1,
+  'Análise pendente': 2,
+  Reprovado: 3,
+  Suspenso: 4,
 }
 
 export const subscriptionSortOrder: Record<DriverSubscription, number> = {
@@ -35,18 +40,10 @@ export const subscriptionSortOrder: Record<DriverSubscription, number> = {
 }
 
 export function getDriverSortValue(driver: Driver, key: DriverSortKey) {
-  if (key === 'category') {
-    return categorySortOrder[driver.category]
-  }
-
-  if (key === 'status') {
-    return statusSortOrder[driver.status]
-  }
-
-  if (key === 'subscription') {
-    return subscriptionSortOrder[driver.subscription]
-  }
-
+  if (key === 'category') return categorySortOrder[driver.category]
+  if (key === 'status') return statusSortOrder[driver.status]
+  if (key === 'situation') return situationSortOrder[driver.situation]
+  if (key === 'subscription') return subscriptionSortOrder[driver.subscription]
   return driver[key]
 }
 
@@ -74,6 +71,13 @@ export function getDriverDetailsBase(driver: Driver): DriverDetails {
       cpf: '000.000.000-00',
       email: `${normalizeSearch(driver.name).replace(/\s+/g, '.')}@email.com`,
       city: 'São Paulo, SP',
+      zipCode: '',
+      street: '',
+      number: '',
+      complement: '',
+      neighborhood: '',
+      state: '',
+      referencePoint: '',
       vehicle: 'Veículo cadastrado',
       plate: 'BRL-0000',
       joinedAt: '10/01/2025',

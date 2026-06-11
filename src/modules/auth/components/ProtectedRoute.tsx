@@ -7,6 +7,7 @@ import { useEffect, useRef, useState } from 'react'
 import { Navigate, Outlet, useLocation } from 'react-router'
 
 const API_RESOURCE = 'https://borali.app/api'
+const REGISTER_FLAG = 'borali_admin_register_flow'
 
 type AdminUser = { id: string; name: string; email: string; role: string }
 type AdminLoginResponse = { accessToken: string; refreshToken: string; user: AdminUser }
@@ -15,10 +16,8 @@ export function ProtectedRoute() {
   const { isAuthenticated, isLoading, getAccessToken, signOut } = useLogto()
   const accessToken = useAuthStore((state) => state.accessToken)
   const location = useLocation()
-  // Start resolving so we never flash <Navigate> before exchange completes
   const [resolving, setResolving] = useState(true)
   const [accessDenied, setAccessDenied] = useState(false)
-  // Prevent re-running exchange on re-mounts caused by redirect loops
   const exchangeAttempted = useRef(false)
 
   useEffect(() => {
@@ -30,31 +29,32 @@ export function ProtectedRoute() {
       return
     }
 
-    // Token already in memory — nothing to do
     if (useAuthStore.getState().accessToken) {
       setResolving(false)
       return
     }
 
-    // Guard: only attempt exchange once per mount lifecycle
     if (exchangeAttempted.current) {
       setResolving(false)
       return
     }
     exchangeAttempted.current = true
 
-    // Exchange the Logto session token for a BoraLi admin JWT
     void (async () => {
+      // Lê e limpa o flag de registro antes de qualquer await — evita leituras duplas
+      const isRegisterFlow = sessionStorage.getItem(REGISTER_FLAG) === '1'
+      sessionStorage.removeItem(REGISTER_FLAG)
+
       try {
         const logtoToken = await getAccessToken(API_RESOURCE)
         if (!logtoToken) {
-          // No Logto token — sign out to prevent a redirect loop
           useAuthStore.getState().clearAuth()
           signOut(`${window.location.origin}/login`)
           return
         }
 
-        const loginRes = await api.post<AdminLoginResponse | ApiEnvelope<AdminLoginResponse>>('/auth/admin-login', {
+        const endpoint = isRegisterFlow ? '/auth/admin-register' : '/auth/admin-login'
+        const loginRes = await api.post<AdminLoginResponse | ApiEnvelope<AdminLoginResponse>>(endpoint, {
           accessToken: logtoToken,
         })
         const data = unwrap<AdminLoginResponse>(loginRes)
@@ -66,10 +66,8 @@ export function ProtectedRoute() {
         )
       } catch (err) {
         if (err instanceof ApiRequestError && err.status === 403) {
-          // User is not an admin — show denial screen instead of looping
           setAccessDenied(true)
         } else {
-          // Network error, 5xx, etc. — clear local token only; user can retry
           useAuthStore.getState().clearAuth()
         }
       } finally {

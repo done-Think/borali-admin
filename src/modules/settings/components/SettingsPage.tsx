@@ -67,7 +67,24 @@ export default function SettingsPage() {
   }
 
   if (!selectedCity) {
-    return null
+    return (
+      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+        <Box>
+          <Typography variant="h3">Configurações</Typography>
+          <Typography color="text.secondary" sx={{ mt: 0.5 }}>
+            Ajuste tarifas, busca de motoristas e regras comerciais por cidade.
+          </Typography>
+        </Box>
+        <Card variant="outlined">
+          <CardContent sx={{ py: 6, textAlign: 'center' }}>
+            <Typography fontWeight={800}>Nenhuma cidade configurada</Typography>
+            <Typography color="text.secondary" sx={{ mt: 0.5 }}>
+              As cidades de operação aparecerão aqui quando forem cadastradas na plataforma.
+            </Typography>
+          </CardContent>
+        </Card>
+      </Box>
+    )
   }
 
   return (

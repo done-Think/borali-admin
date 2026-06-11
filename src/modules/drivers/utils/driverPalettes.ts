@@ -1,4 +1,4 @@
-import type { DriverCategory, DriverStatus, DriverSubscription } from '../types'
+import type { DriverCategory, DriverSituation, DriverStatus, DriverSubscription } from '../types'
 import type { BadgePalette } from '@shared/ui/DataBadge'
 
 export type { BadgePalette }
@@ -32,12 +32,25 @@ export const statusPalette: Record<DriverStatus, BadgePalette> = {
     background: 'rgba(107, 114, 128, 0.12)',
     border: 'rgba(107, 114, 128, 0.32)',
   },
-  Pendente: {
+}
+
+export const situationPalette: Record<DriverSituation, BadgePalette> = {
+  Aprovado: {
+    color: '#2DD4A0',
+    background: 'rgba(45, 212, 160, 0.12)',
+    border: 'rgba(45, 212, 160, 0.36)',
+  },
+  'Análise pendente': {
     color: '#F59E0B',
     background: 'rgba(245, 158, 11, 0.14)',
     border: 'rgba(245, 158, 11, 0.38)',
   },
-  Bloqueado: {
+  Reprovado: {
+    color: '#EF4444',
+    background: 'rgba(239, 68, 68, 0.12)',
+    border: 'rgba(239, 68, 68, 0.36)',
+  },
+  Suspenso: {
     color: '#EF4444',
     background: 'rgba(239, 68, 68, 0.12)',
     border: 'rgba(239, 68, 68, 0.36)',

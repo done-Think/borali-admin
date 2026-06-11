@@ -1,4 +1,4 @@
-import type { Driver, DriverCategory, DriverDetails, DriverStatus, DriverSubscription } from '@modules/drivers/types'
+import type { Driver, DriverCategory, DriverDetails, DriverSituation, DriverStatus, DriverSubscription } from '@modules/drivers/types'
 import type { ApiDriver } from './api.types'
 import { formatDate, initials, mapRideStatus, rideCancellationRate, toNumber } from './common'
 
@@ -8,10 +8,15 @@ export function mapDriverCategory(category?: string): DriverCategory {
   return 'Econômico'
 }
 
-export function mapDriverStatus(driver: Pick<ApiDriver, 'status' | 'isOnline'>): DriverStatus {
-  if (driver.status === 'SUSPENDED' || driver.status === 'REJECTED') return 'Bloqueado'
-  if (driver.status === 'PENDING') return 'Pendente'
+export function mapDriverStatus(driver: Pick<ApiDriver, 'isOnline'>): DriverStatus {
   return driver.isOnline ? 'Online' : 'Offline'
+}
+
+export function mapDriverSituation(driver: Pick<ApiDriver, 'status'>): DriverSituation {
+  if (driver.status === 'PENDING') return 'Análise pendente'
+  if (driver.status === 'APPROVED') return 'Aprovado'
+  if (driver.status === 'REJECTED') return 'Reprovado'
+  return 'Suspenso'
 }
 
 export function mapSubscription(driver: Pick<ApiDriver, 'subscription'>): DriverSubscription {
@@ -40,11 +45,13 @@ export function mapDriver(driver: ApiDriver): Driver {
 
   return {
     id: driver.id,
+    userId: driver.user.id,
     name: driver.user.name,
     initials: initials(driver.user.name),
     phone: driver.user.phone ?? 'Sem telefone',
     category: mapDriverCategory(vehicle?.category),
     status: mapDriverStatus(driver),
+    situation: mapDriverSituation(driver),
     rides: driver.totalRides,
     rating: driver.rating ?? 0,
     subscription: mapSubscription(driver),
@@ -54,12 +61,22 @@ export function mapDriver(driver: ApiDriver): Driver {
 
 export function mapDriverDetails(driver: ApiDriver): Partial<DriverDetails> {
   const rides = driver.rides ?? []
+  const u = driver.user
 
   return {
-    photoLabel: `Foto do motorista ${driver.user.name}`,
+    photoLabel: `Foto do motorista ${u.name}`,
     cpf: 'Não informado',
-    email: driver.user.email,
-    city: 'Não informado',
+    email: u.email,
+    city: u.city ?? 'Não informado',
+    faceCheckStatus: u.faceCheckStatus ?? null,
+    faceCheckUrl: u.faceCheckUrl ?? null,
+    zipCode: u.zipCode ?? '',
+    street: u.street ?? '',
+    number: u.number ?? '',
+    complement: u.complement ?? '',
+    neighborhood: u.neighborhood ?? '',
+    state: u.state ?? '',
+    referencePoint: u.referencePoint ?? '',
     vehicle: vehicleLabel(driver),
     plate: driver.vehicles?.[0]?.plate ?? 'Não informado',
     joinedAt: formatDate(driver.createdAt),

@@ -46,7 +46,7 @@ export function mapPassenger(user: ApiUser): Passenger {
     tier: mapPassengerTier(user.totalRidesAsPassenger ?? 0),
     status: mapPassengerStatus(user),
     rides: user.totalRidesAsPassenger ?? 0,
-    rating: user.passengerRating ?? 5,
+    rating: user.passengerRating ?? null,
     payments: payments.length ? payments : ['Pix'],
     monthlySpend: passengerMonthlySpend(user),
   }
@@ -57,9 +57,12 @@ export function mapPassengerDetails(user: ApiUser): Partial<PassengerDetails> {
 
   return {
     photoLabel: `Foto do passageiro ${user.name}`,
-    cpf: 'Não informado',
+    cpf: user.cpf ?? 'Não informado',
     email: user.email,
-    city: 'Não informado',
+    city: user.city ? (user.state ? `${user.city}, ${user.state}` : user.city) : 'Não informado',
+    faceCheckStatus: user.faceCheckStatus ?? null,
+    faceCheckUrl: user.faceCheckUrl ?? null,
+    documentUrl: user.documentUrl ?? null,
     joinedAt: formatDate(user.createdAt),
     lastRide: rides[0] ? formatDate(rides[0].createdAt) : 'Sem corrida recente',
     preferredRegion: 'Não informado',
@@ -74,7 +77,7 @@ export function mapPassengerDetails(user: ApiUser): Partial<PassengerDetails> {
     monthlyAverage: {
       rides: rides.length,
       spend: passengerMonthlySpend(user),
-      rating: user.passengerRating ?? 5,
+      rating: user.passengerRating ?? null,
       cancellationRate: passengerCancellationRate(user),
     },
   }

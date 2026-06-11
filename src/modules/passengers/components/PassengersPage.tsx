@@ -7,7 +7,6 @@ import { Alert, Avatar, Box, Button, Card, CardContent, FormControl, IconButton,
 import { useSnackbar } from 'notistack'
 import { useLocation } from 'react-router'
 import { useGetAllPassengersAccess } from '../queries'
-import { passengers } from '../data/mockPassengers'
 import type { Passenger, PassengerDetails, PassengerEditForm, PassengerFilter, PassengersLocationState, PassengerSortKey, PassengerTierFilter, SortDirection } from '../types'
 import { currencyFormatter, filters, getInitials, getPassengerDetails, getPassengerSortValue, numberFormatter, normalizeSearch, statusPalette, tierPalette } from '../utils/passengers'
 import { PassengerBadge, PassengerDetailsDialog, PassengerEditDialog, PaymentBadges, SortableHeader } from './PassengerManagementComponents'
@@ -33,7 +32,7 @@ export default function PassengersPage() {
   const locationState = location.state as PassengersLocationState | null
 
   const passengersQuery = useGetAllPassengersAccess()
-  const passengerQueryRows = passengersQuery.data?.rows ?? passengers
+  const passengerQueryRows = passengersQuery.data?.rows ?? []
   const passengerQueryDetails = passengersQuery.data?.details ?? emptyPassengerDetails
   const passengerRows = useMemo(
     () => passengerQueryRows.map((passenger) => passengerOverrides[passenger.id] ?? passenger),
@@ -315,6 +314,17 @@ export default function PassengersPage() {
                   </TableRow>
                 </TableHead>
                 <TableBody>
+                  {visiblePassengers.length === 0 && !passengersQuery.isLoading && (
+                    <TableRow>
+                      <TableCell colSpan={8} align="center" sx={{ py: 6 }}>
+                        <Typography color="text.secondary">
+                          {search || selectedFilter !== 'all' || selectedTier !== 'all'
+                            ? 'Nenhum passageiro encontrado com os filtros aplicados.'
+                            : 'Nenhum passageiro encontrado.'}
+                        </Typography>
+                      </TableCell>
+                    </TableRow>
+                  )}
                   {visiblePassengers.map((passenger) => (
                     <TableRow key={passenger.id} hover>
                       <TableCell>
@@ -366,7 +376,7 @@ export default function PassengersPage() {
                         <PassengerBadge label={passenger.status} palette={statusPalette[passenger.status]} />
                       </TableCell>
                       <TableCell>{numberFormatter.format(passenger.rides)}</TableCell>
-                      <TableCell>{passenger.rating.toFixed(1)}</TableCell>
+                      <TableCell>{passenger.rating != null ? passenger.rating.toFixed(1) : '—'}</TableCell>
                       <TableCell>
                         <PaymentBadges payments={passenger.payments} />
                       </TableCell>

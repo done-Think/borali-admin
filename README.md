@@ -1,6 +1,6 @@
-# BoraLí — Admin Console
+# BorAlí — Admin Console
 
-Painel administrativo da plataforma BoraLí. React 19 + Vite + Material-UI + TanStack Query.
+Painel administrativo da plataforma BorAlí. React 19 + Vite + Material-UI + TanStack Query.
 
 ## Pré-requisitos
 

@@ -1,4 +1,7 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { useSnackbar } from 'notistack'
+import { reviewFaceCheck } from '../services/drivers.service'
 import AddIcon from '@mui/icons-material/Add'
 import CloseIcon from '@mui/icons-material/Close'
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
@@ -7,12 +10,12 @@ import ReportProblemOutlinedIcon from '@mui/icons-material/ReportProblemOutlined
 import RouteOutlinedIcon from '@mui/icons-material/RouteOutlined'
 import { Avatar, Box, Button, Card, CardContent, Chip, Collapse, Dialog, DialogActions, DialogContent, DialogTitle, Divider, FormControl, IconButton, InputLabel, MenuItem, Select, Stack, Tab, Tabs, TextField, Typography, useTheme } from '@mui/material'
 import { useNavigate } from 'react-router'
-import type { Driver, DriverCategory, DriverDetails, DriverEditForm, DriverRequest, DriverRide, DriverStatus, DriverSubscription } from '../types'
+import type { Driver, DriverCategory, DriverDetails, DriverEditForm, DriverRequest, DriverRide, DriverSituation, DriverStatus, DriverSubscription } from '../types'
 import { currencyFormatter, formatCpf, getDriverDetails, getDriverRideDetails, numberFormatter } from '../utils/drivers'
 
 import { DataBadge } from '@shared/ui/DataBadge'
 import { SortableHeader } from '@shared/ui/SortableHeader'
-import { categoryPalette, statusPalette, subscriptionPalette, type BadgePalette } from '../utils/driverPalettes'
+import { categoryPalette, situationPalette, statusPalette, subscriptionPalette, type BadgePalette } from '../utils/driverPalettes'
 
 export function DriverDetailsDialog({
   driver,
@@ -29,7 +32,20 @@ export function DriverDetailsDialog({
 }) {
   const theme = useTheme()
   const navigate = useNavigate()
+  const { enqueueSnackbar } = useSnackbar()
+  const queryClient = useQueryClient()
   const [selectedRide, setSelectedRide] = useState<DriverRide | null>(null)
+  const [selfieOpen, setSelfieOpen] = useState(false)
+
+  const faceCheckMutation = useMutation({
+    mutationFn: ({ status, reason }: { status: 'APPROVED' | 'REJECTED'; reason?: string }) =>
+      reviewFaceCheck(driver!.userId, status, reason),
+    onSuccess: (_, { status }) => {
+      enqueueSnackbar(status === 'APPROVED' ? 'Selfie aprovada com sucesso' : 'Selfie reprovada', { variant: status === 'APPROVED' ? 'success' : 'warning' })
+      queryClient.invalidateQueries({ queryKey: ['drivers'] })
+    },
+    onError: () => enqueueSnackbar('Erro ao revisar selfie', { variant: 'error' }),
+  })
 
   if (!driver) {
     return null
@@ -60,6 +76,7 @@ export function DriverDetailsDialog({
               <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap" sx={{ mt: 1 }}>
                 <DriverBadge label={driver.category} palette={categoryPalette[driver.category]} />
                 <DriverBadge label={driver.status} palette={statusPalette[driver.status]} />
+                <DriverBadge label={driver.situation} palette={situationPalette[driver.situation]} />
                 <DriverBadge label={driver.subscription} palette={subscriptionPalette[driver.subscription]} />
               </Stack>
             </Box>
@@ -80,22 +97,45 @@ export function DriverDetailsDialog({
         </Tabs>
 
         {tab === 0 && (
-          <Box
-            sx={{
-              display: 'grid',
-              gap: 2,
-              gridTemplateColumns: { xs: '1fr', md: 'repeat(3, minmax(0, 1fr))' },
-            }}
-          >
-            <DriverInfo label="Nome completo" value={driver.name} />
-            <DriverInfo label="CPF" value={details.cpf} />
-            <DriverInfo label="Telefone" value={driver.phone} />
-            <DriverInfo label="E-mail" value={details.email} />
-            <DriverInfo label="Cidade" value={details.city} />
-            <DriverInfo label="Data de cadastro" value={details.joinedAt} />
-            <DriverInfo label="Veículo" value={details.vehicle} />
-            <DriverInfo label="Placa" value={details.plate} />
-            <DriverInfo label="Último online" value={details.lastOnline} />
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+            <Box sx={{ display: 'grid', gap: 2, gridTemplateColumns: { xs: '1fr', md: 'repeat(3, minmax(0, 1fr))' } }}>
+              <DriverInfo label="Nome completo" value={driver.name} />
+              <DriverInfo label="CPF" value={details.cpf} />
+              <DriverInfo label="Telefone" value={driver.phone} />
+              <DriverInfo label="E-mail" value={details.email} />
+              <DriverInfo label="Data de cadastro" value={details.joinedAt} />
+              <DriverInfo label="Último online" value={details.lastOnline} />
+              <DriverInfo label="Veículo" value={details.vehicle} />
+              <DriverInfo label="Placa" value={details.plate} />
+              <DriverInfo label="Situação cadastral" value={driver.situation} />
+            </Box>
+
+            {(details.street || details.zipCode) && (
+              <>
+                <Typography sx={{ fontWeight: 800 }}>Endereço</Typography>
+                <Box sx={{ display: 'grid', gap: 2, gridTemplateColumns: { xs: '1fr', md: 'repeat(3, minmax(0, 1fr))' } }}>
+                  {details.zipCode && <DriverInfo label="CEP" value={details.zipCode} />}
+                  {details.state && <DriverInfo label="Estado" value={details.state} />}
+                  {details.city && <DriverInfo label="Cidade" value={details.city} />}
+                  {details.neighborhood && <DriverInfo label="Bairro" value={details.neighborhood} />}
+                  {details.street && <DriverInfo label="Rua" value={details.street} />}
+                  {details.number && <DriverInfo label="Número" value={details.number} />}
+                  {details.complement && <DriverInfo label="Complemento" value={details.complement} />}
+                  {details.referencePoint && <DriverInfo label="Ponto de referência" value={details.referencePoint} />}
+                </Box>
+              </>
+            )}
+
+            <FaceCheckSection
+              faceCheckUrl={details.faceCheckUrl ?? null}
+              faceCheckStatus={details.faceCheckStatus ?? null}
+              loading={faceCheckMutation.isPending}
+              onApprove={() => faceCheckMutation.mutate({ status: 'APPROVED' })}
+              onReject={() => faceCheckMutation.mutate({ status: 'REJECTED' })}
+              selfieOpen={selfieOpen}
+              onSelfieOpen={() => setSelfieOpen(true)}
+              onSelfieClose={() => setSelfieOpen(false)}
+            />
           </Box>
         )}
 
@@ -359,6 +399,13 @@ export function DriverEditDialog({
       cpf: formatCpf(details.cpf),
       email: details.email,
       city: details.city,
+      zipCode: details.zipCode ?? '',
+      street: details.street ?? '',
+      number: details.number ?? '',
+      complement: details.complement ?? '',
+      neighborhood: details.neighborhood ?? '',
+      state: details.state ?? '',
+      referencePoint: details.referencePoint ?? '',
       vehicle: details.vehicle,
       plate: details.plate,
       joinedAt: details.joinedAt,
@@ -451,17 +498,30 @@ export function DriverEditDialog({
           </FormControl>
 
           <FormControl>
-            <InputLabel id="driver-status-label">Status</InputLabel>
+            <InputLabel id="driver-status-label">Status online</InputLabel>
             <Select
               labelId="driver-status-label"
-              label="Status"
+              label="Status online"
               value={form.status}
               onChange={(event) => updateForm('status', event.target.value as DriverStatus)}
             >
               <MenuItem value="Online">Online</MenuItem>
               <MenuItem value="Offline">Offline</MenuItem>
-              <MenuItem value="Pendente">Pendente</MenuItem>
-              <MenuItem value="Bloqueado">Bloqueado</MenuItem>
+            </Select>
+          </FormControl>
+
+          <FormControl>
+            <InputLabel id="driver-situation-label">Situação cadastral</InputLabel>
+            <Select
+              labelId="driver-situation-label"
+              label="Situação cadastral"
+              value={form.situation}
+              onChange={(event) => updateForm('situation', event.target.value as DriverSituation)}
+            >
+              <MenuItem value="Aprovado">Aprovado</MenuItem>
+              <MenuItem value="Análise pendente">Análise pendente</MenuItem>
+              <MenuItem value="Reprovado">Reprovado</MenuItem>
+              <MenuItem value="Suspenso">Suspenso</MenuItem>
             </Select>
           </FormControl>
 
@@ -479,6 +539,18 @@ export function DriverEditDialog({
               <MenuItem value="Trial">Trial</MenuItem>
             </Select>
           </FormControl>
+        </Box>
+
+        <Typography variant="h4" sx={{ mt: 3, mb: 2 }}>Endereço</Typography>
+        <Box sx={{ display: 'grid', gap: 2, gridTemplateColumns: { xs: '1fr', md: 'repeat(2, minmax(0, 1fr))' } }}>
+          <TextField label="CEP" value={form.zipCode} onChange={(event) => updateForm('zipCode', event.target.value)} inputProps={{ maxLength: 8 }} />
+          <TextField label="Estado" value={form.state} onChange={(event) => updateForm('state', event.target.value)} inputProps={{ maxLength: 2 }} />
+          <TextField label="Cidade" value={form.city} onChange={(event) => updateForm('city', event.target.value)} />
+          <TextField label="Bairro" value={form.neighborhood} onChange={(event) => updateForm('neighborhood', event.target.value)} />
+          <TextField label="Rua" value={form.street} onChange={(event) => updateForm('street', event.target.value)} />
+          <TextField label="Número" value={form.number} onChange={(event) => updateForm('number', event.target.value)} />
+          <TextField label="Complemento (opcional)" value={form.complement} onChange={(event) => updateForm('complement', event.target.value)} />
+          <TextField label="Ponto de referência (opcional)" value={form.referencePoint} onChange={(event) => updateForm('referencePoint', event.target.value)} />
         </Box>
       </DialogContent>
 
@@ -725,4 +797,109 @@ export function NewDriverDialog({
 
 export function DriverBadge({ label, palette }: { label: string; palette: BadgePalette }) {
   return <DataBadge label={label} palette={palette} />
+}
+
+export function DocumentSection({ documentUrl }: { documentUrl: string }) {
+  const [open, setOpen] = useState(false)
+  const isPdf = documentUrl.toLowerCase().includes('.pdf') || documentUrl.includes('application/pdf')
+
+  return (
+    <>
+      <Typography sx={{ fontWeight: 800 }}>Documento de Identidade</Typography>
+      <Stack direction="row" alignItems="center" spacing={2}>
+        {isPdf ? (
+          <Button variant="outlined" size="small" onClick={() => window.open(documentUrl, '_blank')}>
+            Abrir PDF
+          </Button>
+        ) : (
+          <Box
+            component="img"
+            src={documentUrl}
+            alt="Documento de identidade"
+            onClick={() => setOpen(true)}
+            sx={{ height: 72, maxWidth: 120, borderRadius: 2, objectFit: 'cover', cursor: 'pointer', border: '2px solid', borderColor: 'divider', '&:hover': { opacity: 0.85 } }}
+          />
+        )}
+      </Stack>
+
+      <Dialog open={open} onClose={() => setOpen(false)} maxWidth="md" fullWidth>
+        <DialogTitle>
+          <Stack direction="row" justifyContent="space-between" alignItems="center">
+            <Typography variant="h4">Documento de identidade</Typography>
+            <IconButton onClick={() => setOpen(false)}><CloseIcon /></IconButton>
+          </Stack>
+        </DialogTitle>
+        <DialogContent sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
+          <Box component="img" src={documentUrl} alt="Documento ampliado" sx={{ maxWidth: '100%', maxHeight: 560, borderRadius: 2, objectFit: 'contain' }} />
+        </DialogContent>
+      </Dialog>
+    </>
+  )
+}
+
+export function FaceCheckSection({
+  faceCheckUrl,
+  faceCheckStatus,
+  loading,
+  onApprove,
+  onReject,
+  selfieOpen,
+  onSelfieOpen,
+  onSelfieClose,
+}: {
+  faceCheckUrl: string | null
+  faceCheckStatus: 'PENDING' | 'VERIFIED' | 'REJECTED' | null
+  loading: boolean
+  onApprove: () => void
+  onReject: () => void
+  selfieOpen: boolean
+  onSelfieOpen: () => void
+  onSelfieClose: () => void
+}) {
+  const statusLabel = faceCheckStatus === 'VERIFIED' ? 'Aprovada' : faceCheckStatus === 'REJECTED' ? 'Reprovada' : faceCheckStatus === 'PENDING' ? 'Aguardando revisão' : 'Não enviada'
+  const statusColor = faceCheckStatus === 'VERIFIED' ? 'success' : faceCheckStatus === 'REJECTED' ? 'error' : faceCheckStatus === 'PENDING' ? 'warning' : 'default'
+
+  return (
+    <>
+      <Typography sx={{ fontWeight: 800 }}>Verificação Facial</Typography>
+      <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} alignItems={{ xs: 'flex-start', sm: 'center' }}>
+        {faceCheckUrl ? (
+          <Box
+            component="img"
+            src={faceCheckUrl}
+            alt="Selfie do usuário"
+            onClick={onSelfieOpen}
+            sx={{ width: 80, height: 80, borderRadius: 2, objectFit: 'cover', cursor: 'pointer', border: '2px solid', borderColor: 'divider', '&:hover': { opacity: 0.85 } }}
+          />
+        ) : (
+          <Box sx={{ width: 80, height: 80, borderRadius: 2, bgcolor: 'action.hover', display: 'grid', placeItems: 'center', border: '2px dashed', borderColor: 'divider' }}>
+            <Typography variant="caption" color="text.disabled" textAlign="center">Não enviada</Typography>
+          </Box>
+        )}
+        <Stack spacing={1}>
+          <Chip label={statusLabel} color={statusColor as any} size="small" sx={{ alignSelf: 'flex-start' }} />
+          {faceCheckStatus === 'PENDING' && faceCheckUrl && (
+            <Stack direction="row" spacing={1}>
+              <Button size="small" variant="contained" color="success" onClick={onApprove} disabled={loading}>Aprovar</Button>
+              <Button size="small" variant="outlined" color="error" onClick={onReject} disabled={loading}>Reprovar</Button>
+            </Stack>
+          )}
+        </Stack>
+      </Stack>
+
+      <Dialog open={selfieOpen} onClose={onSelfieClose} maxWidth="sm" fullWidth>
+        <DialogTitle>
+          <Stack direction="row" justifyContent="space-between" alignItems="center">
+            <Typography variant="h4">Selfie de verificação</Typography>
+            <IconButton onClick={onSelfieClose}><CloseIcon /></IconButton>
+          </Stack>
+        </DialogTitle>
+        <DialogContent sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
+          {faceCheckUrl && (
+            <Box component="img" src={faceCheckUrl} alt="Selfie ampliada" sx={{ maxWidth: '100%', maxHeight: 480, borderRadius: 2, objectFit: 'contain' }} />
+          )}
+        </DialogContent>
+      </Dialog>
+    </>
+  )
 }

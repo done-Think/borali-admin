@@ -337,7 +337,7 @@ export default function AnalyticsPage() {
               }}
             >
               <MapContainer
-                center={[-23.5573, -46.6412]}
+                center={[-22.4256, -45.4528]}
                 zoom={11}
                 scrollWheelZoom={false}
                 style={{ width: '100%', height: '100%' }}

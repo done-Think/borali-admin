@@ -50,3 +50,7 @@ export async function suspendAdminDriver(driverId: string, reason = 'Bloqueio re
 export async function approveAdminDriver(driverId: string) {
   await api.patch(`/admin/drivers/${driverId}/review`, { status: 'APPROVED' })
 }
+
+export async function reviewFaceCheck(userId: string, status: 'APPROVED' | 'REJECTED', reason?: string) {
+  await api.patch(`/admin/users/${userId}/face-check`, { status, reason })
+}

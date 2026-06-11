@@ -13,6 +13,7 @@ import {
   Card,
   CardContent,
   Chip,
+  CircularProgress,
   Collapse,
   Dialog,
   DialogContent,
@@ -28,8 +29,14 @@ import {
 import CloseIcon from '@mui/icons-material/Close'
 import { useSnackbar } from 'notistack'
 import { useLocation } from 'react-router'
-import { pendingApprovalDrivers, recentApprovalHistory } from '../services'
-import type { ApprovalDocument, ApprovalDriver, ApprovalHistoryItem } from '../types'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import {
+  approveDriver,
+  fetchPendingDrivers,
+  rejectDriver,
+  reviewDocument,
+} from '../services'
+import type { ApprovalDocument, ApprovalDriver, ApprovalHistoryItem, PendingDriver } from '../types'
 
 function getFaceCheckColor(status: ApprovalDriver['faceCheck']['status']) {
   if (status === 'Aprovado') {
@@ -47,13 +54,118 @@ function getDocumentIcon(document: ApprovalDocument) {
   return document.format === 'PDF' ? <DescriptionOutlinedIcon /> : <ImageOutlinedIcon />
 }
 
+const categoryLabel: Record<string, string> = {
+  ECONOMY: 'Econômico',
+  COMFORT: 'Conforto',
+  EXECUTIVE: 'Executivo',
+}
+
+function formatDate(iso?: string | null) {
+  if (!iso) return '—'
+  return new Intl.DateTimeFormat('pt-BR', {
+    day: '2-digit', month: '2-digit', year: 'numeric',
+    hour: '2-digit', minute: '2-digit',
+  }).format(new Date(iso))
+}
+
+function formatDocType(type: string): ApprovalDocument['type'] {
+  if (type === 'CNH') return 'CNH'
+  if (type === 'CRLV') return 'CRLV'
+  if (type === 'VEHICLE_PHOTO') return 'Foto do veiculo'
+  if (type === 'FACE_CHECK') return 'Selfie'
+  return 'CNH'
+}
+
+/** Map a PendingDriver from the API to the ApprovalDriver shape used by the UI */
+function mapPendingDriver(pending: PendingDriver): ApprovalDriver {
+  const u = pending.user
+  const v = pending.vehicles?.[0]
+
+  const name = u?.name ?? 'Motorista'
+  const initials = name.split(' ').slice(0, 2).map((p) => p[0]?.toUpperCase() ?? '').join('')
+
+  const city = u?.city && u?.state ? `${u.city}, ${u.state}` : (u?.city ?? '—')
+  const address = u?.street && u?.number ? `${u.street}, ${u.number}` : (u?.street ?? '—')
+
+  const faceStatus = u?.faceCheckStatus
+  const faceCheckUiStatus: ApprovalDriver['faceCheck']['status'] =
+    faceStatus === 'VERIFIED' ? 'Aprovado' : faceStatus === 'REJECTED' ? 'Reprovado' : 'Revisar'
+
+  return {
+    id: pending.userId,
+    driverId: pending.id,
+    name,
+    initials,
+    email: u?.email ?? '—',
+    cpf: u?.cpf ?? '—',
+    birthDate: '—',
+    category: v ? (categoryLabel[v.category] ?? v.category) : '—',
+    city,
+    address,
+    neighborhood: u?.neighborhood ?? '—',
+    zipCode: u?.zipCode ?? '—',
+    phone: u?.phone ?? '—',
+    cnhCategory: pending.cnhCategory ?? '—',
+    cnhExpiresAt: pending.cnhExpiry ? new Intl.DateTimeFormat('pt-BR').format(new Date(pending.cnhExpiry)) : '—',
+    vehicle: v ? `${v.brand} ${v.model}` : '—',
+    vehicleYear: v ? String(v.year) : '—',
+    vehicleColor: v?.color ?? '—',
+    plate: v?.plate ?? '—',
+    bankName: '—',
+    bankAgency: '—',
+    bankAccount: '—',
+    emergencyContact: '—',
+    emergencyPhone: '—',
+    referralSource: '—',
+    requestedAt: formatDate(pending.createdAt),
+    status: 'PENDING',
+    documents: (pending.documents ?? []).map((doc) => ({
+      id: doc.id,
+      type: formatDocType(doc.type),
+      name: doc.type,
+      format: 'Imagem' as const,
+      url: doc.url,
+      status: doc.status,
+    })),
+    faceCheck: { score: 0, status: faceCheckUiStatus },
+  }
+}
+
 export default function ApprovalsPage() {
   const location = useLocation()
   const { enqueueSnackbar } = useSnackbar()
+  const queryClient = useQueryClient()
   const locationState = location.state as { selectedApprovalDriverId?: string; selectedApprovalDriverName?: string } | null
-  const [pendingDrivers, setPendingDrivers] = useState(pendingApprovalDrivers)
-  const [approvalHistory, setApprovalHistory] = useState(recentApprovalHistory)
+  const [approvalHistory, setApprovalHistory] = useState<ApprovalHistoryItem[]>([])
   const [selectedHistory, setSelectedHistory] = useState<ApprovalHistoryItem | null>(null)
+
+  const { data: rawPendingDrivers = [], isLoading } = useQuery({
+    queryKey: ['approvals', 'pending'],
+    queryFn: fetchPendingDrivers,
+    refetchInterval: 30_000,
+  })
+
+  const pendingDrivers: ApprovalDriver[] = rawPendingDrivers.map(mapPendingDriver)
+
+  const approveMutation = useMutation({
+    mutationFn: (driverId: string) => approveDriver(driverId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['approvals', 'pending'] })
+    },
+    onError: () => {
+      enqueueSnackbar('Erro ao aprovar motorista', { variant: 'error' })
+    },
+  })
+
+  const rejectMutation = useMutation({
+    mutationFn: ({ id, reason }: { id: string; reason: string }) => rejectDriver(id, reason),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['approvals', 'pending'] })
+    },
+    onError: () => {
+      enqueueSnackbar('Erro ao reprovar motorista', { variant: 'error' })
+    },
+  })
 
   function getDecisionTimestamp() {
     return new Intl.DateTimeFormat('pt-BR', {
@@ -66,25 +178,44 @@ export default function ApprovalsPage() {
   }
 
   function handleDecision(driver: ApprovalDriver, decision: 'Aprovado' | 'Rejeitado', reason?: string) {
-    setPendingDrivers((current) => current.filter((item) => item.id !== driver.id))
-    setApprovalHistory((current) => [
-      {
-        id: `hist-${driver.id}-${Date.now()}`,
-        driverName: driver.name,
-        decision,
-        decidedAt: getDecisionTimestamp(),
-        reviewer: 'Admin',
-        driver,
-        reason,
-      },
-      ...current,
-    ])
-    enqueueSnackbar(
-      decision === 'Aprovado'
-        ? `${driver.name} aprovado com sucesso.`
-        : `${driver.name} rejeitado e removido da fila.`,
-      { variant: decision === 'Aprovado' ? 'success' : 'warning', autoHideDuration: 2000 },
-    )
+    const driverId = driver.driverId
+
+    if (decision === 'Aprovado') {
+      approveMutation.mutate(driverId, {
+        onSuccess: () => {
+          setApprovalHistory((current) => [
+            {
+              id: `hist-${driver.id}-${Date.now()}`,
+              driverName: driver.name,
+              decision,
+              decidedAt: getDecisionTimestamp(),
+              reviewer: 'Admin',
+              driver,
+            },
+            ...current,
+          ])
+          enqueueSnackbar(`${driver.name} aprovado com sucesso.`, { variant: 'success', autoHideDuration: 2000 })
+        },
+      })
+    } else {
+      rejectMutation.mutate({ id: driverId, reason: reason ?? '' }, {
+        onSuccess: () => {
+          setApprovalHistory((current) => [
+            {
+              id: `hist-${driver.id}-${Date.now()}`,
+              driverName: driver.name,
+              decision,
+              decidedAt: getDecisionTimestamp(),
+              reviewer: 'Admin',
+              driver,
+              reason,
+            },
+            ...current,
+          ])
+          enqueueSnackbar(`${driver.name} rejeitado e removido da fila.`, { variant: 'warning', autoHideDuration: 2000 })
+        },
+      })
+    }
   }
 
   function handleReviewHistory(item: ApprovalHistoryItem, decision: 'Aprovado' | 'Rejeitado', reason?: string) {
@@ -107,13 +238,6 @@ export default function ApprovalsPage() {
   }
 
   function handleRestoreToApprovals(item: ApprovalHistoryItem) {
-    setPendingDrivers((current) => {
-      if (current.some((driver) => driver.id === item.driver.id)) {
-        return current
-      }
-
-      return [item.driver, ...current]
-    })
     setApprovalHistory((current) => current.filter((historyItem) => historyItem.id !== item.id))
     setSelectedHistory(null)
     enqueueSnackbar(`${item.driverName} voltou para a fila de aprovações.`, { variant: 'info', autoHideDuration: 2000 })
@@ -143,19 +267,35 @@ export default function ApprovalsPage() {
         />
       </Stack>
 
-      <Stack spacing={1.5}>
-        {pendingDrivers.map((driver) => (
-          <ApprovalDriverCard
-            key={driver.id}
-            driver={driver}
-            initialExpanded={
-              driver.id === locationState?.selectedApprovalDriverId ||
-              driver.name === locationState?.selectedApprovalDriverName
-            }
-            onDecision={handleDecision}
-          />
-        ))}
-      </Stack>
+      {isLoading ? (
+        <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
+          <CircularProgress />
+        </Box>
+      ) : pendingDrivers.length === 0 ? (
+        <Card variant="outlined">
+          <CardContent sx={{ py: 6, textAlign: 'center' }}>
+            <AssignmentTurnedInIcon sx={{ fontSize: 48, color: 'text.disabled', mb: 1.5, display: 'block', mx: 'auto' }} />
+            <Typography fontWeight={800}>Nenhuma aprovação pendente</Typography>
+            <Typography color="text.secondary" sx={{ mt: 0.5 }}>
+              Novos cadastros de motoristas aparecerão aqui para revisão.
+            </Typography>
+          </CardContent>
+        </Card>
+      ) : (
+        <Stack spacing={1.5}>
+          {pendingDrivers.map((driver) => (
+            <ApprovalDriverCard
+              key={driver.driverId}
+              driver={driver}
+              initialExpanded={
+                driver.driverId === locationState?.selectedApprovalDriverId ||
+                driver.name === locationState?.selectedApprovalDriverName
+              }
+              onDecision={handleDecision}
+            />
+          ))}
+        </Stack>
+      )}
 
       <Card variant="outlined">
         <CardContent>
@@ -259,7 +399,7 @@ function ApprovalDriverCard({
         onClick={() => setExpanded((current) => !current)}
         sx={{ width: '100%', display: 'block', textAlign: 'left', borderRadius: 'inherit' }}
         aria-expanded={expanded}
-        aria-controls={`approval-driver-${driver.id}`}
+        aria-controls={`approval-driver-${driver.driverId}`}
       >
         <CardContent sx={{ p: 1.75, '&:last-child': { pb: 1.75 } }}>
           <Stack direction={{ xs: 'column', md: 'row' }} spacing={1.5} alignItems={{ xs: 'flex-start', md: 'center' }} justifyContent="space-between">
@@ -280,13 +420,13 @@ function ApprovalDriverCard({
                   {driver.name}
                 </Typography>
                 <Typography color="text.secondary" variant="body2" noWrap>
-                  {driver.id} · {driver.city} · {driver.phone}
+                  {driver.driverId} · {driver.city} · {driver.phone}
                 </Typography>
               </Box>
             </Stack>
 
             <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap" useFlexGap>
-              <Chip label={driver.category} size="small" variant="outlined" sx={{ fontWeight: 800 }} />
+              {driver.category ? <Chip label={driver.category} size="small" variant="outlined" sx={{ fontWeight: 800 }} /> : null}
               <Chip label={`${driver.documents.length} documentos`} size="small" color="primary" variant="outlined" sx={{ fontWeight: 800 }} />
               <Chip
                 label={`${driver.faceCheck.status} · ${driver.faceCheck.score.toFixed(1)}%`}
@@ -314,7 +454,7 @@ function ApprovalDriverCard({
       </ButtonBase>
 
       <Collapse in={expanded} timeout="auto" unmountOnExit>
-        <CardContent id={`approval-driver-${driver.id}`} sx={{ pt: 0, px: 1.75, pb: 1.75, '&:last-child': { pb: 1.75 } }}>
+        <CardContent id={`approval-driver-${driver.driverId}`} sx={{ pt: 0, px: 1.75, pb: 1.75, '&:last-child': { pb: 1.75 } }}>
           <Divider sx={{ mb: 1.75 }} />
 
           <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', lg: '1.1fr 1fr 0.9fr' }, gap: 1.5 }}>
@@ -332,12 +472,12 @@ function ApprovalDriverCard({
                   </Button>
                 </Stack>
                 <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 1.25, mt: 1.25 }}>
-                  <DetailItem label="Categoria" value={driver.category} />
-                  <DetailItem label="Solicitado" value={driver.requestedAt} />
-                  <DetailItem label="Veículo" value={driver.vehicle} />
-                  <DetailItem label="Placa" value={driver.plate} />
-                  <DetailItem label="Cidade" value={driver.city} />
-                  <DetailItem label="Telefone" value={driver.phone} />
+                  <DetailItem label="Categoria" value={driver.category || '—'} />
+                  <DetailItem label="Solicitado" value={driver.requestedAt || '—'} />
+                  <DetailItem label="Veículo" value={driver.vehicle || '—'} />
+                  <DetailItem label="Placa" value={driver.plate || '—'} />
+                  <DetailItem label="Cidade" value={driver.city || '—'} />
+                  <DetailItem label="Telefone" value={driver.phone || '—'} />
                 </Box>
               </CardContent>
             </Card>
@@ -372,7 +512,17 @@ function ApprovalDriverCard({
                           </Typography>
                         </Box>
                       </Stack>
-                      <Chip label={document.format} size="small" variant="outlined" sx={{ fontWeight: 800 }} />
+                      <Stack direction="row" spacing={0.5} alignItems="center">
+                        <Chip label={document.format} size="small" variant="outlined" sx={{ fontWeight: 800 }} />
+                        {document.status !== 'PENDING' ? (
+                          <Chip
+                            label={document.status === 'APPROVED' ? 'Aprovado' : 'Reprovado'}
+                            color={document.status === 'APPROVED' ? 'success' : 'error'}
+                            size="small"
+                            sx={{ fontWeight: 800 }}
+                          />
+                        ) : null}
+                      </Stack>
                     </Stack>
                     </ButtonBase>
                   ))}
@@ -547,7 +697,7 @@ function FullRegistrationDialog({
             Cadastro completo
           </Typography>
           <Typography color="text.secondary" variant="body2">
-            {driver.name} · {driver.id}
+            {driver.name} · {driver.driverId}
           </Typography>
         </Box>
 
@@ -588,27 +738,27 @@ function FullRegistrationDialog({
               title="Dados pessoais"
               items={[
                 { label: 'Nome completo', value: driver.name },
-                { label: 'CPF', value: driver.cpf },
-                { label: 'Nascimento', value: driver.birthDate },
+                { label: 'CPF', value: driver.cpf || '—' },
+                { label: 'Nascimento', value: driver.birthDate || '—' },
                 { label: 'E-mail', value: driver.email },
-                { label: 'Telefone', value: driver.phone },
-                { label: 'Origem', value: driver.referralSource },
+                { label: 'Telefone', value: driver.phone || '—' },
+                { label: 'Origem', value: driver.referralSource || '—' },
               ]}
             />
             <RegistrationSection
               title="Endereco"
               items={[
-                { label: 'Cidade', value: driver.city },
-                { label: 'Bairro', value: driver.neighborhood },
-                { label: 'Endereco', value: driver.address },
-                { label: 'CEP', value: driver.zipCode },
+                { label: 'Cidade', value: driver.city || '—' },
+                { label: 'Bairro', value: driver.neighborhood || '—' },
+                { label: 'Endereco', value: driver.address || '—' },
+                { label: 'CEP', value: driver.zipCode || '—' },
               ]}
             />
             <RegistrationSection
               title="CNH"
               items={[
-                { label: 'Categoria CNH', value: driver.cnhCategory },
-                { label: 'Validade', value: driver.cnhExpiresAt },
+                { label: 'Categoria CNH', value: driver.cnhCategory || '—' },
+                { label: 'Validade', value: driver.cnhExpiresAt || '—' },
                 { label: 'Status face check', value: driver.faceCheck.status },
                 { label: 'Score face check', value: `${driver.faceCheck.score.toFixed(1)}%` },
               ]}
@@ -619,27 +769,27 @@ function FullRegistrationDialog({
             <RegistrationSection
               title="Veiculo"
               items={[
-                { label: 'Modelo', value: driver.vehicle },
-                { label: 'Ano', value: driver.vehicleYear },
-                { label: 'Cor', value: driver.vehicleColor },
-                { label: 'Placa', value: driver.plate },
-                { label: 'Categoria', value: driver.category },
+                { label: 'Modelo', value: driver.vehicle || '—' },
+                { label: 'Ano', value: driver.vehicleYear || '—' },
+                { label: 'Cor', value: driver.vehicleColor || '—' },
+                { label: 'Placa', value: driver.plate || '—' },
+                { label: 'Categoria', value: driver.category || '—' },
               ]}
             />
             <RegistrationSection
               title="Dados bancarios"
               items={[
-                { label: 'Banco', value: driver.bankName },
-                { label: 'Agencia', value: driver.bankAgency },
-                { label: 'Conta', value: driver.bankAccount },
+                { label: 'Banco', value: driver.bankName || '—' },
+                { label: 'Agencia', value: driver.bankAgency || '—' },
+                { label: 'Conta', value: driver.bankAccount || '—' },
               ]}
             />
             <RegistrationSection
               title="Emergencia"
               items={[
-                { label: 'Contato', value: driver.emergencyContact },
-                { label: 'Telefone', value: driver.emergencyPhone },
-                { label: 'Solicitado em', value: driver.requestedAt },
+                { label: 'Contato', value: driver.emergencyContact || '—' },
+                { label: 'Telefone', value: driver.emergencyPhone || '—' },
+                { label: 'Solicitado em', value: driver.requestedAt || '—' },
               ]}
             />
           </Box>
@@ -753,6 +903,53 @@ function DocumentPreviewDialog({
   onClose: () => void
 }) {
   const theme = useTheme()
+  const queryClient = useQueryClient()
+  const { enqueueSnackbar } = useSnackbar()
+  const [rejectionNotesMode, setRejectionNotesMode] = useState(false)
+  const [rejectionNotes, setRejectionNotes] = useState('')
+
+  const reviewDocMutation = useMutation({
+    mutationFn: ({ docId, status, notes }: { docId: string; status: 'APPROVED' | 'REJECTED'; notes?: string }) =>
+      reviewDocument(docId, status, notes),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['approvals', 'pending'] })
+    },
+    onError: () => {
+      enqueueSnackbar('Erro ao revisar documento', { variant: 'error' })
+    },
+  })
+
+  // Reset notes state when the dialog opens a new document
+  useEffect(() => {
+    setRejectionNotesMode(false)
+    setRejectionNotes('')
+  }, [document?.id])
+
+  function handleApproveDocument() {
+    if (!document) return
+    reviewDocMutation.mutate(
+      { docId: document.id, status: 'APPROVED' },
+      {
+        onSuccess: () => {
+          enqueueSnackbar(`Documento "${document.type}" aprovado.`, { variant: 'success', autoHideDuration: 2000 })
+          onClose()
+        },
+      },
+    )
+  }
+
+  function handleRejectDocument() {
+    if (!document) return
+    reviewDocMutation.mutate(
+      { docId: document.id, status: 'REJECTED', notes: rejectionNotes.trim() || undefined },
+      {
+        onSuccess: () => {
+          enqueueSnackbar(`Documento "${document.type}" reprovado.`, { variant: 'warning', autoHideDuration: 2000 })
+          onClose()
+        },
+      },
+    )
+  }
 
   return (
     <Dialog open={Boolean(document)} onClose={onClose} fullWidth maxWidth="md">
@@ -780,41 +977,65 @@ function DocumentPreviewDialog({
                 border: `1px solid ${theme.palette.divider}`,
                 borderRadius: 2,
                 bgcolor: 'background.default',
-                display: 'grid',
-                placeItems: 'center',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
                 overflow: 'hidden',
+                p: 1,
               }}
             >
               {document.format === 'PDF' ? (
-                <Stack spacing={1.5} alignItems="center" sx={{ px: 3, textAlign: 'center' }}>
-                  <DescriptionOutlinedIcon sx={{ fontSize: 72, color: theme.palette.error.main }} />
-                  <Typography variant="h4">{document.name}</Typography>
-                  <Typography color="text.secondary">
-                    Prévia de PDF mockada. Na integração real, este painel recebe o arquivo assinado da API.
-                  </Typography>
-                </Stack>
-              ) : (
-                <Box
-                  sx={{
-                    width: 'min(100%, 560px)',
-                    aspectRatio: '4 / 3',
-                    borderRadius: 2,
-                    border: `1px solid ${theme.palette.divider}`,
-                    background:
-                      'linear-gradient(135deg, rgba(10, 190, 233, 0.16), rgba(45, 212, 160, 0.14))',
-                    display: 'grid',
-                    placeItems: 'center',
-                  }}
-                >
-                  <Stack spacing={1.25} alignItems="center" sx={{ textAlign: 'center', px: 3 }}>
-                    <ImageOutlinedIcon sx={{ fontSize: 72, color: theme.palette.secondary.main }} />
+                document.url ? (
+                  <Stack spacing={1.5} alignItems="center" sx={{ px: 3, textAlign: 'center' }}>
+                    <DescriptionOutlinedIcon sx={{ fontSize: 72, color: theme.palette.error.main }} />
                     <Typography variant="h4">{document.name}</Typography>
-                    <Typography color="text.secondary">
-                      Prévia de imagem mockada para revisão documental.
-                    </Typography>
+                    <Button
+                      variant="outlined"
+                      href={document.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      sx={{ fontWeight: 900, textTransform: 'none' }}
+                    >
+                      Abrir PDF
+                    </Button>
                   </Stack>
-                </Box>
+                ) : (
+                  <Stack spacing={1.5} alignItems="center" sx={{ px: 3, textAlign: 'center' }}>
+                    <DescriptionOutlinedIcon sx={{ fontSize: 72, color: theme.palette.error.main }} />
+                    <Typography variant="h4">{document.name}</Typography>
+                    <Typography color="text.secondary">URL do documento não disponível.</Typography>
+                  </Stack>
+                )
+              ) : document.url ? (
+                <img
+                  src={document.url}
+                  alt={document.name}
+                  style={{ width: '100%', maxHeight: 480, objectFit: 'contain', borderRadius: 8 }}
+                  onError={(e) => {
+                    e.currentTarget.style.display = 'none'
+                    const fallback = e.currentTarget.nextElementSibling as HTMLElement | null
+                    if (fallback) fallback.style.display = 'flex'
+                  }}
+                />
+              ) : (
+                <Stack spacing={1.25} alignItems="center" sx={{ textAlign: 'center', px: 3 }}>
+                  <ImageOutlinedIcon sx={{ fontSize: 72, color: theme.palette.secondary.main }} />
+                  <Typography variant="h4">{document.name}</Typography>
+                  <Typography color="text.secondary">URL da imagem não disponível.</Typography>
+                </Stack>
               )}
+              {/* Fallback shown via onError above — hidden by default */}
+              {document.format !== 'PDF' && document.url ? (
+                <Stack
+                  spacing={1.25}
+                  alignItems="center"
+                  sx={{ textAlign: 'center', px: 3, display: 'none' }}
+                >
+                  <ImageOutlinedIcon sx={{ fontSize: 72, color: theme.palette.secondary.main }} />
+                  <Typography variant="h4">{document.name}</Typography>
+                  <Typography color="text.secondary">Imagem indisponível.</Typography>
+                </Stack>
+              ) : null}
             </Box>
 
             <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(3, minmax(0, 1fr))' }, gap: 1.5 }}>
@@ -822,6 +1043,70 @@ function DocumentPreviewDialog({
               <DetailItem label="Arquivo" value={document.name} />
               <DetailItem label="Formato" value={document.format} />
             </Box>
+
+            {/* T016 — individual document review buttons */}
+            <Card variant="outlined">
+              <CardContent sx={{ p: 1.5, '&:last-child': { pb: 1.5 } }}>
+                <Stack
+                  direction={{ xs: 'column', sm: 'row' }}
+                  spacing={1.5}
+                  alignItems={{ xs: 'stretch', sm: 'center' }}
+                  justifyContent="space-between"
+                >
+                  <Box>
+                    <Typography variant="h5">Revisão do documento</Typography>
+                    <Typography color="text.secondary" variant="body2">
+                      Aprove ou reprove este documento individualmente.
+                    </Typography>
+                  </Box>
+
+                  <Stack direction="row" spacing={1} justifyContent={{ xs: 'stretch', sm: 'flex-end' }}>
+                    <Button
+                      variant="contained"
+                      color="success"
+                      disabled={reviewDocMutation.isPending}
+                      onClick={handleApproveDocument}
+                      sx={{ fontWeight: 900, textTransform: 'none' }}
+                    >
+                      Aprovar documento
+                    </Button>
+                    <Button
+                      variant={rejectionNotesMode ? 'contained' : 'outlined'}
+                      color="error"
+                      disabled={reviewDocMutation.isPending}
+                      onClick={() => setRejectionNotesMode((current) => !current)}
+                      sx={{ fontWeight: 900, textTransform: 'none' }}
+                    >
+                      Reprovar documento
+                    </Button>
+                  </Stack>
+                </Stack>
+
+                {rejectionNotesMode ? (
+                  <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.25} alignItems={{ xs: 'stretch', sm: 'flex-start' }} sx={{ mt: 1.5 }}>
+                    <TextField
+                      value={rejectionNotes}
+                      onChange={(event) => setRejectionNotes(event.target.value)}
+                      label="Observações (opcional)"
+                      placeholder="Ex.: documento ilegível, foto cortada, data vencida"
+                      size="small"
+                      multiline
+                      minRows={2}
+                      fullWidth
+                    />
+                    <Button
+                      variant="contained"
+                      color="error"
+                      disabled={reviewDocMutation.isPending}
+                      onClick={handleRejectDocument}
+                      sx={{ fontWeight: 900, textTransform: 'none', minWidth: 150 }}
+                    >
+                      Confirmar
+                    </Button>
+                  </Stack>
+                ) : null}
+              </CardContent>
+            </Card>
           </Stack>
         ) : null}
       </DialogContent>

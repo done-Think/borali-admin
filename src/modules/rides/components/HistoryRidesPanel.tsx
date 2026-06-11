@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import ChatOutlinedIcon from '@mui/icons-material/ChatOutlined'
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown'
 import KeyboardArrowRightIcon from '@mui/icons-material/KeyboardArrowRight'
 import PersonPinCircleIcon from '@mui/icons-material/PersonPinCircle'
@@ -11,6 +12,7 @@ import {
   Card,
   CardContent,
   Chip,
+  CircularProgress,
   Collapse,
   Dialog,
   DialogActions,
@@ -29,6 +31,7 @@ import {
   TextField,
   Typography,
 } from '@mui/material'
+import { useQuery } from '@tanstack/react-query'
 import { alpha } from '@mui/material/styles'
 import L from 'leaflet'
 import { CircleMarker, MapContainer, Polyline, TileLayer, Tooltip, useMap } from 'react-leaflet'
@@ -37,6 +40,7 @@ import { getMapTileLayer } from '@modules/dashboard/utils/mapConfig'
 import { useActivePaletteMode } from '@modules/dashboard/utils/useActivePaletteMode'
 import { useNavigate } from 'react-router'
 import { alertColor } from '../data/mockRides'
+import { fetchRideChatHistory } from '../services'
 import type { HistoryRide, HistoryStatusFilter } from '../types'
 import { formatDateTime } from '../utils/rides'
 
@@ -48,7 +52,7 @@ const rideTableCellSx = {
   verticalAlign: 'middle',
 }
 
-type HistoryDetailModal = 'passenger' | 'driver' | 'ride' | 'occurrences' | null
+type HistoryDetailModal = 'passenger' | 'driver' | 'ride' | 'occurrences' | 'chat' | null
 
 type HistoryRidesPanelProps = {
   rides: HistoryRide[]
@@ -193,7 +197,7 @@ function HistoryRideDetails({ ride }: { ride: HistoryRide }) {
 
   return (
     <Box sx={{ p: 2, bgcolor: 'background.default' }}>
-      <Box sx={{ display: 'grid', gap: 2, gridTemplateColumns: { xs: '1fr', md: 'repeat(2, minmax(0, 1fr))', xl: 'repeat(4, minmax(0, 1fr))' } }}>
+      <Box sx={{ display: 'grid', gap: 2, gridTemplateColumns: { xs: '1fr', md: 'repeat(2, minmax(0, 1fr))', xl: 'repeat(5, minmax(0, 1fr))' } }}>
         <DetailActionCard
           title="Corrida concluida"
           icon={<RouteIcon fontSize="small" />}
@@ -242,6 +246,18 @@ function HistoryRideDetails({ ride }: { ride: HistoryRide }) {
             { label: 'Transacao', value: ride.payment.transactionId },
           ]}
         />
+        <DetailActionCard
+          title="Chat da corrida"
+          icon={<ChatOutlinedIcon fontSize="small" />}
+          accentColor="#F59E0B"
+          onClick={() => setSelectedDetail('chat')}
+          items={[
+            { label: 'Acesso', value: 'Admin — todos os status' },
+            { label: 'Tipo', value: 'Somente leitura' },
+            { label: 'Corrida', value: ride.id },
+            { label: 'Auditoria', value: 'Disponivel' },
+          ]}
+        />
       </Box>
 
       <Box sx={{ mt: 2, border: '1px solid', borderColor: 'divider', borderRadius: 2, p: 1.5 }}>
@@ -265,6 +281,7 @@ function HistoryRideDetails({ ride }: { ride: HistoryRide }) {
       <DriverDetailsDialog ride={ride} profile={driverProfile} open={selectedDetail === 'driver'} onClose={() => setSelectedDetail(null)} />
       <CompletedRideDialog ride={ride} routeReview={routeReview} open={selectedDetail === 'ride'} onClose={() => setSelectedDetail(null)} />
       <OccurrencesDialog ride={ride} open={selectedDetail === 'occurrences'} onClose={() => setSelectedDetail(null)} />
+      <ChatHistoryDialog rideId={ride.id} open={selectedDetail === 'chat'} onClose={() => setSelectedDetail(null)} />
     </Box>
   )
 }
@@ -515,6 +532,82 @@ function OccurrencesDialog({ ride, open, onClose }: { ride: HistoryRide; open: b
           ))}
         </Stack>
       </DialogContent>
+    </Dialog>
+  )
+}
+
+function ChatHistoryDialog({ rideId, open, onClose }: { rideId: string; open: boolean; onClose: () => void }) {
+  const { data, isLoading, isError, refetch } = useQuery({
+    queryKey: ['rides', rideId, 'chat'],
+    queryFn: () => fetchRideChatHistory(rideId),
+    enabled: open,
+    staleTime: 5 * 60 * 1000,
+  })
+
+  function formatMsgTime(iso: string) {
+    return new Date(iso).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })
+  }
+
+  return (
+    <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
+      <DialogTitle>
+        <Typography variant="h4">Chat da corrida</Typography>
+        <Typography color="text.secondary" sx={{ mt: 0.5 }}>
+          {rideId} — somente leitura
+        </Typography>
+      </DialogTitle>
+      <DialogContent dividers sx={{ minHeight: 200 }}>
+        {isLoading && (
+          <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', py: 6 }}>
+            <CircularProgress size={28} />
+          </Box>
+        )}
+        {isError && (
+          <Box sx={{ textAlign: 'center', py: 4 }}>
+            <Typography color="text.secondary">Nao foi possivel carregar o historico.</Typography>
+            <Button size="small" onClick={() => refetch()} sx={{ mt: 1 }}>
+              Tentar novamente
+            </Button>
+          </Box>
+        )}
+        {!isLoading && !isError && data?.messages.length === 0 && (
+          <Typography color="text.secondary" sx={{ textAlign: 'center', py: 4 }}>
+            Nenhuma mensagem trocada nesta corrida.
+          </Typography>
+        )}
+        {!isLoading && !isError && (data?.messages ?? []).length > 0 && (
+          <Stack spacing={1}>
+            {data!.messages.map((msg) => (
+              <Box
+                key={msg.id}
+                sx={{
+                  border: '1px solid',
+                  borderColor: 'divider',
+                  borderRadius: 2,
+                  p: 1.5,
+                  bgcolor: 'background.default',
+                }}
+              >
+                <Stack direction="row" spacing={1} justifyContent="space-between" alignItems="flex-start">
+                  <Typography sx={{ fontSize: 12, fontWeight: 800 }}>{msg.senderName}</Typography>
+                  <Typography color="text.secondary" sx={{ fontSize: 11, whiteSpace: 'nowrap' }}>
+                    {formatMsgTime(msg.sentAt)}
+                  </Typography>
+                </Stack>
+                <Typography sx={{ mt: 0.5, fontSize: 13 }}>{msg.content}</Typography>
+              </Box>
+            ))}
+            {data && data.total > 0 && (
+              <Typography color="text.secondary" sx={{ fontSize: 12, textAlign: 'center', pt: 1 }}>
+                {data.total} mensagem{data.total !== 1 ? 's' : ''}
+              </Typography>
+            )}
+          </Stack>
+        )}
+      </DialogContent>
+      <DialogActions sx={{ px: 3, py: 2 }}>
+        <Button onClick={onClose}>Fechar</Button>
+      </DialogActions>
     </Dialog>
   )
 }

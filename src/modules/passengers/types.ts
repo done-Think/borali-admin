@@ -14,7 +14,7 @@ export type Passenger = {
   tier: PassengerTier
   status: PassengerStatus
   rides: number
-  rating: number
+  rating: number | null
   payments: PassengerPayment[]
   monthlySpend: number
 }
@@ -27,6 +27,9 @@ export type PassengerDetails = {
   joinedAt: string
   lastRide: string
   preferredRegion: string
+  faceCheckStatus?: 'PENDING' | 'VERIFIED' | 'REJECTED' | null
+  faceCheckUrl?: string | null
+  documentUrl?: string | null
   rideHistory: Array<{
     id: string
     date: string
@@ -44,7 +47,7 @@ export type PassengerDetails = {
   monthlyAverage: {
     rides: number
     spend: number
-    rating: number
+    rating: number | null
     cancellationRate: number | null
   }
 }

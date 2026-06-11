@@ -447,6 +447,15 @@ export function SubscriptionsTable({
                 </TableRow>
               </TableHead>
               <TableBody>
+                {filteredSubscriptions.length === 0 && (
+                  <TableRow>
+                    <TableCell colSpan={6} align="center" sx={{ py: 6 }}>
+                      <Typography color="text.secondary">
+                        {searchTerm ? 'Nenhuma assinatura encontrada.' : 'Nenhuma assinatura cadastrada.'}
+                      </Typography>
+                    </TableCell>
+                  </TableRow>
+                )}
                 {filteredSubscriptions.map((subscription) => (
                   <TableRow key={subscription.id} hover>
                     <TableCell>

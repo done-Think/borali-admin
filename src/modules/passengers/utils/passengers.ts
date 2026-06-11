@@ -73,7 +73,8 @@ export function getPassengerSortValue(passenger: Passenger, key: PassengerSortKe
     return Math.min(...passenger.payments.map((payment) => paymentSortOrder[payment]))
   }
 
-  return passenger[key]
+  const value = passenger[key]
+  return value ?? -1
 }
 
 export function getPassengerDetailsBase(passenger: Passenger): PassengerDetails {

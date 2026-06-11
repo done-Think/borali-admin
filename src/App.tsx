@@ -62,7 +62,7 @@ const branding = {
   logo: (
     <img
       src={logo}
-      alt="BoraLi"
+      alt="BorAlí"
       style={{
         width: 168,
         maxHeight: 72,
@@ -120,9 +120,7 @@ export default function App() {
       branding={branding}
       session={session}
       authentication={{
-        signIn: () => {
-          navigate('/login')
-        },
+        signIn: () => navigate('/login'),
         signOut: () => {
           useAuthStore.getState().clearAuth()
           signOut(`${window.location.origin}/login`)

@@ -3,11 +3,15 @@ import CloseIcon from '@mui/icons-material/Close'
 import ReportProblemOutlinedIcon from '@mui/icons-material/ReportProblemOutlined'
 import RouteOutlinedIcon from '@mui/icons-material/RouteOutlined'
 import { Avatar, Box, Button, Checkbox, Chip, Dialog, DialogActions, DialogContent, DialogTitle, FormControl, IconButton, InputLabel, ListItemText, MenuItem, Select, Stack, Tab, Tabs, TextField, Typography, useTheme } from '@mui/material'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { useSnackbar } from 'notistack'
 import { useNavigate } from 'react-router'
 import { DataBadge, type BadgePalette } from '@shared/ui/DataBadge'
 import { SortableHeader } from '@shared/ui/SortableHeader'
 import type { Passenger, PassengerDetails, PassengerEditForm, PassengerPayment, PassengerRide, PassengerStatus, PassengerTier } from '../types'
 import { currencyFormatter, formatCpf, getPassengerDetails, getPassengerRideDetails, numberFormatter, paymentOptions, paymentPalette, statusPalette, tierPalette } from '../utils/passengers'
+import { reviewFaceCheck } from '@modules/drivers/services/drivers.service'
+import { DocumentSection, FaceCheckSection } from '@modules/drivers/components/DriverManagementComponents'
 
 export function PassengerDetailsDialog({
   passenger,
@@ -24,7 +28,20 @@ export function PassengerDetailsDialog({
 }) {
   const theme = useTheme()
   const navigate = useNavigate()
+  const { enqueueSnackbar } = useSnackbar()
+  const queryClient = useQueryClient()
   const [selectedRide, setSelectedRide] = useState<PassengerRide | null>(null)
+  const [selfieOpen, setSelfieOpen] = useState(false)
+
+  const faceCheckMutation = useMutation({
+    mutationFn: ({ status, reason }: { status: 'APPROVED' | 'REJECTED'; reason?: string }) =>
+      reviewFaceCheck(passenger!.id, status, reason),
+    onSuccess: (_, { status }) => {
+      enqueueSnackbar(status === 'APPROVED' ? 'Selfie aprovada com sucesso' : 'Selfie reprovada', { variant: status === 'APPROVED' ? 'success' : 'warning' })
+      queryClient.invalidateQueries({ queryKey: ['passengers'] })
+    },
+    onError: () => enqueueSnackbar('Erro ao revisar selfie', { variant: 'error' }),
+  })
 
   if (!passenger) {
     return null
@@ -79,22 +96,39 @@ export function PassengerDetailsDialog({
         </Tabs>
 
         {tab === 0 && (
-          <Box
-            sx={{
-              display: 'grid',
-              gap: 2,
-              gridTemplateColumns: { xs: '1fr', md: 'repeat(3, minmax(0, 1fr))' },
-            }}
-          >
-            <PassengerInfo label="Nome completo" value={passenger.name} />
-            <PassengerInfo label="CPF" value={details.cpf} />
-            <PassengerInfo label="Telefone" value={passenger.phone} />
-            <PassengerInfo label="E-mail" value={details.email} />
-            <PassengerInfo label="Cidade" value={details.city} />
-            <PassengerInfo label="Data de cadastro" value={details.joinedAt} />
-            <PassengerInfo label="Ultima corrida" value={details.lastRide} />
-            <PassengerInfo label="Regiao preferida" value={details.preferredRegion} />
-            <PassengerPaymentInfo payments={passenger.payments} />
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+            <Box
+              sx={{
+                display: 'grid',
+                gap: 2,
+                gridTemplateColumns: { xs: '1fr', md: 'repeat(3, minmax(0, 1fr))' },
+              }}
+            >
+              <PassengerInfo label="Nome completo" value={passenger.name} />
+              <PassengerInfo label="CPF" value={details.cpf} />
+              <PassengerInfo label="Telefone" value={passenger.phone} />
+              <PassengerInfo label="E-mail" value={details.email} />
+              <PassengerInfo label="Cidade" value={details.city} />
+              <PassengerInfo label="Data de cadastro" value={details.joinedAt} />
+              <PassengerInfo label="Ultima corrida" value={details.lastRide} />
+              <PassengerInfo label="Regiao preferida" value={details.preferredRegion} />
+              <PassengerPaymentInfo payments={passenger.payments} />
+            </Box>
+
+            {details.documentUrl && (
+              <DocumentSection documentUrl={details.documentUrl} />
+            )}
+
+            <FaceCheckSection
+              faceCheckUrl={details.faceCheckUrl ?? null}
+              faceCheckStatus={details.faceCheckStatus ?? null}
+              loading={faceCheckMutation.isPending}
+              onApprove={() => faceCheckMutation.mutate({ status: 'APPROVED' })}
+              onReject={() => faceCheckMutation.mutate({ status: 'REJECTED' })}
+              selfieOpen={selfieOpen}
+              onSelfieOpen={() => setSelfieOpen(true)}
+              onSelfieClose={() => setSelfieOpen(false)}
+            />
           </Box>
         )}
 
@@ -226,7 +260,7 @@ export function PassengerDetailsDialog({
           >
             <PassengerMetric title="Corridas/mês" value={numberFormatter.format(details.monthlyAverage.rides)} />
             <PassengerMetric title="Gasto/mês" value={currencyFormatter.format(details.monthlyAverage.spend)} />
-            <PassengerMetric title="Avaliação média" value={details.monthlyAverage.rating.toFixed(1)} />
+            <PassengerMetric title="Avaliação média" value={details.monthlyAverage.rating != null ? details.monthlyAverage.rating.toFixed(1) : '—'} />
             <PassengerMetric title="Cancelamentos" value={cancellationRateLabel} />
           </Box>
         )}
@@ -400,9 +434,10 @@ export function PassengerEditDialog({
           <TextField
             label="Avaliação"
             type="number"
-            value={form.rating}
-            onChange={(event) => updateForm('rating', Number(event.target.value))}
+            value={form.rating ?? ''}
+            onChange={(event) => updateForm('rating', event.target.value === '' ? null : Number(event.target.value))}
             inputProps={{ step: 0.1, min: 0, max: 5 }}
+            placeholder="Sem avaliações ainda"
           />
           <TextField
             label="Gasto no mês"

@@ -1,5 +1,6 @@
 import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings'
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward'
+import PersonAddOutlinedIcon from '@mui/icons-material/PersonAddOutlined'
 import ShieldOutlinedIcon from '@mui/icons-material/ShieldOutlined'
 import {
   Box,
@@ -7,6 +8,7 @@ import {
   Card,
   CardContent,
   Chip,
+  Divider,
   Stack,
   Typography,
   useTheme,
@@ -19,12 +21,10 @@ import { useLocation, useNavigate } from 'react-router'
 import loginMapBg from '@/assets/login-map-bg.png'
 import logo from '@/assets/logo.png'
 
+const REGISTER_FLAG = 'borali_admin_register_flow'
+
 type LoginLocationState = {
-  from?: {
-    pathname?: string
-    search?: string
-    hash?: string
-  }
+  from?: { pathname?: string; search?: string; hash?: string }
 }
 
 export function LoginPage() {
@@ -32,8 +32,6 @@ export function LoginPage() {
   const navigate = useNavigate()
   const location = useLocation()
   const { signIn, isAuthenticated, isLoading } = useLogto()
-  // Only redirect if BOTH Logto AND the BoraLi token are present — prevents the redirect
-  // loop that occurs when clearAuth() clears the Zustand token but Logto stays authenticated
   const accessToken = useAuthStore((state) => state.accessToken)
   const locationState = location.state as LoginLocationState | null
   const redirectPath = locationState?.from
@@ -48,7 +46,14 @@ export function LoginPage() {
   }, [isAuthenticated, isLoading, accessToken, navigate, redirectPath])
 
   function handleSignIn() {
+    sessionStorage.removeItem(REGISTER_FLAG)
     signIn(`${window.location.origin}/callback`)
+  }
+
+  function handleRegister() {
+    sessionStorage.setItem(REGISTER_FLAG, '1')
+    // interactionMode 'signUp' direciona para a tela de cadastro do Logto
+    signIn(`${window.location.origin}/callback`, 'signUp' as any)
   }
 
   return (
@@ -96,12 +101,8 @@ export function LoginPage() {
               <Box
                 component="img"
                 src={logo}
-                alt="BoraLi"
-                sx={{
-                  width: 180,
-                  height: 'auto',
-                  objectFit: 'contain',
-                }}
+                alt="BorAlí"
+                sx={{ width: 180, height: 'auto', objectFit: 'contain' }}
               />
               <Chip
                 icon={<ShieldOutlinedIcon />}
@@ -111,20 +112,13 @@ export function LoginPage() {
                   fontWeight: 800,
                   bgcolor: alpha(theme.palette.secondary.main, 0.1),
                   color: 'secondary.dark',
-                  '& .MuiChip-icon': {
-                    color: 'secondary.main',
-                  },
+                  '& .MuiChip-icon': { color: 'secondary.main' },
                 }}
               />
             </Stack>
 
             <Stack spacing={1} alignItems="center" textAlign="center">
-              <AdminPanelSettingsIcon
-                sx={{
-                  fontSize: 48,
-                  color: 'secondary.main',
-                }}
-              />
+              <AdminPanelSettingsIcon sx={{ fontSize: 48, color: 'secondary.main' }} />
               <Typography variant="h2" sx={{ fontSize: { xs: '1.75rem', sm: '2rem' } }}>
                 Acesso administrativo
               </Typography>
@@ -140,13 +134,27 @@ export function LoginPage() {
               color="secondary"
               endIcon={<ArrowForwardIcon />}
               onClick={handleSignIn}
-              sx={{
-                minHeight: 48,
-                fontWeight: 800,
-                boxShadow: 'none',
-              }}
+              sx={{ minHeight: 48, fontWeight: 800, boxShadow: 'none' }}
             >
               Entrar
+            </Button>
+
+            <Divider>
+              <Typography variant="caption" color="text.disabled" sx={{ px: 1 }}>
+                ou
+              </Typography>
+            </Divider>
+
+            <Button
+              fullWidth
+              size="large"
+              variant="outlined"
+              color="secondary"
+              endIcon={<PersonAddOutlinedIcon />}
+              onClick={handleRegister}
+              sx={{ minHeight: 48, fontWeight: 700, borderStyle: 'dashed' }}
+            >
+              Criar conta de administrador
             </Button>
           </Stack>
         </CardContent>

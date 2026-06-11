@@ -45,6 +45,13 @@ export function RecentRidesTable() {
                 </TableRow>
               </TableHead>
               <TableBody>
+                {recentRides.length === 0 && (
+                  <TableRow>
+                    <TableCell colSpan={6} align="center" sx={{ py: 4 }}>
+                      <Typography color="text.secondary" variant="body2">Nenhuma corrida recente.</Typography>
+                    </TableCell>
+                  </TableRow>
+                )}
                 {recentRides.map((ride) => (
                   <TableRow
                     key={ride.id}

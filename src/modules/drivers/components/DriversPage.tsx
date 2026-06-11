@@ -11,7 +11,6 @@ import { useLocation } from 'react-router'
 import { dashboardQueryKeys } from '@modules/dashboard/queries'
 import { driversQueryKeys, useGetAllDriversAccess } from '../queries'
 import { approveAdminDriver, suspendAdminDriver } from '../services'
-import { drivers } from '../data/mockDrivers'
 import type { Driver, DriverCategoryFilter, DriverDetails, DriverEditForm, DriverFilter, DriversLocationState, DriverSortKey, SortDirection } from '../types'
 import { categoryPalette, statusPalette, subscriptionPalette } from '../utils/driverPalettes'
 import { currencyFormatter, filters, getDriverSortValue, getInitials, normalizeSearch, numberFormatter } from '../utils/drivers'
@@ -50,7 +49,7 @@ export default function DriversPage() {
   const handledNavStateRef = useRef(false)
 
   const driversQuery = useGetAllDriversAccess()
-  const driverQueryRows = driversQuery.data?.rows ?? drivers
+  const driverQueryRows = driversQuery.data?.rows ?? []
   const driverQueryDetails = driversQuery.data?.details ?? emptyDriverDetails
   const driverRows = useMemo(
     () => driverQueryRows.map((driver) => driverOverrides[driver.id] ?? driver),
@@ -419,6 +418,17 @@ export default function DriversPage() {
                   </TableRow>
                 </TableHead>
                 <TableBody>
+                  {visibleDrivers.length === 0 && !driversQuery.isLoading && (
+                    <TableRow>
+                      <TableCell colSpan={8} align="center" sx={{ py: 6 }}>
+                        <Typography color="text.secondary">
+                          {search || selectedFilter !== 'all' || selectedCategory !== 'all'
+                            ? 'Nenhum motorista encontrado com os filtros aplicados.'
+                            : 'Nenhum motorista cadastrado.'}
+                        </Typography>
+                      </TableCell>
+                    </TableRow>
+                  )}
                   {visibleDrivers.map((driver) => (
                     <TableRow key={driver.id} hover>
                       <TableCell>
