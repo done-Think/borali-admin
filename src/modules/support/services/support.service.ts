@@ -1,1 +1,1 @@
-export { supportTickets, type SupportTicket } from '@shared/mocks/supportTickets'
+export { supportTickets, type SupportTicket } from '../data/supportData'

@@ -36,7 +36,7 @@ import {
 } from '@mui/material'
 import { useSnackbar } from 'notistack'
 import { useNavigate } from 'react-router'
-import { driverDetailsById, drivers } from '../../drivers/data/mockDrivers'
+import { driverDetailsById, drivers } from '../../drivers/data/driversData'
 import { supportTickets } from '@modules/support/services'
 import {
   subscriptionRenewalsByDriverId,

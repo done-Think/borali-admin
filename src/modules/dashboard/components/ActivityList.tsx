@@ -1,6 +1,6 @@
 import { Box, ButtonBase, Stack, Typography } from '@mui/material'
 import { alpha } from '@mui/material/styles'
-import { activityStyles } from '../data/mockDashboardData'
+import { activityStyles } from '../data/dashboardData'
 import type { Activity } from '../types'
 
 type ActivityListProps = {

@@ -7,4 +7,4 @@ export {
   subscriptionMovementBySubscriptionId,
   subscriptionPaymentHistoryBySubscriptionId,
   subscriptionRenewalsByDriverId,
-} from '../data/mockSubscriptions'
+} from '../data/subscriptionsData'

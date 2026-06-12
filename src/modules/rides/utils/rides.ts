@@ -1,6 +1,6 @@
 import L from 'leaflet'
 import { alpha } from '@mui/material/styles'
-import { alertColor, statusConfig } from '../data/mockRides'
+import { alertColor, statusConfig } from '../data/ridesData'
 import type { ActiveRideStatus, ActiveRideView } from '../types'
 
 export function normalizeRide(ride: ActiveRideView): ActiveRideView {

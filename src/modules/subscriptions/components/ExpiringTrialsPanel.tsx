@@ -25,7 +25,7 @@ import {
   useTheme,
 } from '@mui/material'
 import { useNavigate } from 'react-router'
-import { driverDetailsById, drivers } from '../../drivers/data/mockDrivers'
+import { driverDetailsById, drivers } from '../../drivers/data/driversData'
 import { subscriptionRenewalsByDriverId } from '../services'
 import type { SubscriptionRenewal, TrialExpiration } from '../types'
 

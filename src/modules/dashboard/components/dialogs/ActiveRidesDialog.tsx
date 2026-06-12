@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Box, ButtonBase, Chip, Dialog, DialogContent, DialogTitle, Stack, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography } from '@mui/material'
 import { useNavigate } from 'react-router'
-import { activeRides } from '../../data/mockDashboardData'
+import { activeRides } from '../../data/dashboardData'
 import type { ActiveRide } from '../../types'
 import { currencyFormatter } from '../../utils/formatters'
 import { ApplicationDetail } from '../ApplicationDetail'

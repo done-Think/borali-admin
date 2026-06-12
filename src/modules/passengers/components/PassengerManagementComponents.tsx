@@ -202,9 +202,9 @@ export function PassengerDetailsDialog({
           <Stack spacing={1.5}>
             {details.complaints.length === 0 ? (
               <Box sx={{ border: `1px solid ${theme.palette.divider}`, borderRadius: 2, p: 3, textAlign: 'center' }}>
-                <Typography fontWeight={700}>Sem reclamacoes registradas</Typography>
+                <Typography fontWeight={700}>Sem reclamações registradas</Typography>
                 <Typography color="text.secondary" sx={{ mt: 0.5 }}>
-                  Este passageiro nao possui reclamacoes no historico mockado.
+                  Este passageiro não possui reclamações registradas.
                 </Typography>
               </Box>
             ) : (

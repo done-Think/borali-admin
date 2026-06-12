@@ -6,7 +6,7 @@ import { CircleMarker, MapContainer, Marker, Polyline, TileLayer, Tooltip, useMa
 import { currencyFormatter } from '@modules/dashboard/utils/formatters'
 import { getMapTileLayer } from '@modules/dashboard/utils/mapConfig'
 import { useActivePaletteMode } from '@modules/dashboard/utils/useActivePaletteMode'
-import { alertColor, statusConfig } from '../data/mockRides'
+import { alertColor, statusConfig } from '../data/ridesData'
 import type { ActiveRideView } from '../types'
 import { createRideStatusIcon, getElapsedMinutes } from '../utils/rides'
 

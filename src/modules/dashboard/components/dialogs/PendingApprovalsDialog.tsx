@@ -2,7 +2,7 @@ import { useState } from 'react'
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
 import { Box, ButtonBase, Card, CardContent, Chip, Collapse, Dialog, DialogContent, DialogTitle, Stack, Typography } from '@mui/material'
 import { useNavigate } from 'react-router'
-import { driverApplications } from '../../data/mockDashboardData'
+import { driverApplications } from '../../data/dashboardData'
 import { ApplicationDetail } from '../ApplicationDetail'
 
 export function PendingApprovalsDialog({ open, onClose }: { open: boolean; onClose: () => void }) {

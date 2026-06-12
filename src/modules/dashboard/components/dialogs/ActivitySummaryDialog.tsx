@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Box, ButtonBase, Chip, Dialog, DialogContent, DialogTitle, Stack, Typography, useTheme } from '@mui/material'
 import { alpha } from '@mui/material/styles'
-import { activityStyles } from '../../data/mockDashboardData'
+import { activityStyles } from '../../data/dashboardData'
 import type { Activity } from '../../types'
 
 export function ActivitySummaryDialog({

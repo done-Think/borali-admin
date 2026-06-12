@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Box, Card, CardContent, Chip, Dialog, DialogContent, DialogTitle, Stack, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography } from '@mui/material'
-import { recentRides, statusStyles } from '../data/mockDashboardData'
+import { recentRides, statusStyles } from '../data/dashboardData'
 import type { RecentRide, RideStatus } from '../types'
 import { currencyFormatter } from '../utils/formatters'
 import { ApplicationDetail } from './ApplicationDetail'

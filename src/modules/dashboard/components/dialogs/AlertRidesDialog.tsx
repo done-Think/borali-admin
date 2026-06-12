@@ -1,6 +1,6 @@
 import WarningAmberIcon from '@mui/icons-material/WarningAmber'
 import { Box, Chip, Dialog, DialogContent, DialogTitle, Stack, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography } from '@mui/material'
-import { alertRides } from '../../data/mockDashboardData'
+import { alertRides } from '../../data/dashboardData'
 import { currencyFormatter } from '../../utils/formatters'
 
 export function AlertRidesDialog({ open, onClose }: { open: boolean; onClose: () => void }) {

@@ -22,7 +22,7 @@ import {
   mapMarkers,
   rideLine,
   secondRideLine,
-} from "../data/mockDashboardData";
+} from "../data/dashboardData";
 import type { HeatZone } from "../types";
 import { getMapTileLayer } from "../utils/mapConfig";
 import { driverIcon, passengerIcon } from "../utils/mapIcons";

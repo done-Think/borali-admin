@@ -8,7 +8,7 @@ import SendIcon from '@mui/icons-material/Send'
 import { Box, Button, Card, CardContent, Chip, Dialog, DialogActions, DialogContent, DialogTitle, Divider, Stack, TextField, Typography } from '@mui/material'
 import { alpha } from '@mui/material/styles'
 import { currencyFormatter } from '@modules/dashboard/utils/formatters'
-import { scheduledStatusConfig } from '../data/mockRides'
+import { scheduledStatusConfig } from '../data/ridesData'
 import type { ScheduledRide } from '../types'
 import { formatDateTime } from '../utils/rides'
 

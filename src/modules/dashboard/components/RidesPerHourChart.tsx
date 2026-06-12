@@ -1,6 +1,6 @@
 import { Box, Card, CardContent, Chip, Stack, Typography, useTheme } from '@mui/material'
 import { Bar, BarChart, CartesianGrid, Cell, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
-import { ridesPerHour } from '../data/mockDashboardData'
+import { ridesPerHour } from '../data/dashboardData'
 
 const peakRides = Math.max(...ridesPerHour.map((item) => item.rides))
 

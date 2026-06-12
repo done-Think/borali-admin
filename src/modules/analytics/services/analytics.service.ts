@@ -8,4 +8,4 @@ export {
   revenueByMonth,
   rideCategories,
   timeRanges,
-} from '../data/mockAnalytics'
+} from '../data/analyticsData'

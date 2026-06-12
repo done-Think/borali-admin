@@ -1,6 +1,6 @@
 import { Box, Card, CardContent, Chip, Dialog, DialogContent, DialogTitle, Stack, Typography } from '@mui/material'
 import { useNavigate } from 'react-router'
-import { driversAcceptingRides, driversAppOpenOnly } from '../../data/mockDashboardData'
+import { driversAcceptingRides, driversAppOpenOnly } from '../../data/dashboardData'
 import type { DriverAvailability } from '../../types'
 
 export function OnlineDriversDialog({ open, onClose }: { open: boolean; onClose: () => void }) {

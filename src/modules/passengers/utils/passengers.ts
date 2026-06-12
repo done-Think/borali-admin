@@ -2,7 +2,7 @@ import { supportTickets } from '@modules/support/services'
 import { currencyFormatter, numberFormatter } from '@shared/utils/formatters'
 import { formatCpf, getInitials, normalizeSearch } from '@shared/utils/text'
 import type { BadgePalette } from '@shared/ui/DataBadge'
-import { passengerDetailsById } from '../data/mockPassengers'
+import { passengerDetailsById } from '../data/passengersData'
 import type { Passenger, PassengerDetails, PassengerFilter, PassengerPayment, PassengerRide, PassengerSortKey, PassengerStatus, PassengerTier } from '../types'
 
 export { currencyFormatter, formatCpf, getInitials, normalizeSearch, numberFormatter }

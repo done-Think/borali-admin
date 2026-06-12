@@ -2,7 +2,7 @@ import { useState, type MouseEvent } from 'react'
 import { Box, Card, CardContent, Dialog, DialogContent, DialogTitle, Stack, ToggleButton, ToggleButtonGroup, Typography, useTheme } from '@mui/material'
 import { alpha } from '@mui/material/styles'
 import { Bar, BarChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
-import { revenueComparisons } from '../../data/mockDashboardData'
+import { revenueComparisons } from '../../data/dashboardData'
 import type { RevenuePeriod } from '../../types'
 import { currencyFormatter } from '../../utils/formatters'
 

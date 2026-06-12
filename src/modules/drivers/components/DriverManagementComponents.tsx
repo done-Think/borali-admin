@@ -216,7 +216,7 @@ export function DriverDetailsDialog({
               >
                 <Typography fontWeight={700}>Sem reclamações registradas</Typography>
                 <Typography color="text.secondary" sx={{ mt: 0.5 }}>
-                  Este motorista não possui reclamações no histórico mockado.
+                  Este motorista não possui reclamações registradas.
                 </Typography>
               </Box>
             ) : (

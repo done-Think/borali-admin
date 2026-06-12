@@ -1,7 +1,7 @@
 import { supportTickets } from '@modules/support/services'
 import { currencyFormatter, numberFormatter } from '@shared/utils/formatters'
 import { formatCpf, getInitials, normalizeSearch } from '@shared/utils/text'
-import { driverDetailsById } from '../data/mockDrivers'
+import { driverDetailsById } from '../data/driversData'
 import type { Driver, DriverCategory, DriverDetails, DriverFilter, DriverRide, DriverSituation, DriverSortKey, DriverStatus, DriverSubscription } from '../types'
 
 export { currencyFormatter, formatCpf, getInitials, normalizeSearch, numberFormatter }
