@@ -1,4 +1,5 @@
 import * as React from 'react'
+import './theme/theme.css'
 import * as ReactDOM from 'react-dom/client'
 import { RouterProvider } from 'react-router'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
@@ -6,6 +7,7 @@ import { LogtoProvider, type LogtoConfig, UserScope, ReservedScope } from '@logt
 import { SnackbarProvider } from 'notistack'
 import { router } from './routes'
 import { ADMIN_QUERY_STALE_TIME } from '@shared/services'
+import ThemeToggle from './components/ThemeToggle'
 
 const logtoConfig: LogtoConfig = {
   endpoint: import.meta.env.VITE_LOGTO_ENDPOINT,
@@ -31,6 +33,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
           maxSnack={3}
           anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
         >
+          <ThemeToggle />
           <RouterProvider router={router} />
         </SnackbarProvider>
       </QueryClientProvider>

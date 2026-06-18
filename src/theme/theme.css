@@ -1,0 +1,92 @@
+:root{
+  /* Fallbacks (should be overridden by data attributes below) */
+  --bg-primary: #ffffff;
+  --bg-card: #ffffff;
+  --text-primary: #111827;
+  --text-secondary: #6B7280;
+  --borders: rgba(45, 212, 160, 0.12);
+  --shadows: 0 6px 20px rgba(16,24,40,0.04);
+  --color-primary: #2DD4A0; /* BorAli green */
+  --color-accent: rgba(45,212,160,0.9);
+  --lines: rgba(16,24,40,0.06);
+  --gradient-subtle: linear-gradient(180deg, rgba(45,212,160,0.06), rgba(45,212,160,0.02));
+}
+
+/* Light theme — white / green tone */
+[data-toolpad-color-scheme="light"] {
+  --bg-primary: #F7FFFB; /* very light green tint */
+  --bg-card: #FFFFFF;
+  --text-primary: #1F2937; /* dark gray, not heavy black */
+  --text-secondary: #6B7280; /* neutral */
+  --borders: rgba(45, 212, 160, 0.14);
+  --shadows: 0 8px 24px rgba(16,24,40,0.04);
+  --color-primary: #2DD4A0; /* logo green */
+  --color-accent: #1DAF82;
+  --lines: rgba(34, 197, 94, 0.12);
+  --gradient-subtle: linear-gradient(180deg, rgba(45,212,160,0.06), rgba(45,212,160,0.02));
+}
+
+/* Light-specific helpers for sections */
+[data-toolpad-color-scheme="light"] .solutions-section {
+  background: transparent;
+}
+
+[data-toolpad-color-scheme="light"] #nossos-beneficios {
+  background: #f8fdfa;
+}
+
+[data-toolpad-color-scheme="light"] #passageiros {
+  background: linear-gradient(180deg, #ffffff 0%, #f7fffb 100%);
+}
+
+/* Dark theme — preserve current black/blue look */
+[data-toolpad-color-scheme="dark"] {
+  --bg-primary: #0A0E1A; /* neutral[900] */
+  --bg-card: #111827; /* neutral[800] */
+  --text-primary: #FFFFFF;
+  --text-secondary: #9CA3AF;
+  --borders: rgba(255,255,255,0.06);
+  --shadows: 0 8px 24px rgba(2,6,23,0.6);
+  --color-primary: #0ABEE9; /* blue used in current dark theme */
+  --color-accent: #35D6F6;
+  --lines: rgba(255,255,255,0.08);
+  --gradient-subtle: linear-gradient(180deg, rgba(10,190,233,0.04), rgba(10,190,233,0.02));
+}
+
+/* Utility helpers to consume tokens in CSS */
+:root {
+  --app-bg: var(--bg-primary);
+}
+
+body {
+  background: var(--bg-primary);
+  color: var(--text-primary);
+}
+
+/* Prepare section-level helper class so sections can easily adapt */
+.section-theme-aware {
+  background: var(--bg-card);
+  color: var(--text-primary);
+  border: 1px solid var(--borders);
+  box-shadow: var(--shadows);
+}
+
+/* Global fixed toggle button */
+.global-theme-toggle {
+  position: fixed;
+  top: 10px;
+  right: 16px;
+  z-index: 99999;
+  background: transparent;
+  border-radius: 999px;
+}
+.global-theme-toggle .MuiIconButton-root {
+  background: rgba(255,255,255,0.9);
+  box-shadow: 0 6px 18px rgba(16,24,40,0.06);
+}
+
+[data-toolpad-color-scheme="dark"] .global-theme-toggle .MuiIconButton-root {
+  background: rgba(2,7,13,0.6);
+  color: #fff;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.6);
+}
