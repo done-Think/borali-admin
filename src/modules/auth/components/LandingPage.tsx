@@ -1,6 +1,8 @@
 import AndroidIcon from '@mui/icons-material/Android'
 import AppleIcon from '@mui/icons-material/Apple'
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward'
+import AccessTimeIcon from '@mui/icons-material/AccessTime'
+import CalendarMonthIcon from '@mui/icons-material/CalendarMonth'
 import LightModeIcon from '@mui/icons-material/LightMode'
 import DarkModeIcon from '@mui/icons-material/DarkMode'
 import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome'
@@ -17,6 +19,7 @@ import StarIcon from '@mui/icons-material/Star'
 import SupportAgentIcon from '@mui/icons-material/SupportAgent'
 import VerifiedUserIcon from '@mui/icons-material/VerifiedUser'
 import VisibilityIcon from '@mui/icons-material/Visibility'
+import WorkspacePremiumIcon from '@mui/icons-material/WorkspacePremium'
 import { Box, Button, Stack, Typography } from '@mui/material'
 import { IconButton, Tooltip } from '@mui/material'
 import { useAuthStore } from '@shared/store'
@@ -25,12 +28,14 @@ import { useNavigate } from 'react-router'
 import carTopView from '@/assets/car-top-view-transparent.png'
 import driverGpsNavigatorBlue from '@/assets/illustrations/driver-gps-navigator-cuate-blue.svg'
 import driverGpsNavigatorGreen from '@/assets/illustrations/driver-gps-navigator-cuate-green.svg'
+import orderRideBlue from '@/assets/illustrations/order-ride-amico-blue.svg'
+import orderRideGreen from '@/assets/illustrations/order-ride-amico-green.svg'
 import passengerLocationBlue from '@/assets/illustrations/passenger-location-blue.svg'
 import passengerLocationGreen from '@/assets/illustrations/passenger-location-tracking-cuate-green.svg'
 import loginMapBg from '@/assets/login-map-bg.png'
 import logo from '@/assets/logo.png'
 
-const navLinks = ['Passageiros', 'Motoristas', 'Segurança', 'Suporte', 'Sobre nós']
+const navLinks = ['Passageiros', 'Motoristas', 'Valores', 'Segurança', 'Suporte', 'Sobre nós']
 
 const benefits = [
   {
@@ -89,6 +94,34 @@ const featureBlocks = [
   { icon: SupportAgentIcon, title: 'Suporte 24h', description: 'Atendimento humano sempre que precisar.' },
   { icon: HubIcon, title: 'Tecnologia inteligente', description: 'Soluções que tornam tudo mais eficiente.' },
   { icon: AutoAwesomeIcon, title: 'Comunidade', description: 'Juntos por uma mobilidade melhor.' },
+]
+
+const pricingPlans = [
+  {
+    icon: AccessTimeIcon,
+    title: 'Plano Diário',
+    price: 'R$ 19,90',
+    period: '/ dia',
+    description: 'Ideal para quem roda ocasionalmente.',
+    benefits: ['Sem cobrança por km rodado', 'Acesso completo à plataforma', 'Mais previsibilidade de ganhos'],
+  },
+  {
+    icon: CalendarMonthIcon,
+    title: 'Plano Semanal',
+    price: 'R$ 69,90',
+    period: '/ semana',
+    description: 'Perfeito para rotina flexível.',
+    benefits: ['Sem cobrança por km rodado', 'Acesso completo à plataforma', 'Mais previsibilidade de ganhos'],
+  },
+  {
+    icon: WorkspacePremiumIcon,
+    title: 'Plano Mensal',
+    price: 'R$ 149,90',
+    period: '/ mês',
+    description: 'Melhor custo-benefício para motoristas frequentes.',
+    benefits: ['Sem cobrança por km rodado', 'Acesso completo à plataforma', 'Mais previsibilidade de ganhos', 'Suporte prioritário'],
+    popular: true,
+  },
 ]
 
 const stats = [
@@ -734,7 +767,7 @@ export function LandingPage() {
           justifyContent="space-between"
           sx={{ width: pageWidth, mx: 'auto', py: 1.7 }}
         >
-          <Box component="img" src={logo} alt="BorAli" sx={{ width: { xs: 106, md: 128 }, objectFit: 'contain', filter: isLight ? 'hue-rotate(315deg) saturate(1.08)' : 'none' }} />
+          <Box component="img" src={logo} alt="BorAli" sx={{ width: { xs: 106, md: 128 }, objectFit: 'contain' }} />
           <Stack direction="row" spacing={3.5} sx={{ display: { xs: 'none', md: 'flex' } }}>
             {navLinks.map((item) => (
               <Typography
@@ -757,7 +790,16 @@ export function LandingPage() {
             <Tooltip title="Alternar tema">
               <IconButton
                 onClick={toggleColorScheme}
-                sx={{ color: isLight ? 'var(--text-primary)' : '#fff', display: isLight ? 'none' : 'inline-flex' }}
+                sx={{
+                  color: isLight ? 'rgba(31,41,55,0.82)' : '#fff',
+                  display: 'inline-flex',
+                  flexShrink: 0,
+                  border: isLight ? '1px solid rgba(16,24,40,0.10)' : '1px solid rgba(255,255,255,0.18)',
+                  bgcolor: isLight ? 'rgba(255,255,255,0.86)' : 'rgba(255,255,255,0.08)',
+                  '&:hover': {
+                    bgcolor: isLight ? 'rgba(45,212,160,0.08)' : 'rgba(0,200,255,0.12)',
+                  },
+                }}
                 aria-label="toggle theme"
               >
                 {colorScheme === 'light' ? <DarkModeIcon /> : <LightModeIcon />}
@@ -842,12 +884,36 @@ export function LandingPage() {
                 }}
               >
                 Mobilidade justa
-                <Box component="span" sx={{ display: 'block', color: isLight ? 'var(--color-accent)' : 'inherit' }}>
+                <Box component="span" sx={{ display: 'block', color: isLight ? 'var(--color-accent)' : '#00c8ff' }}>
                   para todos.
                 </Box>
               </Typography>
               <Typography sx={{ maxWidth: 660, color: isLight ? 'rgba(31, 41, 55, 0.78)' : 'rgba(230, 241, 248, 0.78)', fontSize: { xs: 16, md: 19 }, lineHeight: 1.75 }}>
-                Peça viagens com transparência, segurança e preço justo. A BorAli conecta passageiros e motoristas em uma experiência mais humana.
+                <Box
+                  component="span"
+                  sx={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 0.75,
+                    mr: 0.45,
+                    verticalAlign: 'middle',
+                  }}
+                >
+                  A
+                  <Box
+                    component="img"
+                    src={logo}
+                    alt="BorAli"
+                    sx={{
+                      display: 'block',
+                      width: { xs: 76, md: 90 },
+                      height: 'auto',
+                      flexShrink: 0,
+                      transform: 'translateY(0.02em)',
+                    }}
+                  />
+                </Box>
+                conecta passageiros e motoristas em uma experiência mais justa: viagens com segurança, preço transparente e motoristas pagando por mensalidade, não por km rodado.
               </Typography>
               <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
                 <Button
@@ -932,7 +998,7 @@ export function LandingPage() {
               />
               <Box sx={{ position: 'relative', zIndex: 1 }}>
                 <Stack direction="row" justifyContent="space-between" alignItems="center">
-                  <Box component="img" src={logo} alt="BorAli" sx={{ width: 120, filter: isLight ? 'hue-rotate(315deg) saturate(1.08)' : 'none' }} />
+                  <Box component="img" src={logo} alt="BorAli" sx={{ width: 120 }} />
                   <GlassIcon icon={SecurityIcon} />
                 </Stack>
                 <MiniMap secure />
@@ -1232,6 +1298,229 @@ export function LandingPage() {
           </Box>
         </Box>
 
+        <Box
+          component="section"
+          id="valores"
+          sx={{
+            position: 'relative',
+            py: { xs: 7, md: 10 },
+            overflow: 'hidden',
+            background: isLight
+              ? 'linear-gradient(180deg, var(--bg-primary) 0%, #f7fffb 52%, var(--bg-primary) 100%)'
+              : 'radial-gradient(circle at 50% 10%, rgba(0,200,255,0.13), transparent 34%), transparent',
+          }}
+        >
+          <Box
+            sx={{
+              position: 'absolute',
+              inset: 0,
+              pointerEvents: 'none',
+              opacity: isLight ? 0.45 : 0.65,
+              backgroundImage: isLight
+                ? 'radial-gradient(circle, rgba(45,212,160,0.16) 1px, transparent 1.5px)'
+                : 'radial-gradient(circle, rgba(0,200,255,0.18) 1px, transparent 1.5px)',
+              backgroundSize: '42px 42px',
+              maskImage: 'linear-gradient(180deg, transparent 0%, #000 18%, #000 76%, transparent 100%)',
+            }}
+          />
+          <Stack sx={{ position: 'relative', zIndex: 1, width: pageWidth, mx: 'auto' }} spacing={{ xs: 4, md: 5 }}>
+            <Stack alignItems="center" textAlign="center" spacing={1.5}>
+              <Typography
+                sx={{
+                  px: 4.5,
+                  py: 0.75,
+                  borderRadius: 999,
+                  border: isLight ? '1px solid rgba(45,212,160,0.24)' : '1px solid rgba(0,200,255,0.42)',
+                  color: isLight ? 'var(--color-primary)' : '#16d9ff',
+                  bgcolor: isLight ? 'rgba(255,255,255,0.78)' : 'rgba(0,200,255,0.06)',
+                  boxShadow: isLight ? '0 10px 24px rgba(16,24,40,0.04)' : '0 0 24px rgba(0,200,255,0.14)',
+                  fontSize: 12,
+                  fontWeight: 900,
+                  letterSpacing: 0,
+                }}
+              >
+                PLANOS
+              </Typography>
+              <Typography
+                component="h2"
+                sx={{
+                  color: isLight ? 'var(--text-primary)' : '#fff',
+                  fontSize: { xs: 31, sm: 40, md: 52 },
+                  lineHeight: 1.05,
+                  fontWeight: 950,
+                  letterSpacing: 0,
+                  textShadow: isLight ? 'none' : '0 0 34px rgba(0,200,255,0.18)',
+                }}
+              >
+                Planos para{' '}
+                <Box component="span" sx={{ color: isLight ? 'var(--color-accent)' : '#16d9ff' }}>
+                  motoristas
+                </Box>
+              </Typography>
+              <Typography
+                sx={{
+                  maxWidth: 620,
+                  color: isLight ? 'rgba(31,41,55,0.72)' : 'rgba(230,241,248,0.74)',
+                  fontSize: { xs: 15.5, md: 18 },
+                  lineHeight: 1.65,
+                }}
+              >
+                Escolha a opção ideal para rodar com liberdade, pagando por período e não por km rodado.
+              </Typography>
+            </Stack>
+
+            <Box
+              sx={{
+                display: 'grid',
+                gridTemplateColumns: { xs: '1fr', md: 'repeat(2, minmax(0, 1fr))', lg: 'repeat(3, minmax(0, 1fr))' },
+                gap: { xs: 2.4, md: 3 },
+                alignItems: 'stretch',
+              }}
+            >
+              {pricingPlans.map((plan) => {
+                const Icon = plan.icon
+                const isPopular = Boolean(plan.popular)
+
+                return (
+                  <Box
+                    key={plan.title}
+                    className="fade-up"
+                    sx={{
+                      position: 'relative',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      height: '100%',
+                      minHeight: { xs: 460, md: 500 },
+                      p: { xs: 3, md: 3.6 },
+                      pt: { xs: 4, md: 4.2 },
+                      borderRadius: 5,
+                      overflow: 'hidden',
+                      border: isPopular
+                        ? (isLight ? '1px solid rgba(45,212,160,0.48)' : '1px solid rgba(0,200,255,0.82)')
+                        : (isLight ? '1px solid rgba(45,212,160,0.18)' : '1px solid rgba(0,200,255,0.22)'),
+                      background: isPopular
+                        ? (isLight
+                            ? 'radial-gradient(circle at 70% 0%, rgba(45,212,160,0.16), transparent 34%), linear-gradient(180deg, #ffffff 0%, #f2fff9 100%)'
+                            : 'radial-gradient(circle at 70% 0%, rgba(0,200,255,0.22), transparent 36%), linear-gradient(145deg, rgba(5,27,43,0.94), rgba(2,8,16,0.9))')
+                        : (isLight
+                            ? 'linear-gradient(180deg, #ffffff 0%, #f8fffb 100%)'
+                            : 'linear-gradient(145deg, rgba(6,24,40,0.88), rgba(3,10,18,0.82))'),
+                      boxShadow: isPopular
+                        ? (isLight ? '0 24px 70px rgba(16,24,40,0.10), 0 0 0 1px rgba(45,212,160,0.12)' : '0 0 44px rgba(0,200,255,0.28), 0 24px 70px rgba(0,0,0,0.34)')
+                        : (isLight ? '0 18px 48px rgba(16,24,40,0.07)' : '0 24px 70px rgba(0,0,0,0.28), inset 0 0 34px rgba(0,200,255,0.04)'),
+                    }}
+                  >
+                    {isPopular && (
+                      <Typography
+                        sx={{
+                          position: 'absolute',
+                          top: 0,
+                          left: '50%',
+                          transform: 'translate(-50%, -1px)',
+                          px: 3.2,
+                          py: 0.8,
+                          borderRadius: '0 0 999px 999px',
+                          bgcolor: isLight ? 'var(--color-accent)' : '#16d9ff',
+                          color: isLight ? '#fff' : '#02111a',
+                          fontSize: 12,
+                          fontWeight: 950,
+                          letterSpacing: 0,
+                          whiteSpace: 'nowrap',
+                          boxShadow: isLight ? '0 12px 24px rgba(45,212,160,0.24)' : '0 0 30px rgba(0,200,255,0.42)',
+                        }}
+                      >
+                        MAIS POPULAR
+                      </Typography>
+                    )}
+                    <Stack direction="row" alignItems="center" spacing={2} sx={{ minHeight: 52 }}>
+                      <Box
+                        sx={{
+                          width: 52,
+                          height: 52,
+                          borderRadius: '50%',
+                          display: 'grid',
+                          placeItems: 'center',
+                          color: isLight ? 'var(--color-primary)' : '#16d9ff',
+                          border: isLight ? '1px solid rgba(45,212,160,0.2)' : '1px solid rgba(0,200,255,0.2)',
+                          bgcolor: isLight ? 'rgba(45,212,160,0.08)' : 'rgba(0,200,255,0.08)',
+                          boxShadow: isLight ? 'none' : '0 0 22px rgba(0,200,255,0.12)',
+                        }}
+                      >
+                        <Icon sx={{ fontSize: 25 }} />
+                      </Box>
+                      <Typography sx={{ color: isLight ? 'var(--text-primary)' : '#fff', fontSize: 20, fontWeight: 950 }}>
+                        {plan.title}
+                      </Typography>
+                    </Stack>
+
+                    <Stack direction="row" alignItems="baseline" spacing={1} sx={{ mt: 3 }}>
+                      <Typography sx={{ color: isLight ? 'var(--color-primary)' : '#16d9ff', fontSize: 21, fontWeight: 950 }}>
+                        R$
+                      </Typography>
+                      <Typography sx={{ color: isLight ? 'var(--color-accent)' : '#16d9ff', fontSize: { xs: 42, md: 52 }, lineHeight: 1, fontWeight: 950 }}>
+                        {plan.price.replace('R$ ', '')}
+                      </Typography>
+                      <Typography sx={{ color: isLight ? 'rgba(31,41,55,0.66)' : 'rgba(230,241,248,0.78)', fontSize: 16, fontWeight: 700 }}>
+                        {plan.period}
+                      </Typography>
+                    </Stack>
+
+                    <Typography sx={{ mt: 2.2, minHeight: { xs: 48, md: 56 }, color: isLight ? 'rgba(31,41,55,0.72)' : 'rgba(230,241,248,0.74)', fontSize: 15.5, lineHeight: 1.55 }}>
+                      {plan.description}
+                    </Typography>
+
+                    <Stack spacing={1.4} sx={{ mt: 3, flex: 1 }}>
+                      {plan.benefits.map((benefit) => (
+                        <Stack key={benefit} direction="row" alignItems="center" spacing={1.3}>
+                          <Box
+                            sx={{
+                              width: 22,
+                              height: 22,
+                              borderRadius: '50%',
+                              display: 'grid',
+                              placeItems: 'center',
+                              flexShrink: 0,
+                              border: isLight ? '1px solid rgba(45,212,160,0.42)' : '1px solid rgba(0,200,255,0.72)',
+                              color: isLight ? 'var(--color-primary)' : '#16d9ff',
+                            }}
+                          >
+                            <CheckIcon sx={{ fontSize: 15 }} />
+                          </Box>
+                          <Typography sx={{ color: isLight ? 'rgba(31,41,55,0.78)' : 'rgba(230,241,248,0.82)', fontSize: 14.5, lineHeight: 1.35 }}>
+                            {benefit}
+                          </Typography>
+                        </Stack>
+                      ))}
+                    </Stack>
+
+                    <Button
+                      variant={isPopular ? 'contained' : 'outlined'}
+                      endIcon={<ArrowForwardIcon />}
+                      sx={{
+                        mt: 4,
+                        minHeight: 52,
+                        borderRadius: 2.4,
+                        fontWeight: 950,
+                        color: isPopular ? (isLight ? '#fff' : '#02111a') : (isLight ? 'var(--color-primary)' : '#16d9ff'),
+                        borderColor: isLight ? 'rgba(45,212,160,0.46)' : 'rgba(0,200,255,0.58)',
+                        bgcolor: isPopular ? (isLight ? 'var(--color-accent)' : '#16d9ff') : 'transparent',
+                        boxShadow: isPopular ? (isLight ? '0 14px 30px rgba(45,212,160,0.2)' : '0 0 30px rgba(0,200,255,0.28)') : 'none',
+                        '&:hover': {
+                          borderColor: isLight ? 'var(--color-accent)' : '#16d9ff',
+                          bgcolor: isPopular ? (isLight ? '#158765' : '#36dfff') : (isLight ? 'rgba(45,212,160,0.08)' : 'rgba(0,200,255,0.08)'),
+                          boxShadow: isPopular ? (isLight ? '0 18px 38px rgba(45,212,160,0.24)' : '0 0 36px rgba(0,200,255,0.34)') : 'none',
+                        },
+                      }}
+                    >
+                      Escolher plano
+                    </Button>
+                  </Box>
+                )
+              })}
+            </Box>
+          </Stack>
+        </Box>
+
         <Box component="section" id="segurança" sx={{ py: { xs: 7, md: 9 }, background: isLight ? 'var(--bg-primary)' : 'transparent' }}>
           <Box sx={{ width: 'min(1120px, calc(100% - 32px))', mx: 'auto' }}>
             <SectionTitle sx={{ color: isLight ? 'var(--text-primary)' : undefined }}>Recursos que fazem a diferença</SectionTitle>
@@ -1369,7 +1658,7 @@ export function LandingPage() {
             }}
           >
             <Box className="float-soft" sx={{ width: 160, height: 270, mx: { xs: 'auto', md: 0 }, borderRadius: '30px', border: isLight ? '8px solid rgba(8,164,88,0.12)' : '8px solid rgba(255,255,255,0.14)', bgcolor: isLight ? '#ffffff' : '#02070d', transform: 'rotate(-8deg)', display: 'grid', placeItems: 'center', boxShadow: isLight ? '0 18px 34px rgba(16,24,40,0.10)' : '0 0 44px rgba(0,200,255,0.18)' }}>
-              <Box component="img" src={logo} alt="BorAli" sx={{ width: 92, filter: isLight ? 'hue-rotate(315deg) saturate(1.08)' : 'none' }} />
+              <Box component="img" src={logo} alt="BorAli" sx={{ width: 92 }} />
             </Box>
             <Stack alignItems="center" textAlign="center" spacing={1.4}>
               <Typography sx={{ color: isLight ? 'var(--text-primary)' : '#fff', fontSize: { xs: 30, md: 38 }, lineHeight: 1.1, fontWeight: 950 }}>Pronto para uma nova experiência?</Typography>
@@ -1380,8 +1669,21 @@ export function LandingPage() {
               </Stack>
             </Stack>
             <Box sx={{ display: { xs: 'none', md: 'block' }, position: 'relative', height: 190 }}>
-              <DirectionsCarIcon sx={{ position: 'absolute', right: 0, bottom: 18, color: isLight ? 'rgba(8,164,88,0.18)' : '#dff7ff', fontSize: 170, filter: isLight ? 'drop-shadow(0 18px 24px rgba(16,24,40,0.08))' : 'drop-shadow(0 0 32px rgba(0,200,255,0.38))' }} />
-              <Box sx={{ position: 'absolute', left: 0, right: 0, bottom: 0, height: 74, background: isLight ? 'repeating-linear-gradient(90deg, rgba(8,164,88,0.10) 0 22px, transparent 22px 36px)' : 'repeating-linear-gradient(90deg, rgba(0,200,255,0.14) 0 22px, transparent 22px 36px)' }} />
+              <Box
+                component="img"
+                src={isLight ? orderRideGreen : orderRideBlue}
+                alt=""
+                aria-hidden="true"
+                sx={{
+                  position: 'absolute',
+                  right: -10,
+                  bottom: -18,
+                  width: 285,
+                  maxWidth: '100%',
+                  height: 'auto',
+                  filter: isLight ? 'drop-shadow(0 18px 24px rgba(16,24,40,0.08))' : 'drop-shadow(0 0 32px rgba(0,200,255,0.34))',
+                }}
+              />
             </Box>
           </Box>
         </Box>
@@ -1395,8 +1697,20 @@ export function LandingPage() {
           boxShadow: isLight ? '0 -10px 28px rgba(16,24,40,0.04)' : 'none',
         }}
       >
-        <Stack alignItems="center" justifyContent="center" sx={{ width: pageWidth, mx: 'auto', py: 3 }}>
-          <Box component="img" src={logo} alt="BorAli" sx={{ width: 110, filter: isLight ? 'hue-rotate(315deg) saturate(1.08)' : 'none' }} />
+        <Stack alignItems="center" justifyContent="center" spacing={0.75} sx={{ width: pageWidth, mx: 'auto', py: 3 }}>
+          <Box component="img" src={logo} alt="BorAli" sx={{ width: 110 }} />
+          <Typography
+            sx={{
+              color: isLight ? 'rgba(0,0,0,0.55)' : 'rgba(255,255,255,0.55)',
+              fontSize: { xs: 11, sm: 12 },
+              fontWeight: 500,
+              lineHeight: 1.4,
+              textAlign: 'center',
+              letterSpacing: 0,
+            }}
+          >
+            © 2026 doneThink. All rights reserved.
+          </Typography>
         </Stack>
       </Box>
     </Box>

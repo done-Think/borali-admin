@@ -12,6 +12,10 @@
   --gradient-subtle: linear-gradient(180deg, rgba(45,212,160,0.06), rgba(45,212,160,0.02));
 }
 
+html {
+  scroll-behavior: smooth;
+}
+
 /* Light theme — white / green tone */
 [data-toolpad-color-scheme="light"] {
   --bg-primary: #F7FFFB; /* very light green tint */
@@ -71,22 +75,3 @@ body {
   box-shadow: var(--shadows);
 }
 
-/* Global fixed toggle button */
-.global-theme-toggle {
-  position: fixed;
-  top: 10px;
-  right: 16px;
-  z-index: 99999;
-  background: transparent;
-  border-radius: 999px;
-}
-.global-theme-toggle .MuiIconButton-root {
-  background: rgba(255,255,255,0.9);
-  box-shadow: 0 6px 18px rgba(16,24,40,0.06);
-}
-
-[data-toolpad-color-scheme="dark"] .global-theme-toggle .MuiIconButton-root {
-  background: rgba(2,7,13,0.6);
-  color: #fff;
-  box-shadow: 0 6px 18px rgba(0,0,0,0.6);
-}
