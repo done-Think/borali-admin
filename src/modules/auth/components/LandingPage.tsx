@@ -716,9 +716,6 @@ export function LandingPage() {
           '0%, 100%': { boxShadow: '0 0 18px rgba(0, 200, 255, 0.16), inset 0 0 18px rgba(0, 200, 255, 0.12)' },
           '50%': { boxShadow: '0 0 34px rgba(0, 200, 255, 0.32), inset 0 0 24px rgba(0, 200, 255, 0.18)' },
         },
-        '@keyframes dashMove': {
-          to: { backgroundPosition: '44px 0' },
-        },
         '@keyframes routeShimmer': {
           '0%': { transform: 'translateX(-100%)', opacity: 0 },
           '35%, 65%': { opacity: 0.75 },
@@ -786,7 +783,7 @@ export function LandingPage() {
               </Typography>
             ))}
           </Stack>
-          <Stack direction="row" spacing={1} alignItems="center">
+          <Stack direction="row" spacing={1.6} alignItems="center">
             <Tooltip title="Alternar tema">
               <IconButton
                 onClick={toggleColorScheme}
@@ -889,30 +886,10 @@ export function LandingPage() {
                 </Box>
               </Typography>
               <Typography sx={{ maxWidth: 660, color: isLight ? 'rgba(31, 41, 55, 0.78)' : 'rgba(230, 241, 248, 0.78)', fontSize: { xs: 16, md: 19 }, lineHeight: 1.75 }}>
-                <Box
-                  component="span"
-                  sx={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: 0.75,
-                    mr: 0.45,
-                    verticalAlign: 'middle',
-                  }}
-                >
-                  A
-                  <Box
-                    component="img"
-                    src={logo}
-                    alt="BorAli"
-                    sx={{
-                      display: 'block',
-                      width: { xs: 76, md: 90 },
-                      height: 'auto',
-                      flexShrink: 0,
-                      transform: 'translateY(0.02em)',
-                    }}
-                  />
-                </Box>
+                A{' '}
+                <Box component="span" sx={{ color: isLight ? 'var(--color-accent)' : '#00c8ff', fontWeight: 700 }}>
+                  BorAli
+                </Box>{' '}
                 conecta passageiros e motoristas em uma experiência mais justa: viagens com segurança, preço transparente e motoristas pagando por mensalidade, não por km rodado.
               </Typography>
               <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
@@ -1259,7 +1236,6 @@ export function LandingPage() {
                   backgroundImage: colorScheme === 'light' ? `linear-gradient(90deg, ${getComputedStyle(document.documentElement).getPropertyValue('--color-primary') || 'rgba(45,212,160,0.55)'} 50%, transparent 0)` : 'linear-gradient(90deg, rgba(0,200,255,.55) 50%, transparent 0)',
                   backgroundSize: '22px 1px',
                   filter: colorScheme === 'light' ? 'none' : 'drop-shadow(0 0 8px rgba(0,200,255,.65))',
-                  animation: 'dashMove 1.4s linear infinite',
                 },
               }}
             >
@@ -1396,18 +1372,28 @@ export function LandingPage() {
                       borderRadius: 5,
                       overflow: 'hidden',
                       border: isPopular
-                        ? (isLight ? '1px solid rgba(45,212,160,0.48)' : '1px solid rgba(0,200,255,0.82)')
-                        : (isLight ? '1px solid rgba(45,212,160,0.18)' : '1px solid rgba(0,200,255,0.22)'),
+                        ? (isLight ? '1px solid rgba(45,212,160,0.58)' : '1px solid rgba(22,217,255,0.52)')
+                        : (isLight ? '1px solid rgba(45,212,160,0.24)' : '1px solid rgba(22,217,255,0.26)'),
                       background: isPopular
                         ? (isLight
-                            ? 'radial-gradient(circle at 70% 0%, rgba(45,212,160,0.16), transparent 34%), linear-gradient(180deg, #ffffff 0%, #f2fff9 100%)'
-                            : 'radial-gradient(circle at 70% 0%, rgba(0,200,255,0.22), transparent 36%), linear-gradient(145deg, rgba(5,27,43,0.94), rgba(2,8,16,0.9))')
+                            ? 'radial-gradient(circle at 50% 0%, rgba(45,212,160,0.16), rgba(255,255,255,0.96) 46%), linear-gradient(180deg, rgba(255,255,255,0.98), rgba(245,255,251,0.96))'
+                            : 'radial-gradient(circle at 50% 0%, rgba(22,217,255,0.18), rgba(4,16,28,0.96) 50%), linear-gradient(180deg, rgba(7,22,36,0.94), rgba(2,8,16,0.94))')
                         : (isLight
-                            ? 'linear-gradient(180deg, #ffffff 0%, #f8fffb 100%)'
-                            : 'linear-gradient(145deg, rgba(6,24,40,0.88), rgba(3,10,18,0.82))'),
+                            ? 'radial-gradient(circle at 50% 0%, rgba(45,212,160,0.07), rgba(255,255,255,0.96) 42%), linear-gradient(180deg, rgba(255,255,255,0.96), rgba(248,255,251,0.92))'
+                            : 'radial-gradient(circle at 50% 0%, rgba(22,217,255,0.10), rgba(4,15,26,0.90) 44%), linear-gradient(180deg, rgba(7,22,36,0.88), rgba(2,9,17,0.86))'),
                       boxShadow: isPopular
-                        ? (isLight ? '0 24px 70px rgba(16,24,40,0.10), 0 0 0 1px rgba(45,212,160,0.12)' : '0 0 44px rgba(0,200,255,0.28), 0 24px 70px rgba(0,0,0,0.34)')
-                        : (isLight ? '0 18px 48px rgba(16,24,40,0.07)' : '0 24px 70px rgba(0,0,0,0.28), inset 0 0 34px rgba(0,200,255,0.04)'),
+                        ? (isLight ? '0 24px 80px rgba(45,212,160,0.18), 0 0 0 1px rgba(45,212,160,0.10)' : '0 24px 80px rgba(0,200,255,0.20), 0 0 0 1px rgba(22,217,255,0.12)')
+                        : (isLight ? '0 20px 60px rgba(45,212,160,0.10)' : '0 20px 60px rgba(0,200,255,0.10)'),
+                      transition: 'transform .3s ease, border-color .3s ease, box-shadow .3s ease, background .3s ease',
+                      '&:hover': {
+                        transform: 'translateY(-4px)',
+                        borderColor: isPopular
+                          ? (isLight ? 'rgba(45,212,160,0.72)' : 'rgba(22,217,255,0.66)')
+                          : (isLight ? 'rgba(45,212,160,0.38)' : 'rgba(22,217,255,0.42)'),
+                        boxShadow: isPopular
+                          ? (isLight ? '0 30px 90px rgba(45,212,160,0.22), 0 0 0 1px rgba(45,212,160,0.14)' : '0 30px 90px rgba(0,200,255,0.24), 0 0 0 1px rgba(22,217,255,0.16)')
+                          : (isLight ? '0 24px 70px rgba(45,212,160,0.16)' : '0 24px 70px rgba(0,200,255,0.16)'),
+                      },
                     }}
                   >
                     {isPopular && (
@@ -1426,7 +1412,7 @@ export function LandingPage() {
                           fontWeight: 950,
                           letterSpacing: 0,
                           whiteSpace: 'nowrap',
-                          boxShadow: isLight ? '0 12px 24px rgba(45,212,160,0.24)' : '0 0 30px rgba(0,200,255,0.42)',
+                          boxShadow: isLight ? '0 12px 26px rgba(45,212,160,0.28)' : '0 12px 30px rgba(0,200,255,0.32)',
                         }}
                       >
                         MAIS POPULAR
@@ -1441,9 +1427,9 @@ export function LandingPage() {
                           display: 'grid',
                           placeItems: 'center',
                           color: isLight ? 'var(--color-primary)' : '#16d9ff',
-                          border: isLight ? '1px solid rgba(45,212,160,0.2)' : '1px solid rgba(0,200,255,0.2)',
-                          bgcolor: isLight ? 'rgba(45,212,160,0.08)' : 'rgba(0,200,255,0.08)',
-                          boxShadow: isLight ? 'none' : '0 0 22px rgba(0,200,255,0.12)',
+                          border: isLight ? '1px solid rgba(45,212,160,0.24)' : '1px solid rgba(22,217,255,0.28)',
+                          bgcolor: isLight ? 'rgba(45,212,160,0.10)' : 'rgba(22,217,255,0.09)',
+                          boxShadow: isLight ? '0 10px 24px rgba(45,212,160,0.08)' : '0 10px 24px rgba(0,200,255,0.10)',
                         }}
                       >
                         <Icon sx={{ fontSize: 25 }} />
@@ -1480,8 +1466,9 @@ export function LandingPage() {
                               display: 'grid',
                               placeItems: 'center',
                               flexShrink: 0,
-                              border: isLight ? '1px solid rgba(45,212,160,0.42)' : '1px solid rgba(0,200,255,0.72)',
+                              border: isLight ? '1px solid rgba(45,212,160,0.42)' : '1px solid rgba(22,217,255,0.58)',
                               color: isLight ? 'var(--color-primary)' : '#16d9ff',
+                              bgcolor: isLight ? 'rgba(45,212,160,0.04)' : 'rgba(22,217,255,0.05)',
                             }}
                           >
                             <CheckIcon sx={{ fontSize: 15 }} />
@@ -1499,16 +1486,18 @@ export function LandingPage() {
                       sx={{
                         mt: 4,
                         minHeight: 52,
-                        borderRadius: 2.4,
+                        borderRadius: 999,
                         fontWeight: 950,
                         color: isPopular ? (isLight ? '#fff' : '#02111a') : (isLight ? 'var(--color-primary)' : '#16d9ff'),
-                        borderColor: isLight ? 'rgba(45,212,160,0.46)' : 'rgba(0,200,255,0.58)',
+                        borderColor: isLight ? 'rgba(45,212,160,0.46)' : 'rgba(22,217,255,0.48)',
                         bgcolor: isPopular ? (isLight ? 'var(--color-accent)' : '#16d9ff') : 'transparent',
-                        boxShadow: isPopular ? (isLight ? '0 14px 30px rgba(45,212,160,0.2)' : '0 0 30px rgba(0,200,255,0.28)') : 'none',
+                        boxShadow: isPopular ? (isLight ? '0 14px 30px rgba(45,212,160,0.24)' : '0 14px 32px rgba(0,200,255,0.26)') : 'none',
+                        transition: 'background .25s ease, border-color .25s ease, box-shadow .25s ease, transform .25s ease',
                         '&:hover': {
                           borderColor: isLight ? 'var(--color-accent)' : '#16d9ff',
                           bgcolor: isPopular ? (isLight ? '#158765' : '#36dfff') : (isLight ? 'rgba(45,212,160,0.08)' : 'rgba(0,200,255,0.08)'),
-                          boxShadow: isPopular ? (isLight ? '0 18px 38px rgba(45,212,160,0.24)' : '0 0 36px rgba(0,200,255,0.34)') : 'none',
+                          boxShadow: isPopular ? (isLight ? '0 18px 38px rgba(45,212,160,0.30)' : '0 18px 40px rgba(0,200,255,0.34)') : 'none',
+                          transform: 'translateY(-1px)',
                         },
                       }}
                     >
@@ -1697,15 +1686,21 @@ export function LandingPage() {
           boxShadow: isLight ? '0 -10px 28px rgba(16,24,40,0.04)' : 'none',
         }}
       >
-        <Stack alignItems="center" justifyContent="center" spacing={0.75} sx={{ width: pageWidth, mx: 'auto', py: 3 }}>
-          <Box component="img" src={logo} alt="BorAli" sx={{ width: 110 }} />
+        <Stack
+          direction={{ xs: 'column', md: 'row' }}
+          alignItems="center"
+          justifyContent={{ xs: 'center', md: 'space-between' }}
+          spacing={{ xs: 0.5, md: 0 }}
+          sx={{ width: pageWidth, mx: 'auto', py: { xs: 1.5, md: 1.75 } }}
+        >
+          <Box component="img" src={logo} alt="BorAli" sx={{ width: { xs: 78, md: 84 }, height: 'auto' }} />
           <Typography
             sx={{
               color: isLight ? 'rgba(0,0,0,0.55)' : 'rgba(255,255,255,0.55)',
               fontSize: { xs: 11, sm: 12 },
               fontWeight: 500,
               lineHeight: 1.4,
-              textAlign: 'center',
+              textAlign: { xs: 'center', md: 'right' },
               letterSpacing: 0,
             }}
           >
