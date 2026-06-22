@@ -6,8 +6,13 @@
   --text-secondary: #6B7280;
   --borders: rgba(45, 212, 160, 0.12);
   --shadows: 0 6px 20px rgba(16,24,40,0.04);
-  --color-primary: #2DD4A0; /* BorAli green */
-  --color-accent: rgba(45,212,160,0.9);
+  --accent-primary: #2DD4A0;
+  --accent-secondary: #1DAF82;
+  --accent-glow: rgba(45,212,160,0.18);
+  --accent-border: rgba(45,212,160,0.16);
+  --accent-soft: rgba(45,212,160,0.08);
+  --color-primary: var(--accent-primary); /* BorAli green */
+  --color-accent: var(--accent-secondary);
   --lines: rgba(16,24,40,0.06);
   --gradient-subtle: linear-gradient(180deg, rgba(45,212,160,0.06), rgba(45,212,160,0.02));
 }
@@ -24,8 +29,13 @@ html {
   --text-secondary: #6B7280; /* neutral */
   --borders: rgba(45, 212, 160, 0.14);
   --shadows: 0 8px 24px rgba(16,24,40,0.04);
-  --color-primary: #2DD4A0; /* logo green */
-  --color-accent: #1DAF82;
+  --accent-primary: #2DD4A0;
+  --accent-secondary: #1DAF82;
+  --accent-glow: rgba(45,212,160,0.18);
+  --accent-border: rgba(45,212,160,0.16);
+  --accent-soft: rgba(45,212,160,0.08);
+  --color-primary: var(--accent-primary); /* logo green */
+  --color-accent: var(--accent-secondary);
   --lines: rgba(34, 197, 94, 0.12);
   --gradient-subtle: linear-gradient(180deg, rgba(45,212,160,0.06), rgba(45,212,160,0.02));
 }
@@ -49,11 +59,16 @@ html {
   --bg-card: #111827; /* neutral[800] */
   --text-primary: #FFFFFF;
   --text-secondary: #9CA3AF;
-  --borders: rgba(255,255,255,0.06);
+  --borders: rgba(0,200,255,0.12);
   --shadows: 0 8px 24px rgba(2,6,23,0.6);
-  --color-primary: #0ABEE9; /* blue used in current dark theme */
-  --color-accent: #35D6F6;
-  --lines: rgba(255,255,255,0.08);
+  --accent-primary: #16D9FF;
+  --accent-secondary: #35D6F6;
+  --accent-glow: rgba(0,200,255,0.24);
+  --accent-border: rgba(0,200,255,0.18);
+  --accent-soft: rgba(0,200,255,0.08);
+  --color-primary: var(--accent-primary); /* blue used in dark theme */
+  --color-accent: var(--accent-secondary);
+  --lines: rgba(0,200,255,0.10);
   --gradient-subtle: linear-gradient(180deg, rgba(10,190,233,0.04), rgba(10,190,233,0.02));
 }
 

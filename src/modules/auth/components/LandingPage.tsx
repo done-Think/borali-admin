@@ -23,6 +23,7 @@ import WorkspacePremiumIcon from '@mui/icons-material/WorkspacePremium'
 import { Box, Button, Stack, Typography } from '@mui/material'
 import { IconButton, Tooltip } from '@mui/material'
 import { useAuthStore } from '@shared/store'
+import type { CSSProperties } from 'react'
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router'
 import carTopView from '@/assets/car-top-view-transparent.png'
@@ -125,10 +126,9 @@ const pricingPlans = [
 ]
 
 const stats = [
-  { value: '+25K', title: 'Viagens realizadas', description: 'Todos os dias', icon: DirectionsCarIcon },
-  { value: '+8K', title: 'Motoristas parceiros', description: 'Ativos na plataforma', icon: GroupsIcon },
-  { value: '+50K', title: 'Passageiros satisfeitos', description: 'Em toda a região', icon: AutoAwesomeIcon },
-  { value: '4.9', title: 'Avaliação média', description: 'Confiança que nos guia', icon: StarIcon },
+  { value: '+25K', title: 'Viagens realizadas', description: 'Todos os dias' },
+  { value: '+8K', title: 'Motoristas parceiros', description: 'Ativos na plataforma' },
+  { value: '+50K', title: 'Passageiros satisfeitos', description: 'Em toda a região' },
 ]
 
 const testimonials = [
@@ -162,10 +162,10 @@ function SectionTitle({ children, sx }: { children: string; sx?: any }) {
   )
 }
 
-function GlassIcon({ icon: Icon }: { icon: typeof PaidIcon }) {
+function GlassIcon({ icon: Icon, className }: { icon: typeof PaidIcon; className?: string }) {
   return (
     <Box
-      className="pulse-icon"
+      className={`pulse-icon${className ? ` ${className}` : ''}`}
       sx={{
         width: 44,
         height: 44,
@@ -173,9 +173,9 @@ function GlassIcon({ icon: Icon }: { icon: typeof PaidIcon }) {
         placeItems: 'center',
         borderRadius: '50%',
         color: 'var(--color-primary)',
-        border: '1px solid rgba(45,212,160,0.18)',
-        bgcolor: 'rgba(45,212,160,0.08)',
-        boxShadow: 'inset 0 0 18px rgba(45,212,160,0.06), 0 0 14px rgba(45,212,160,0.06)',
+        border: '1px solid var(--accent-border)',
+        bgcolor: 'var(--accent-soft)',
+        boxShadow: 'inset 0 0 18px var(--accent-soft), 0 0 14px var(--accent-glow)',
       }}
     >
       <Icon sx={{ fontSize: 22, color: 'var(--color-primary)' }} />
@@ -187,9 +187,24 @@ function Bullets({ items }: { items: string[] }) {
   return (
     <Stack spacing={1.25}>
       {items.map((item) => (
-        <Stack key={item} direction="row" spacing={1} alignItems="center">
-          <CheckIcon sx={{ color: 'var(--color-primary)', fontSize: 16 }} />
-          <Typography sx={{ color: 'var(--text-secondary)', fontSize: 13 }}>{item}</Typography>
+        <Stack
+          key={item}
+          className="benefit-bullet"
+          direction="row"
+          spacing={1}
+          alignItems="center"
+          sx={{ transition: 'transform .28s ease' }}
+        >
+          <CheckIcon
+            className="benefit-check"
+            sx={{ color: 'var(--color-primary)', fontSize: 16, transition: 'transform .28s ease, filter .28s ease' }}
+          />
+          <Typography
+            className="benefit-bullet-text"
+            sx={{ color: 'var(--text-secondary)', fontSize: 13, transition: 'color .28s ease' }}
+          >
+            {item}
+          </Typography>
         </Stack>
       ))}
     </Stack>
@@ -638,10 +653,80 @@ export function LandingPage() {
     border: isLight ? '1px solid rgba(45,212,160,0.16)' : cardSx.border,
     background: isLight ? 'linear-gradient(180deg, #ffffff 0%, #f7fffb 100%)' : cardSx.background,
     boxShadow: isLight ? '0 18px 44px rgba(15,23,42,0.08)' : cardSx.boxShadow,
+    isolation: 'isolate',
+    transition: 'transform .38s ease, border-color .38s ease, box-shadow .38s ease, background .38s ease',
+    '& > *': {
+      position: 'relative',
+      zIndex: 1,
+    },
+    '&::before': {
+      content: '""',
+      position: 'absolute',
+      inset: 0,
+      borderRadius: 'inherit',
+      padding: '1px',
+      background: isLight
+        ? 'linear-gradient(120deg, transparent 0%, rgba(45,212,160,0.05) 34%, rgba(45,212,160,0.55) 49%, rgba(0,184,232,0.24) 55%, transparent 70%)'
+        : 'linear-gradient(120deg, transparent 0%, rgba(0,200,255,0.05) 32%, rgba(0,200,255,0.58) 48%, rgba(45,212,160,0.35) 58%, transparent 72%)',
+      WebkitMask: 'linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0)',
+      WebkitMaskComposite: 'xor',
+      maskComposite: 'exclude',
+      opacity: 0.32,
+      pointerEvents: 'none',
+      transform: 'translateX(-125%)',
+      animation: 'benefitBorderSweep 5.4s ease-in-out infinite',
+      zIndex: 0,
+    },
+    '&::after': {
+      content: '""',
+      position: 'absolute',
+      inset: 1,
+      borderRadius: 'inherit',
+      background: isLight
+        ? 'radial-gradient(circle at 25% 0%, rgba(45,212,160,0.08), transparent 38%)'
+        : 'radial-gradient(circle at 25% 0%, rgba(0,200,255,0.12), transparent 38%)',
+      opacity: 0,
+      transition: 'opacity .38s ease',
+      pointerEvents: 'none',
+      zIndex: 0,
+    },
     '&:hover': {
       ...cardSx['&:hover'],
-      borderColor: isLight ? 'rgba(45,212,160,0.28)' : cardSx['&:hover'].borderColor,
-      boxShadow: isLight ? '0 24px 64px rgba(15,23,42,0.1)' : cardSx['&:hover'].boxShadow,
+      borderColor: isLight ? 'rgba(45,212,160,0.42)' : 'rgba(0,200,255,0.52)',
+      background: isLight
+        ? 'radial-gradient(circle at 18% 0%, rgba(45,212,160,0.12), transparent 36%), linear-gradient(180deg, #ffffff 0%, #f3fff9 100%)'
+        : 'radial-gradient(circle at 18% 0%, rgba(0,200,255,0.16), transparent 36%), linear-gradient(145deg, rgba(7, 29, 47, 0.92), rgba(3, 10, 18, 0.86))',
+      boxShadow: isLight
+        ? '0 26px 70px rgba(8,164,88,0.16), 0 12px 30px rgba(15,23,42,0.08)'
+        : '0 30px 90px rgba(0, 200, 255, 0.16), inset 0 0 42px rgba(45, 212, 160, 0.08)',
+      '&::before': {
+        opacity: 0.78,
+        animationDuration: '3.2s',
+      },
+      '&::after': {
+        opacity: 1,
+      },
+      '.benefit-icon-wrap': {
+        transform: 'translateY(-4px) scale(1.04)',
+        borderColor: isLight ? 'rgba(45,212,160,0.34)' : 'rgba(0,200,255,0.36)',
+        boxShadow: isLight
+          ? '0 18px 42px rgba(45,212,160,0.18), inset 0 0 18px rgba(45,212,160,0.12)'
+          : '0 18px 44px rgba(0,200,255,0.18), inset 0 0 18px rgba(45,212,160,0.10)',
+      },
+      '.benefit-bullet': {
+        transform: 'translateX(4px)',
+      },
+      '.benefit-check': {
+        filter: isLight ? 'drop-shadow(0 0 7px rgba(45,212,160,0.36))' : 'drop-shadow(0 0 8px rgba(0,200,255,0.42))',
+        transform: 'scale(1.08)',
+      },
+      '.benefit-bullet-text': {
+        color: isLight ? 'rgba(20,33,45,0.82)' : 'rgba(242,249,252,0.86)',
+      },
+      '.benefit-title': {
+        color: isLight ? 'rgba(7,26,18,0.96)' : '#ffffff',
+        textShadow: isLight ? '0 0 0 rgba(45,212,160,0)' : '0 0 16px rgba(0,200,255,0.16)',
+      },
     },
   }
 
@@ -713,8 +798,8 @@ export function LandingPage() {
           '50%': { transform: 'translateY(-12px)' },
         },
         '@keyframes pulseGlow': {
-          '0%, 100%': { boxShadow: '0 0 18px rgba(0, 200, 255, 0.16), inset 0 0 18px rgba(0, 200, 255, 0.12)' },
-          '50%': { boxShadow: '0 0 34px rgba(0, 200, 255, 0.32), inset 0 0 24px rgba(0, 200, 255, 0.18)' },
+          '0%, 100%': { boxShadow: '0 0 18px var(--accent-glow), inset 0 0 18px var(--accent-soft)' },
+          '50%': { boxShadow: '0 0 34px var(--accent-glow), inset 0 0 24px var(--accent-soft)' },
         },
         '@keyframes routeShimmer': {
           '0%': { transform: 'translateX(-100%)', opacity: 0 },
@@ -739,9 +824,238 @@ export function LandingPage() {
           '96%': { left: '21.9%', top: '73.4%', transform: 'translate(-50%, -50%) rotate(242deg)' },
           '100%': { left: '21.9%', top: '73.4%', transform: 'translate(-50%, -50%) rotate(62deg)' },
         },
+        '@keyframes benefitBorderSweep': {
+          '0%': { transform: 'translateX(-125%)' },
+          '42%, 100%': { transform: 'translateX(125%)' },
+        },
+        '@keyframes benefitIconBounce': {
+          '0%, 100%': { transform: 'translateY(0) scale(1)' },
+          '45%': { transform: 'translateY(-4px) scale(1.13)' },
+          '72%': { transform: 'translateY(1px) scale(0.98)' },
+        },
+        '@keyframes benefitIconGlow': {
+          '0%, 100%': { filter: 'drop-shadow(0 0 0 transparent)', transform: 'scale(1)' },
+          '52%': { filter: 'drop-shadow(0 0 12px var(--accent-glow))', transform: 'scale(1.1)' },
+        },
+        '@keyframes benefitIconShield': {
+          '0%, 100%': { transform: 'rotate(0deg) scale(1)' },
+          '42%': { transform: 'rotate(-7deg) scale(1.08)' },
+          '72%': { transform: 'rotate(5deg) scale(1.03)' },
+        },
+        '@keyframes benefitIconStar': {
+          '0%, 100%': { filter: 'drop-shadow(0 0 0 transparent)', transform: 'scale(1)' },
+          '46%': { filter: 'drop-shadow(0 0 13px var(--accent-glow))', transform: 'scale(1.16)' },
+          '72%': { transform: 'scale(1.04)' },
+        },
+        '@keyframes dreamOrbMove': {
+          '0%': {
+            left: '0%',
+            opacity: 0,
+            transform: 'translate(-50%, -50%) scale(0.75)',
+          },
+          '8%': {
+            opacity: 1,
+          },
+          '25%': {
+            left: '25%',
+            transform: 'translate(-50%, -50%) scale(1)',
+          },
+          '50%': {
+            left: '50%',
+            transform: 'translate(-50%, -50%) scale(0.92)',
+          },
+          '75%': {
+            left: '75%',
+            transform: 'translate(-50%, -50%) scale(1.05)',
+          },
+          '92%': {
+            opacity: 1,
+          },
+          '100%': {
+            left: '100%',
+            opacity: 0,
+            transform: 'translate(-50%, -50%) scale(0.75)',
+          },
+        },
+        '@keyframes resourceIconDream': {
+          '0%, 9%, 100%': {
+            transform: 'scale(1)',
+            boxShadow: 'inset 0 0 18px var(--accent-soft), 0 0 14px var(--accent-glow)',
+          },
+          '4.5%': {
+            transform: 'scale(1.08)',
+            boxShadow: isLight
+              ? 'inset 0 0 18px rgba(45,212,160,0.12), 0 0 22px rgba(45,212,160,0.26)'
+              : 'inset 0 0 20px rgba(0,200,255,0.16), 0 0 26px rgba(0,200,255,0.30), 0 0 36px rgba(53,214,246,0.14)',
+          },
+        },
+        '@keyframes resourceRipple': {
+          '0%, 8%, 100%': { opacity: 0, transform: 'translate(-50%, -50%) scale(0.82)' },
+          '4.5%': { opacity: isLight ? 0.34 : 0.42, transform: 'translate(-50%, -50%) scale(1.34)' },
+        },
         '.fade-up': { animation: 'fadeUp .78s ease both' },
         '.float-soft': { animation: 'floatSoft 5.5s ease-in-out infinite' },
         '.pulse-icon': { animation: 'pulseGlow 3s ease-in-out infinite' },
+        '.stats-content': {
+          position: 'relative',
+          zIndex: 1,
+        },
+        '.stats-grid': {
+          position: 'relative',
+          display: 'grid',
+          gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)', lg: 'repeat(3, 1fr)' },
+          gap: { xs: 2.5, md: 3 },
+          background: 'transparent',
+          boxShadow: 'none',
+          border: 'none',
+        },
+        '.number': {
+          position: 'relative',
+          width: 'auto',
+          maxWidth: '100%',
+          minHeight: 48,
+          overflow: 'hidden',
+          transition: 'text-shadow .28s ease',
+        },
+        '.stat-label': {
+          minHeight: 20,
+          width: '100%',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+        },
+        '.stat-caption': {
+          minHeight: 36,
+          width: '100%',
+          display: 'flex',
+          alignItems: 'flex-start',
+          justifyContent: 'center',
+        },
+        '.dream-line': {
+          position: 'absolute',
+          left: '8.5%',
+          right: '8.5%',
+          top: 34,
+          height: 2,
+          width: 'auto',
+          pointerEvents: 'none',
+          zIndex: 0,
+          display: 'none',
+          overflow: 'visible',
+        },
+        '.dream-line::before': {
+          content: '""',
+          position: 'absolute',
+          inset: 0,
+          borderRadius: 999,
+          background: isLight
+            ? 'linear-gradient(90deg, rgba(45,212,160,0), rgba(45,212,160,0.18), rgba(45,212,160,0))'
+            : 'linear-gradient(90deg, rgba(0,200,255,0), rgba(0,200,255,0.22), rgba(53,214,246,0.16), rgba(0,200,255,0))',
+          boxShadow: isLight ? '0 0 10px rgba(45,212,160,0.08)' : '0 0 14px rgba(0,200,255,0.14)',
+        },
+        '.dream-orb': {
+          position: 'absolute',
+          left: 0,
+          top: '50%',
+          width: 14,
+          height: 14,
+          transform: 'translate(-50%, -50%) scale(0.75)',
+          borderRadius: 999,
+          background: isLight
+            ? 'radial-gradient(circle, #ffffff 0%, #8effd9 28%, rgba(45,212,160,0.42) 66%, transparent 100%)'
+            : 'radial-gradient(circle, #ffffff 0%, #9eefff 26%, rgba(0,200,255,0.44) 66%, transparent 100%)',
+          boxShadow: isLight
+            ? '0 0 14px rgba(45,212,160,0.62), 0 0 30px rgba(8,164,88,0.20)'
+            : '0 0 18px rgba(0,200,255,0.74), 0 0 38px rgba(53,214,246,0.24)',
+          animation: 'dreamOrbMove 6.4s ease-in-out infinite',
+          willChange: 'left, opacity, transform',
+        },
+        '.dream-orb::before': {
+          content: '""',
+          position: 'absolute',
+          top: '50%',
+          right: 6,
+          width: 92,
+          height: 2,
+          transform: 'translateY(-50%)',
+          borderRadius: 999,
+          background: isLight
+            ? 'linear-gradient(90deg, transparent, rgba(45,212,160,0.54), rgba(45,212,160,0.10))'
+            : 'linear-gradient(90deg, transparent, rgba(0,200,255,0.46), rgba(53,214,246,0.22), transparent)',
+          filter: 'blur(1px)',
+          opacity: isLight ? 0.72 : 0.86,
+        },
+        '.resource-item': {
+          position: 'relative',
+          zIndex: 1,
+          borderRadius: 4,
+          transition: 'transform .32s ease, background .32s ease, box-shadow .32s ease',
+          animationDelay: 'calc(var(--resource-index) * 95ms)',
+        },
+        '.resource-icon': {
+          position: 'relative',
+          width: 44,
+          height: 44,
+          display: 'grid',
+          placeItems: 'center',
+        },
+        '.resource-icon::after': {
+          content: '""',
+          position: 'absolute',
+          left: '50%',
+          top: '50%',
+          width: 48,
+          height: 48,
+          borderRadius: '50%',
+          border: isLight ? '1px solid rgba(45,212,160,0.22)' : '1px solid rgba(0,200,255,0.28)',
+          boxShadow: isLight ? '0 0 18px rgba(45,212,160,0.12)' : '0 0 22px rgba(0,200,255,0.16)',
+          opacity: 0,
+          transform: 'translate(-50%, -50%) scale(0.82)',
+          animation: 'resourceRipple 6.6s ease-in-out infinite',
+          animationDelay: 'calc(var(--resource-index) * 1.32s)',
+          pointerEvents: 'none',
+        },
+        '.resource-icon .pulse-icon': {
+          animation: 'resourceIconDream 6.6s ease-in-out infinite',
+          animationDelay: 'calc(var(--resource-index) * 1.32s)',
+          transition: 'transform .32s ease, box-shadow .32s ease, background .32s ease, border-color .32s ease',
+        },
+        '.resource-item:hover': {
+          transform: 'translateY(-5px)',
+          background: isLight ? 'rgba(255,255,255,0.58)' : 'rgba(0,200,255,0.045)',
+          boxShadow: isLight ? '0 16px 34px rgba(8,164,88,0.10)' : '0 18px 42px rgba(0,200,255,0.10)',
+        },
+        '.resource-item:hover .pulse-icon': {
+          transform: 'scale(1.08)',
+          borderColor: isLight ? 'rgba(45,212,160,0.36)' : 'rgba(0,200,255,0.42)',
+          boxShadow: isLight
+            ? 'inset 0 0 18px rgba(45,212,160,0.12), 0 0 24px rgba(45,212,160,0.22)'
+            : 'inset 0 0 20px rgba(0,200,255,0.12), 0 0 28px rgba(0,200,255,0.24)',
+        },
+        '.resource-item:hover .resource-title': {
+          color: isLight ? 'rgba(9,28,20,0.96)' : '#ffffff',
+          textShadow: isLight ? 'none' : '0 0 14px rgba(0,200,255,0.14)',
+        },
+        '@media (min-width: 1200px)': {
+          '.dream-line': {
+            display: 'block',
+          },
+        },
+        '.benefit-card-0:hover .benefit-icon-symbol': { animation: 'benefitIconBounce .58s ease both' },
+        '.benefit-card-1:hover .benefit-icon-symbol': { animation: 'benefitIconGlow .7s ease both' },
+        '.benefit-card-2:hover .benefit-icon-symbol': { animation: 'benefitIconShield .64s ease both' },
+        '.benefit-card-3:hover .benefit-icon-symbol': { animation: 'benefitIconStar .64s ease both' },
+        '@media (prefers-reduced-motion: reduce)': {
+          '.fade-up, .float-soft, .pulse-icon, .dream-orb, .resource-icon::after': {
+            animation: 'none',
+          },
+          '.benefit-card::before, .benefit-card .benefit-icon-symbol, .resource-icon .pulse-icon': {
+            animation: 'none !important',
+          },
+          '.benefit-card, .benefit-card::after, .benefit-icon-wrap, .benefit-bullet, .benefit-check, .benefit-bullet-text, .resource-item, .resource-icon .pulse-icon': {
+            transitionDuration: '0.01ms !important',
+          },
+        },
       }}
     >
       <Box
@@ -1019,16 +1333,17 @@ export function LandingPage() {
               {benefits.map((benefit, index) => (
                 <Stack
                   key={benefit.title}
-                  className="fade-up"
+                  className={`fade-up benefit-card benefit-card-${index}`}
                   spacing={2.4}
                   sx={{
                     ...benefitsCardSx,
                     p: { xs: 3, md: 3.5 },
                     minHeight: 288,
-                    animationDelay: `${index * 80}ms`,
+                    animationDelay: `${index * 110}ms`,
                   }}
                 >
                   <Box
+                    className="benefit-icon-wrap"
                     sx={{
                       width: 50,
                       height: 50,
@@ -1038,13 +1353,24 @@ export function LandingPage() {
                       bgcolor: 'rgba(45,212,160,0.12)',
                       color: 'var(--color-primary)',
                       boxShadow: '0 12px 32px rgba(45,212,160,0.08)',
+                      border: isLight ? '1px solid rgba(45,212,160,0.16)' : '1px solid rgba(0,200,255,0.16)',
                       flexShrink: 0,
+                      transition: 'transform .36s ease, box-shadow .36s ease, border-color .36s ease',
                     }}
                   >
-                    <benefit.icon sx={{ fontSize: 22, color: 'var(--color-primary)' }} />
+                    <benefit.icon className="benefit-icon-symbol" sx={{ fontSize: 22, color: 'var(--color-primary)', transformOrigin: 'center', transition: 'filter .3s ease' }} />
                   </Box>
                   <Box>
-                    <Typography sx={{ color: colorScheme === 'light' ? 'var(--text-primary)' : '#fff', fontSize: 18, fontWeight: 700, mb: 1 }}>
+                    <Typography
+                      className="benefit-title"
+                      sx={{
+                        color: colorScheme === 'light' ? 'var(--text-primary)' : '#fff',
+                        fontSize: 18,
+                        fontWeight: 700,
+                        mb: 1,
+                        transition: 'color .32s ease, text-shadow .32s ease',
+                      }}
+                    >
                       {benefit.title}
                     </Typography>
                     <Typography sx={{ color: colorScheme === 'light' ? 'var(--text-secondary)' : 'rgba(230,241,248,0.78)', fontSize: 14, lineHeight: 1.75 }}>
@@ -1513,10 +1839,23 @@ export function LandingPage() {
         <Box component="section" id="segurança" sx={{ py: { xs: 7, md: 9 }, background: isLight ? 'var(--bg-primary)' : 'transparent' }}>
           <Box sx={{ width: 'min(1120px, calc(100% - 32px))', mx: 'auto' }}>
             <SectionTitle sx={{ color: isLight ? 'var(--text-primary)' : undefined }}>Recursos que fazem a diferença</SectionTitle>
-            <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)', lg: 'repeat(5, 1fr)' }, gap: { xs: 2.5, lg: 0 } }}>
+            <Box
+              className="resources-grid"
+              sx={{
+                position: 'relative',
+                display: 'grid',
+                gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)', lg: 'repeat(5, 1fr)' },
+                gap: { xs: 2.5, lg: 0 },
+              }}
+            >
+              <Box className="dream-line" aria-hidden="true">
+                <Box className="dream-orb" />
+              </Box>
               {featureBlocks.map((feature, index) => (
                 <Stack
                   key={feature.title}
+                  className="fade-up resource-item"
+                  style={{ '--resource-index': index } as CSSProperties}
                   alignItems="center"
                   textAlign="center"
                   spacing={1.3}
@@ -1529,8 +1868,10 @@ export function LandingPage() {
                     bgcolor: isLight ? 'transparent' : undefined,
                   }}
                 >
-                  <GlassIcon icon={feature.icon} />
-                  <Typography sx={{ color: isLight ? 'var(--text-primary)' : '#fff', fontSize: 14, fontWeight: 900 }}>{feature.title}</Typography>
+                  <Box className="resource-icon">
+                    <GlassIcon icon={feature.icon} />
+                  </Box>
+                  <Typography className="resource-title" sx={{ color: isLight ? 'var(--text-primary)' : '#fff', fontSize: 14, fontWeight: 900, transition: 'color .28s ease, text-shadow .28s ease' }}>{feature.title}</Typography>
                   <Typography sx={{ color: isLight ? 'var(--text-secondary)' : 'rgba(230,241,248,0.65)', fontSize: 12.5, lineHeight: 1.45 }}>{feature.description}</Typography>
                 </Stack>
               ))}
@@ -1538,33 +1879,55 @@ export function LandingPage() {
           </Box>
         </Box>
 
-        <Box component="section" sx={{ py: { xs: 5, md: 8 }, background: isLight ? 'var(--bg-primary)' : 'transparent' }}>
-          <Box
-            sx={{
-              ...cardSx,
-              width: 'min(1160px, calc(100% - 32px))',
-              mx: 'auto',
-              p: { xs: 3, md: 4.5 },
-              border: isLight ? '1px solid rgba(45,212,160,0.16)' : cardSx.border,
-              background: isLight ? 'linear-gradient(180deg, #ffffff 0%, #f7fffb 100%)' : cardSx.background,
-              boxShadow: isLight ? '0 18px 48px rgba(16,24,40,0.08)' : cardSx.boxShadow,
-              '&:hover': {
-                ...cardSx['&:hover'],
-                borderColor: isLight ? 'rgba(45,212,160,0.26)' : cardSx['&:hover'].borderColor,
-                boxShadow: isLight ? '0 24px 64px rgba(16,24,40,0.1)' : cardSx['&:hover'].boxShadow,
-              },
-            }}
-          >
-            <SectionTitle>Números que nos movem</SectionTitle>
-            <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)', lg: 'repeat(4, 1fr)' }, gap: 2 }}>
+        <Box component="section" sx={{ py: { xs: 7, md: 9 }, background: isLight ? 'var(--bg-primary)' : 'transparent' }}>
+          <Box sx={{ width: pageWidth, mx: 'auto', background: colorScheme === 'light' ? 'var(--bg-primary)' : 'transparent', borderRadius: colorScheme === 'light' ? 4 : 0, py: { xs: 4, md: 6 }, px: { xs: 0, md: 0 } }}>
+            <Box sx={{ textAlign: 'center', mb: { xs: 4, md: 5 } }}>
+              <Typography sx={{ color: colorScheme === 'light' ? 'var(--text-primary)' : '#fff', fontSize: { xs: 24, md: 30 }, fontWeight: 900 }}>
+                Números que nos movem
+              </Typography>
+              <Box sx={{ width: 68, height: 3, borderRadius: 999, bgcolor: 'var(--color-primary)', mx: 'auto', mt: 2, boxShadow: colorScheme === 'light' ? '0 0 18px rgba(45,212,160,0.12)' : 'none' }} />
+            </Box>
+
+            <Box className="stats-grid">
               {stats.map((stat, index) => (
-                <Stack key={stat.title} alignItems="center" textAlign="center" spacing={1.2} sx={{ py: 2, borderRight: { lg: index < stats.length - 1 ? (isLight ? '1px solid rgba(45,212,160,0.16)' : '1px solid rgba(0,200,255,0.14)') : 'none' } }}>
-                  <GlassIcon icon={stat.icon} />
-                  <Typography sx={{ color: isLight ? 'var(--color-accent)' : '#16d9ff', fontSize: { xs: 38, md: 48 }, lineHeight: 1, fontWeight: 950, textShadow: isLight ? 'none' : '0 0 22px rgba(0,200,255,0.32)' }}>
-                    {stat.value}{stat.value === '4.9' && <StarIcon sx={{ color: '#ffc857', fontSize: 24, ml: 0.5 }} />}
+                <Stack
+                  key={stat.title}
+                  className={`fade-up benefit-card metric-card metric-card-${index}`}
+                  spacing={1.45}
+                  alignItems="center"
+                  textAlign="center"
+                  sx={{
+                    ...benefitsCardSx,
+                    p: { xs: 3, md: 3.5 },
+                    minHeight: 220,
+                    justifyContent: 'center',
+                    animationDelay: `${index * 110}ms`,
+                  }}
+                >
+                  <Typography
+                    className="number"
+                    sx={{
+                      display: 'inline-flex',
+                      alignItems: 'baseline',
+                      justifyContent: 'center',
+                      m: 0,
+                      color: isLight ? 'var(--accent-secondary)' : 'var(--accent-primary)',
+                      fontSize: 'clamp(38px, 4.6vw, 54px)',
+                      lineHeight: 0.95,
+                      fontWeight: 950,
+                      letterSpacing: 0,
+                      textShadow: isLight ? 'none' : '0 0 18px rgba(0,200,255,0.14)',
+                    }}
+                  >
+                    {stat.value}
                   </Typography>
-                  <Typography sx={{ color: isLight ? 'var(--text-primary)' : '#fff', fontSize: 14, fontWeight: 900 }}>{stat.title}</Typography>
-                  <Typography sx={{ color: isLight ? 'var(--text-secondary)' : 'rgba(230,241,248,0.65)', fontSize: 13 }}>{stat.description}</Typography>
+
+                  <Typography className="stat-label" sx={{ mt: 1, color: isLight ? 'var(--text-primary)' : '#fff', fontSize: 18, fontWeight: 900, letterSpacing: 0 }}>
+                    {stat.title}
+                  </Typography>
+                  <Typography className="stat-caption" sx={{ m: 0, color: isLight ? 'var(--text-secondary)' : 'rgba(230,241,248,0.72)', fontSize: 14, lineHeight: 1.65 }}>
+                    {stat.description}
+                  </Typography>
                 </Stack>
               ))}
             </Box>
