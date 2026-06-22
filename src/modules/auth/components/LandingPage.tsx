@@ -1,5 +1,3 @@
-import AndroidIcon from '@mui/icons-material/Android'
-import AppleIcon from '@mui/icons-material/Apple'
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward'
 import AccessTimeIcon from '@mui/icons-material/AccessTime'
 import CalendarMonthIcon from '@mui/icons-material/CalendarMonth'
@@ -29,14 +27,12 @@ import { useNavigate } from 'react-router'
 import carTopView from '@/assets/car-top-view-transparent.png'
 import driverGpsNavigatorBlue from '@/assets/illustrations/driver-gps-navigator-cuate-blue.svg'
 import driverGpsNavigatorGreen from '@/assets/illustrations/driver-gps-navigator-cuate-green.svg'
-import orderRideBlue from '@/assets/illustrations/order-ride-amico-blue.svg'
-import orderRideGreen from '@/assets/illustrations/order-ride-amico-green.svg'
 import passengerLocationBlue from '@/assets/illustrations/passenger-location-blue.svg'
 import passengerLocationGreen from '@/assets/illustrations/passenger-location-tracking-cuate-green.svg'
 import loginMapBg from '@/assets/login-map-bg.png'
 import logo from '@/assets/logo.png'
 
-const navLinks = ['Passageiros', 'Motoristas', 'Valores', 'Segurança', 'Suporte', 'Sobre nós']
+const navLinks = ['Passageiros', 'Motoristas', 'Valores', 'Segurança', 'Sobre nós']
 
 const benefits = [
   {
@@ -129,6 +125,7 @@ const stats = [
   { value: '+25K', title: 'Viagens realizadas', description: 'Todos os dias' },
   { value: '+8K', title: 'Motoristas parceiros', description: 'Ativos na plataforma' },
   { value: '+50K', title: 'Passageiros satisfeitos', description: 'Em toda a região' },
+  { value: '4,9/5', title: 'Avaliação do app', description: 'Nota média dos usuários' },
 ]
 
 const testimonials = [
@@ -647,6 +644,66 @@ export function LandingPage() {
   })
 
   const isLight = colorScheme === 'light'
+  const premiumHoverEase = 'cubic-bezier(0.22, 1, 0.36, 1)'
+  const premiumHoverTransition = [
+    `transform 360ms ${premiumHoverEase}`,
+    `box-shadow 360ms ${premiumHoverEase}`,
+    'border-color 300ms ease',
+    'background-color 300ms ease',
+  ].join(', ')
+
+  const solutionCardVisualSx = {
+    ...(colorScheme === 'light'
+      ? {
+          background: 'var(--bg-card)',
+          border: '1px solid var(--borders)',
+          boxShadow: 'var(--shadows)',
+          p: 3,
+          minHeight: 300,
+          borderRadius: 4,
+        }
+      : { ...cardSx, p: 3, minHeight: 300 }),
+    position: 'relative',
+    overflow: 'hidden',
+    transform: 'translate3d(0, 0, 0)',
+    willChange: 'transform, box-shadow',
+    backfaceVisibility: 'hidden',
+    transition: premiumHoverTransition,
+    '& .pulse-icon': {
+      transform: 'translate3d(0, 0, 0) scale(1)',
+      willChange: 'transform, box-shadow',
+      backfaceVisibility: 'hidden',
+      transition: premiumHoverTransition,
+    },
+    '&:hover': {
+      transform: 'translate3d(0, -4px, 0)',
+      borderColor: isLight ? 'var(--color-primary)' : 'rgba(0, 200, 255, 0.46)',
+      boxShadow: isLight
+        ? '0 20px 40px rgba(16,24,40,0.06)'
+        : '0 30px 90px rgba(0, 200, 255, 0.12), inset 0 0 42px rgba(0, 200, 255, 0.08)',
+      '& .pulse-icon': {
+        transform: 'translate3d(0, 0, 0) scale(1.03)',
+        borderColor: isLight ? 'rgba(45,212,160,0.3)' : 'rgba(0,200,255,0.36)',
+        boxShadow: isLight
+          ? 'inset 0 0 18px rgba(45,212,160,0.1), 0 0 20px rgba(45,212,160,0.18)'
+          : 'inset 0 0 18px rgba(0,200,255,0.1), 0 0 24px rgba(0,200,255,0.2)',
+      },
+    },
+    '@media (prefers-reduced-motion: reduce)': {
+      willChange: 'auto',
+      transition: 'transform 160ms ease, box-shadow 160ms ease, border-color 160ms ease, background-color 160ms ease',
+      '& .pulse-icon': {
+        willChange: 'auto',
+        transition: 'transform 160ms ease, box-shadow 160ms ease, border-color 160ms ease, background-color 160ms ease',
+      },
+      '&:hover': {
+        transform: 'translate3d(0, -4px, 0)',
+      },
+      '&:hover .pulse-icon': {
+        transform: 'translate3d(0, 0, 0) scale(1.02)',
+      },
+    },
+  }
 
   const benefitsCardSx = {
     ...cardSx,
@@ -726,6 +783,35 @@ export function LandingPage() {
       '.benefit-title': {
         color: isLight ? 'rgba(7,26,18,0.96)' : '#ffffff',
         textShadow: isLight ? '0 0 0 rgba(45,212,160,0)' : '0 0 16px rgba(0,200,255,0.16)',
+      },
+    },
+  }
+
+  const metricsCardSx = {
+    ...benefitsCardSx,
+    transform: 'translate3d(0, 0, 0)',
+    willChange: 'transform, box-shadow',
+    backfaceVisibility: 'hidden',
+    transition: premiumHoverTransition,
+    '&:hover': {
+      transform: 'translate3d(0, -4px, 0)',
+      borderColor: isLight ? 'rgba(45,212,160,0.42)' : 'rgba(0, 200, 255, 0.46)',
+      boxShadow: isLight
+        ? '0 20px 40px rgba(16,24,40,0.06), 0 12px 30px rgba(8,164,88,0.08)'
+        : '0 30px 90px rgba(0, 200, 255, 0.12), inset 0 0 42px rgba(0, 200, 255, 0.08)',
+      '&::before': {
+        opacity: 0.62,
+        animationDuration: '3.2s',
+      },
+      '&::after': {
+        opacity: 1,
+      },
+    },
+    '@media (prefers-reduced-motion: reduce)': {
+      willChange: 'auto',
+      transition: 'transform 160ms ease, box-shadow 160ms ease, border-color 160ms ease, background-color 160ms ease',
+      '&:hover': {
+        transform: 'translate3d(0, -4px, 0)',
       },
     },
   }
@@ -903,7 +989,7 @@ export function LandingPage() {
         '.stats-grid': {
           position: 'relative',
           display: 'grid',
-          gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)', lg: 'repeat(3, 1fr)' },
+          gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, minmax(0, 1fr))', lg: 'repeat(4, minmax(0, 1fr))' },
           gap: { xs: 2.5, md: 3 },
           background: 'transparent',
           boxShadow: 'none',
@@ -1041,10 +1127,6 @@ export function LandingPage() {
             display: 'block',
           },
         },
-        '.benefit-card-0:hover .benefit-icon-symbol': { animation: 'benefitIconBounce .58s ease both' },
-        '.benefit-card-1:hover .benefit-icon-symbol': { animation: 'benefitIconGlow .7s ease both' },
-        '.benefit-card-2:hover .benefit-icon-symbol': { animation: 'benefitIconShield .64s ease both' },
-        '.benefit-card-3:hover .benefit-icon-symbol': { animation: 'benefitIconStar .64s ease both' },
         '@media (prefers-reduced-motion: reduce)': {
           '.fade-up, .float-soft, .pulse-icon, .dream-orb, .resource-icon::after': {
             animation: 'none',
@@ -1334,50 +1416,21 @@ export function LandingPage() {
                 <Stack
                   key={benefit.title}
                   className={`fade-up benefit-card benefit-card-${index}`}
-                  spacing={2.4}
                   sx={{
-                    ...benefitsCardSx,
-                    p: { xs: 3, md: 3.5 },
-                    minHeight: 288,
+                    ...solutionCardVisualSx,
                     animationDelay: `${index * 110}ms`,
                   }}
                 >
-                  <Box
-                    className="benefit-icon-wrap"
-                    sx={{
-                      width: 50,
-                      height: 50,
-                      display: 'grid',
-                      placeItems: 'center',
-                      borderRadius: '50%',
-                      bgcolor: 'rgba(45,212,160,0.12)',
-                      color: 'var(--color-primary)',
-                      boxShadow: '0 12px 32px rgba(45,212,160,0.08)',
-                      border: isLight ? '1px solid rgba(45,212,160,0.16)' : '1px solid rgba(0,200,255,0.16)',
-                      flexShrink: 0,
-                      transition: 'transform .36s ease, box-shadow .36s ease, border-color .36s ease',
-                    }}
-                  >
-                    <benefit.icon className="benefit-icon-symbol" sx={{ fontSize: 22, color: 'var(--color-primary)', transformOrigin: 'center', transition: 'filter .3s ease' }} />
+                  <GlassIcon icon={benefit.icon} />
+                  <Typography className="benefit-title" sx={{ mt: 3, color: colorScheme === 'light' ? 'var(--text-primary)' : '#fff', fontSize: 21, fontWeight: 950 }}>
+                    {benefit.title}
+                  </Typography>
+                  <Typography sx={{ mt: 1.2, color: colorScheme === 'light' ? 'var(--text-secondary)' : 'rgba(230,241,248,0.78)', fontSize: 14.5, lineHeight: 1.65 }}>
+                    {benefit.description}
+                  </Typography>
+                  <Box sx={{ mt: 2.2 }}>
+                    <Bullets items={benefit.bullets} />
                   </Box>
-                  <Box>
-                    <Typography
-                      className="benefit-title"
-                      sx={{
-                        color: colorScheme === 'light' ? 'var(--text-primary)' : '#fff',
-                        fontSize: 18,
-                        fontWeight: 700,
-                        mb: 1,
-                        transition: 'color .32s ease, text-shadow .32s ease',
-                      }}
-                    >
-                      {benefit.title}
-                    </Typography>
-                    <Typography sx={{ color: colorScheme === 'light' ? 'var(--text-secondary)' : 'rgba(230,241,248,0.78)', fontSize: 14, lineHeight: 1.75 }}>
-                      {benefit.description}
-                    </Typography>
-                  </Box>
-                  <Bullets items={benefit.bullets} />
                 </Stack>
               ))}
             </Box>
@@ -1551,18 +1604,6 @@ export function LandingPage() {
                 display: 'grid',
                 gridTemplateColumns: { xs: '1fr', lg: 'repeat(3, 1fr)' },
                 gap: 2.4,
-                '&::before': {
-                  content: '""',
-                  display: { xs: 'none', lg: 'block' },
-                  position: 'absolute',
-                  top: 38,
-                  left: '11%',
-                  right: '11%',
-                  height: 1,
-                  backgroundImage: colorScheme === 'light' ? `linear-gradient(90deg, ${getComputedStyle(document.documentElement).getPropertyValue('--color-primary') || 'rgba(45,212,160,0.55)'} 50%, transparent 0)` : 'linear-gradient(90deg, rgba(0,200,255,.55) 50%, transparent 0)',
-                  backgroundSize: '22px 1px',
-                  filter: colorScheme === 'light' ? 'none' : 'drop-shadow(0 0 8px rgba(0,200,255,.65))',
-                },
               }}
             >
               {[
@@ -1897,7 +1938,7 @@ export function LandingPage() {
                   alignItems="center"
                   textAlign="center"
                   sx={{
-                    ...benefitsCardSx,
+                    ...metricsCardSx,
                     p: { xs: 3, md: 3.5 },
                     minHeight: 220,
                     justifyContent: 'center',
@@ -1985,60 +2026,6 @@ export function LandingPage() {
           </Box>
         </Box>
 
-        <Box component="section" id="suporte" sx={{ pt: { xs: 6, md: 9 }, pb: 0, background: isLight ? 'linear-gradient(180deg, #ffffff 0%, #f7fffb 100%)' : 'transparent' }}>
-          <Box
-            sx={{
-              ...cardSx,
-              width: pageWidth,
-              mx: 'auto',
-              minHeight: { xs: 420, md: 300 },
-              p: { xs: 3, md: 5 },
-              display: 'grid',
-              gridTemplateColumns: { xs: '1fr', md: '240px 1fr 260px' },
-              alignItems: 'center',
-              gap: 3,
-              borderBottomLeftRadius: 0,
-              borderBottomRightRadius: 0,
-              ...(isLight
-                ? {
-                    background: 'linear-gradient(180deg, #ffffff 0%, #f7fffb 100%)',
-                    border: '1px solid rgba(8, 164, 88, 0.18)',
-                    borderBottom: 0,
-                    boxShadow: '0 16px 42px rgba(16,24,40,0.08)',
-                  }
-                : {}),
-            }}
-          >
-            <Box className="float-soft" sx={{ width: 160, height: 270, mx: { xs: 'auto', md: 0 }, borderRadius: '30px', border: isLight ? '8px solid rgba(8,164,88,0.12)' : '8px solid rgba(255,255,255,0.14)', bgcolor: isLight ? '#ffffff' : '#02070d', transform: 'rotate(-8deg)', display: 'grid', placeItems: 'center', boxShadow: isLight ? '0 18px 34px rgba(16,24,40,0.10)' : '0 0 44px rgba(0,200,255,0.18)' }}>
-              <Box component="img" src={logo} alt="BorAli" sx={{ width: 92 }} />
-            </Box>
-            <Stack alignItems="center" textAlign="center" spacing={1.4}>
-              <Typography sx={{ color: isLight ? 'var(--text-primary)' : '#fff', fontSize: { xs: 30, md: 38 }, lineHeight: 1.1, fontWeight: 950 }}>Pronto para uma nova experiência?</Typography>
-              <Typography sx={{ color: isLight ? 'var(--text-secondary)' : 'rgba(230,241,248,0.75)', fontSize: 16 }}>Baixe agora e descubra uma mobilidade mais justa para todos.</Typography>
-              <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} sx={{ pt: 1.4 }}>
-                <Button variant="outlined" startIcon={<AppleIcon />} sx={{ color: isLight ? 'var(--text-primary)' : '#fff', borderColor: isLight ? 'rgba(8,164,88,0.24)' : 'rgba(255,255,255,0.28)', bgcolor: isLight ? '#ffffff' : 'rgba(0,0,0,0.28)', boxShadow: isLight ? '0 10px 24px rgba(16,24,40,0.06)' : 'none', px: 2.4, '&:hover': { borderColor: isLight ? 'var(--color-primary)' : 'rgba(255,255,255,0.42)', bgcolor: isLight ? '#f7fffb' : 'rgba(0,0,0,0.36)' } }}>App Store</Button>
-                <Button variant="outlined" startIcon={<AndroidIcon />} sx={{ color: isLight ? 'var(--text-primary)' : '#fff', borderColor: isLight ? 'rgba(8,164,88,0.24)' : 'rgba(255,255,255,0.28)', bgcolor: isLight ? '#ffffff' : 'rgba(0,0,0,0.28)', boxShadow: isLight ? '0 10px 24px rgba(16,24,40,0.06)' : 'none', px: 2.4, '&:hover': { borderColor: isLight ? 'var(--color-primary)' : 'rgba(255,255,255,0.42)', bgcolor: isLight ? '#f7fffb' : 'rgba(0,0,0,0.36)' } }}>Google Play</Button>
-              </Stack>
-            </Stack>
-            <Box sx={{ display: { xs: 'none', md: 'block' }, position: 'relative', height: 190 }}>
-              <Box
-                component="img"
-                src={isLight ? orderRideGreen : orderRideBlue}
-                alt=""
-                aria-hidden="true"
-                sx={{
-                  position: 'absolute',
-                  right: -10,
-                  bottom: -18,
-                  width: 285,
-                  maxWidth: '100%',
-                  height: 'auto',
-                  filter: isLight ? 'drop-shadow(0 18px 24px rgba(16,24,40,0.08))' : 'drop-shadow(0 0 32px rgba(0,200,255,0.34))',
-                }}
-              />
-            </Box>
-          </Box>
-        </Box>
       </Box>
 
       <Box
