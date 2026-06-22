@@ -371,7 +371,7 @@ function RouteMockup() {
       >
         <Box
           component="path"
-          d="M92 88 C132 70, 186 42, 238 28"
+          d="M92 80 C132 64, 186 42, 238 28"
           sx={{
             fill: 'none',
             stroke: 'var(--color-primary)',
@@ -386,7 +386,7 @@ function RouteMockup() {
         sx={{
           position: 'absolute',
           left: '28.75%',
-          top: '55.7%',
+          top: '50.6%',
           color: isLight ? 'rgba(45,212,160,0.9)' : '#9eefff',
           fontSize: 24,
           zIndex: 3,
@@ -2013,7 +2013,7 @@ export function LandingPage() {
                 ))}
               </Box>
               {['‹', '›'].map((arrow, index) => (
-                <Box key={arrow} sx={{ display: { xs: 'none', lg: 'grid' }, position: 'absolute', top: '50%', [index === 0 ? 'left' : 'right']: -58, width: 42, height: 58, placeItems: 'center', borderRadius: 999, color: isLight ? 'var(--color-accent)' : '#16d9ff', border: isLight ? '1px solid rgba(45,212,160,0.22)' : '1px solid rgba(0,200,255,0.18)', bgcolor: isLight ? 'rgba(255,255,255,0.92)' : 'rgba(6,24,40,0.72)', boxShadow: isLight ? '0 10px 24px rgba(16,24,40,0.08)' : 'none', fontSize: 30 }}>
+                <Box key={arrow} sx={{ display: { xs: 'none', lg: 'grid' }, position: 'absolute', top: '50%', transform: 'translateY(-50%)', [index === 0 ? 'left' : 'right']: -58, width: 42, height: 58, placeItems: 'center', borderRadius: 999, color: isLight ? 'var(--color-accent)' : '#16d9ff', border: isLight ? '1px solid rgba(45,212,160,0.22)' : '1px solid rgba(0,200,255,0.18)', bgcolor: isLight ? 'rgba(255,255,255,0.92)' : 'rgba(6,24,40,0.72)', boxShadow: isLight ? '0 10px 24px rgba(16,24,40,0.08)' : 'none', fontSize: 30 }}>
                   {arrow}
                 </Box>
               ))}
