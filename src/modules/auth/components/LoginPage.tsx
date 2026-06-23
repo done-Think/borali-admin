@@ -35,8 +35,8 @@ export function LoginPage() {
   const accessToken = useAuthStore((state) => state.accessToken)
   const locationState = location.state as LoginLocationState | null
   const redirectPath = locationState?.from
-    ? `${locationState.from.pathname ?? '/admin'}${locationState.from.search ?? ''}${locationState.from.hash ?? ''}`
-    : '/admin'
+    ? `${locationState.from.pathname ?? '/'}${locationState.from.search ?? ''}${locationState.from.hash ?? ''}`
+    : '/'
 
   useEffect(() => {
     if (isLoading) return
