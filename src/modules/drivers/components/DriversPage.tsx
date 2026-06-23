@@ -66,7 +66,7 @@ export default function DriversPage() {
   const suspendDriverMutation = useMutation({
     mutationFn: ({ driverId }: SuspendDriverVariables) => suspendAdminDriver(driverId),
     onMutate: ({ driverId, previousDriver }) => {
-      const blockedDriver: Driver = { ...previousDriver, status: 'Bloqueado' }
+      const blockedDriver: Driver = { ...previousDriver, status: 'Offline', situation: 'Suspenso' }
 
       setDriverOverrides((currentOverrides) => ({
         ...currentOverrides,
@@ -170,11 +170,11 @@ export default function DriversPage() {
       }
 
       if (selectedFilter === 'pending') {
-        return driver.status === 'Pendente'
+        return driver.situation === 'Análise pendente'
       }
 
       if (selectedFilter === 'blocked') {
-        return driver.status === 'Bloqueado'
+        return driver.situation === 'Suspenso'
       }
 
       return true
@@ -229,11 +229,13 @@ export default function DriversPage() {
   function handleSaveDriver(form: DriverEditForm) {
     const updatedDriver: Driver = {
       id: form.id,
+      userId: form.userId,
       name: form.name,
       initials: getInitials(form.name),
       phone: form.phone,
       category: form.category,
       status: form.status,
+      situation: form.situation,
       rides: form.rides,
       rating: form.rating,
       subscription: form.subscription,
@@ -260,7 +262,7 @@ export default function DriversPage() {
   }
 
   function handleToggleBlocked(driver: Driver) {
-    if (driver.status === 'Bloqueado') {
+    if (driver.situation === 'Suspenso') {
       enqueueSnackbar('Desbloqueio ainda precisa de endpoint na API.', { variant: 'info' })
       return
     }
@@ -487,7 +489,7 @@ export default function DriversPage() {
                       <TableCell>{currencyFormatter.format(driver.monthlyEarnings)}</TableCell>
                       <TableCell align="right">
                         <Stack direction="row" spacing={0.5} justifyContent="flex-end">
-                          {driver.status === 'Pendente' && (
+                          {driver.situation === 'Análise pendente' && (
                             <Tooltip title="Aprovar">
                               <span>
                                 <IconButton
@@ -506,15 +508,15 @@ export default function DriversPage() {
                               <EditOutlinedIcon fontSize="small" />
                             </IconButton>
                           </Tooltip>
-                          <Tooltip title={driver.status === 'Bloqueado' ? 'Desbloqueio indisponivel' : 'Bloquear'}>
+                          <Tooltip title={driver.situation === 'Suspenso' ? 'Desbloqueio indisponivel' : 'Bloquear'}>
                             <span>
                               <IconButton
                                 size="small"
-                                aria-label={`${driver.status === 'Bloqueado' ? 'Desbloqueio indisponivel para' : 'Bloquear'} ${driver.name}`}
+                                aria-label={`${driver.situation === 'Suspenso' ? 'Desbloqueio indisponivel para' : 'Bloquear'} ${driver.name}`}
                                 disabled={suspendDriverMutation.isPending}
                                 onClick={() => handleToggleBlocked(driver)}
                               >
-                                {driver.status === 'Bloqueado' ? (
+                                {driver.situation === 'Suspenso' ? (
                                   <LockOpenOutlinedIcon fontSize="small" />
                                 ) : (
                                   <BlockIcon fontSize="small" />

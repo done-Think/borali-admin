@@ -87,14 +87,14 @@ export function getDriverDetailsBase(driver: Driver): DriverDetails {
         { id: 'BRL-82977', date: '24/04/2026', from: 'Aeroporto', to: 'Hotel', value: 58, status: 'Finalizada' },
       ],
       complaints:
-        driver.status === 'Bloqueado'
+        driver.situation === 'Suspenso'
           ? [{ id: 'REC-1180', date: '18/04/2026', title: 'Conduta em análise pelo suporte', status: 'Aberta' }]
           : [],
       monthlyAverage: {
         rides: Math.max(12, Math.round(driver.rides / 5)),
         earnings: driver.monthlyEarnings,
         rating: driver.rating,
-        cancellationRate: driver.status === 'Bloqueado' ? 9.4 : 3.1,
+        cancellationRate: driver.situation === 'Suspenso' ? 9.4 : 3.1,
       },
     }
   )
