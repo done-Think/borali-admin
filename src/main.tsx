@@ -1,4 +1,5 @@
 import * as React from 'react'
+import './theme/theme.css'
 import * as ReactDOM from 'react-dom/client'
 import { RouterProvider } from 'react-router'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'

@@ -1,5 +1,32 @@
 import { createTheme } from "@mui/material/styles";
 
+type ThemeTokens = {
+    bg: string;
+    cardBg: string;
+    textPrimary: string;
+    textSecondary: string;
+    border: string;
+    shadow: string;
+    primary: string;
+    accent: string;
+    lines: string;
+    gradient: string;
+};
+
+declare module "@mui/material/styles" {
+    interface Theme {
+        custom: {
+            tokens: ThemeTokens;
+        };
+    }
+
+    interface ThemeOptions {
+        custom?: {
+            tokens?: Partial<ThemeTokens>;
+        };
+    }
+}
+
 // BorAli Design System — brand palette
 const green = {
     50: "#E8FBF7",
@@ -161,11 +188,11 @@ const theme = createTheme({
                     contrastText: "#FFFFFF",
                 },
                 background: {
-                    default: neutral[100],
+                    default: "#F7FFFB",
                     paper: "#FFFFFF",
                 },
                 text: {
-                    primary: neutral[900],
+                    primary: neutral[700],
                     secondary: neutral[500],
                     secondaryChannel: "rgba(0, 0, 0, 0.23)",
                 },
@@ -227,6 +254,20 @@ const theme = createTheme({
                     light: semantic.infoLight,
                 },
             },
+        },
+    },
+    custom: {
+        tokens: {
+            bg: 'var(--bg-primary)',
+            cardBg: 'var(--bg-card)',
+            textPrimary: 'var(--text-primary)',
+            textSecondary: 'var(--text-secondary)',
+            border: 'var(--borders)',
+            shadow: 'var(--shadows)',
+            primary: 'var(--color-primary)',
+            accent: 'var(--color-accent)',
+            lines: 'var(--lines)',
+            gradient: 'var(--gradient-subtle)'
         },
     },
     defaultColorScheme: "light",
