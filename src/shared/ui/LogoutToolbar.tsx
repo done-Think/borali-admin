@@ -6,9 +6,12 @@ import { Logout } from '@mui/icons-material'
 import { Avatar, IconButton, ListItemIcon, Menu, MenuItem } from '@mui/material'
 import { ThemeSwitcher } from '@toolpad/core/DashboardLayout'
 import { useAuthStore } from '@shared/store'
+import { isLocalAdminSession } from '@modules/auth/utils/localAuth'
+import { useNavigate } from 'react-router'
 
 export function LogoutToolbar() {
   const { signOut } = useLogto()
+  const navigate = useNavigate()
   const [anchorEl, setAnchorEl] = useState<O.Option<HTMLElement>>(O.none)
 
   const handleOpen = (event: MouseEvent<HTMLElement>) =>
@@ -18,7 +21,12 @@ export function LogoutToolbar() {
 
   const handleLogout = () => {
     handleClose()
+    const accessToken = useAuthStore.getState().accessToken
     useAuthStore.getState().clearAuth()
+    if (isLocalAdminSession(accessToken)) {
+      navigate('/login', { replace: true })
+      return
+    }
     signOut(`${window.location.origin}/login`)
   }
 

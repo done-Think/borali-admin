@@ -1,10 +1,12 @@
 import { useLogto } from '@logto/react'
 import { Box, Button, LinearProgress, Typography } from '@mui/material'
+import { AuthTransition } from './AuthTransition'
 import { useAuthStore } from '@shared/store'
 import { api, ApiRequestError } from '@shared/services/api'
 import { type ApiEnvelope, unwrap } from '@shared/services/apiResponse'
 import { useEffect, useRef, useState } from 'react'
 import { Navigate, Outlet, useLocation } from 'react-router'
+import { isLocalAdminSession } from '../utils/localAuth'
 
 const API_RESOURCE = 'https://borali.app/api'
 const REGISTER_FLAG = 'borali_admin_register_flow'
@@ -18,9 +20,16 @@ export function ProtectedRoute() {
   const location = useLocation()
   const [resolving, setResolving] = useState(true)
   const [accessDenied, setAccessDenied] = useState(false)
+  const [showTransition, setShowTransition] = useState(false)
   const exchangeAttempted = useRef(false)
 
   useEffect(() => {
+    if (isLocalAdminSession(useAuthStore.getState().accessToken)) {
+      setResolving(false)
+      setShowTransition(true)
+      return
+    }
+
     if (isLoading) return
 
     if (!isAuthenticated) {
@@ -31,6 +40,7 @@ export function ProtectedRoute() {
 
     if (useAuthStore.getState().accessToken) {
       setResolving(false)
+      setShowTransition(true)
       return
     }
 
@@ -72,9 +82,22 @@ export function ProtectedRoute() {
         }
       } finally {
         setResolving(false)
+        if (useAuthStore.getState().accessToken) {
+          setShowTransition(true)
+        }
       }
     })()
-  }, [isAuthenticated, isLoading]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [accessToken, isAuthenticated, isLoading]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    if (!showTransition) return
+
+    const timeoutId = window.setTimeout(() => {
+      setShowTransition(false)
+    }, 1000)
+
+    return () => window.clearTimeout(timeoutId)
+  }, [showTransition])
 
   if (resolving) return <LinearProgress color="secondary" />
 
@@ -108,8 +131,12 @@ export function ProtectedRoute() {
     )
   }
 
-  if (!isAuthenticated || !accessToken) {
+  if ((!isAuthenticated && !isLocalAdminSession(accessToken)) || !accessToken) {
     return <Navigate to="/login" replace state={{ from: location }} />
+  }
+
+  if (showTransition) {
+    return <AuthTransition />
   }
 
   return <Outlet />

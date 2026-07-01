@@ -126,7 +126,26 @@ export default function Layout() {
         },
       }}
     >
-      <Box sx={{ p: { xs: 2, md: 3 }, minHeight: "100%" }}>
+      <Box
+        sx={{
+          p: { xs: 2, md: 3 },
+          minHeight: "100%",
+          animation: "boraliDashboardEnter 520ms cubic-bezier(0.22, 1, 0.36, 1) both",
+          "@keyframes boraliDashboardEnter": {
+            from: {
+              opacity: 0,
+              transform: "translateY(12px)",
+            },
+            to: {
+              opacity: 1,
+              transform: "translateY(0)",
+            },
+          },
+          "@media (prefers-reduced-motion: reduce)": {
+            animation: "none",
+          },
+        }}
+      >
         <Outlet />
       </Box>
     </DashboardLayout>

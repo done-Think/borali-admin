@@ -9,7 +9,7 @@ export function CallbackPage() {
 
   useEffect(() => {
     if (isLoading) return
-    if (isAuthenticated) navigate('/', { replace: true })
+    if (isAuthenticated) navigate('/admin', { replace: true })
   }, [isLoading, isAuthenticated, navigate])
 
   useEffect(() => {

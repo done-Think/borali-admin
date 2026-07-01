@@ -1,6 +1,7 @@
 import axios, { type AxiosError, type AxiosInstance, type InternalAxiosRequestConfig } from 'axios'
 import { useAuthStore } from '@shared/store'
 import { unwrap, type ApiEnvelope } from './apiResponse'
+import { isLocalAdminSession } from '@modules/auth/utils/localAuth'
 
 const apiBaseUrl = import.meta.env.VITE_API_URL ?? 'http://localhost:3000/api/v1'
 
@@ -74,7 +75,9 @@ class ApiClient {
           // Clear the local token — ProtectedRoute's reactive subscription will render
           // <Navigate to="/login"> automatically. Calling redirectToLogin() here would
           // create a double-redirect race with ProtectedRoute's own navigation.
-          useAuthStore.getState().clearAuth()
+          if (!isLocalAdminSession(useAuthStore.getState().accessToken)) {
+            useAuthStore.getState().clearAuth()
+          }
         }
 
         return Promise.reject(apiError)

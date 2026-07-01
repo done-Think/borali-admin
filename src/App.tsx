@@ -12,6 +12,7 @@ import { ReactRouterAppProvider } from '@toolpad/core/react-router'
 import { useLogto } from '@logto/react'
 import { useAuthStore } from '@shared/store'
 import { registerLoginNavigator } from '@shared/services/api'
+import { isLocalAdminSession } from '@modules/auth/utils/localAuth'
 import { useEffect, useMemo, useState } from 'react'
 import { Outlet, useNavigate } from 'react-router'
 import logo from '@/assets/logo.png'
@@ -122,7 +123,12 @@ export default function App() {
       authentication={{
         signIn: () => navigate('/login'),
         signOut: () => {
+          const accessToken = useAuthStore.getState().accessToken
           useAuthStore.getState().clearAuth()
+          if (isLocalAdminSession(accessToken)) {
+            navigate('/login', { replace: true })
+            return
+          }
           signOut(`${window.location.origin}/login`)
         },
       }}

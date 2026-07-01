@@ -90,3 +90,94 @@ body {
   box-shadow: var(--shadows);
 }
 
+@keyframes borali-feature-icon-pulse {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow: inset 0 0 18px rgba(0, 184, 232, 0.06), 0 0 10px rgba(0, 184, 232, 0.06);
+  }
+
+  50% {
+    transform: scale(1.035);
+    box-shadow:
+      inset 0 0 18px var(--feature-glow-soft),
+      0 0 18px var(--feature-glow-soft);
+  }
+}
+
+.feature-connect-grid {
+  --feature-line: rgba(0, 184, 232, 0.22);
+  --feature-glow: rgba(0, 184, 232, 0.9);
+  --feature-glow-soft: rgba(8, 164, 88, 0.35);
+}
+
+[data-toolpad-color-scheme="light"] .feature-connect-grid {
+  --feature-line: rgba(29, 175, 130, 0.20);
+  --feature-glow: rgba(29, 175, 130, 0.72);
+  --feature-glow-soft: rgba(45, 212, 160, 0.28);
+}
+
+.feature-connect-grid::before {
+  content: "";
+  position: absolute;
+  display: none;
+  left: 8%;
+  right: 8%;
+  top: 37px;
+  height: 2px;
+  pointer-events: none;
+  border-radius: 999px;
+  z-index: 0;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    var(--feature-line) 14%,
+    var(--feature-line) 86%,
+    transparent
+  );
+  box-shadow: 0 0 10px color-mix(in srgb, var(--feature-line) 70%, transparent);
+}
+
+.feature-connect-item {
+  --feature-index: 0;
+}
+
+.feature-connect-grid .feature-connect-item .pulse-icon.feature-icon-orb {
+  transition: transform 0.28s ease, box-shadow 0.28s ease, color 0.28s ease, border-color 0.28s ease;
+  animation: borali-feature-icon-pulse 4.2s ease-in-out infinite;
+  animation-delay: calc(var(--feature-index) * 0.45s);
+  will-change: transform, box-shadow;
+}
+
+.feature-connect-grid .feature-connect-item:hover .pulse-icon.feature-icon-orb {
+  animation-play-state: paused;
+  transform: translateY(-4px) scale(1.055);
+  color: var(--feature-glow);
+  border-color: var(--feature-glow-soft);
+  box-shadow:
+    inset 0 0 18px var(--feature-glow-soft),
+    0 10px 24px var(--feature-glow-soft);
+}
+
+.feature-connect-grid .feature-connect-item:hover .pulse-icon.feature-icon-orb svg {
+  color: var(--feature-glow);
+}
+
+.feature-connect-grid .feature-connect-item:hover h6,
+.feature-connect-grid .feature-connect-item:hover .MuiTypography-root:first-of-type {
+  color: var(--feature-glow);
+}
+
+@media (min-width: 900px) {
+  .feature-connect-grid::before {
+    display: block;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .feature-icon-orb,
+  .feature-icon-orb svg,
+  .feature-icon-orb::after {
+    animation: none;
+  }
+}
+

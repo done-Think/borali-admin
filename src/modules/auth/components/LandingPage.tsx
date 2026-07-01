@@ -1,29 +1,25 @@
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward'
-import AccessTimeIcon from '@mui/icons-material/AccessTime'
-import CalendarMonthIcon from '@mui/icons-material/CalendarMonth'
-import LightModeIcon from '@mui/icons-material/LightMode'
-import DarkModeIcon from '@mui/icons-material/DarkMode'
-import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome'
-import CheckIcon from '@mui/icons-material/Check'
-import CreditCardIcon from '@mui/icons-material/CreditCard'
-import DashboardIcon from '@mui/icons-material/Dashboard'
-import DirectionsCarIcon from '@mui/icons-material/DirectionsCar'
-import GroupsIcon from '@mui/icons-material/Groups'
-import HubIcon from '@mui/icons-material/Hub'
-import PaidIcon from '@mui/icons-material/Paid'
-import PlaceIcon from '@mui/icons-material/Place'
-import SecurityIcon from '@mui/icons-material/Security'
-import StarIcon from '@mui/icons-material/Star'
-import SupportAgentIcon from '@mui/icons-material/SupportAgent'
-import VerifiedUserIcon from '@mui/icons-material/VerifiedUser'
-import VisibilityIcon from '@mui/icons-material/Visibility'
-import WorkspacePremiumIcon from '@mui/icons-material/WorkspacePremium'
-import { Box, Button, Stack, Typography } from '@mui/material'
-import { IconButton, Tooltip } from '@mui/material'
+import DeveloperModeOutlinedIcon from '@mui/icons-material/DeveloperModeOutlined'
+import LockOutlinedIcon from '@mui/icons-material/LockOutlined'
+import PersonAddOutlinedIcon from '@mui/icons-material/PersonAddOutlined'
+import ShieldOutlinedIcon from '@mui/icons-material/ShieldOutlined'
+import VerifiedUserOutlinedIcon from '@mui/icons-material/VerifiedUserOutlined'
+import {
+  Box,
+  Button,
+  CircularProgress,
+  Divider,
+  Stack,
+  Typography,
+  useTheme,
+} from '@mui/material'
+import { alpha } from '@mui/material/styles'
+import { useLogto } from '@logto/react'
 import { useAuthStore } from '@shared/store'
 import type { CSSProperties } from 'react'
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router'
+<<<<<<< HEAD
 import carTopView from '@/assets/car-top-view-transparent.png'
 import driverGpsNavigatorBlue from '@/assets/illustrations/driver-gps-navigator-cuate-blue.svg'
 import driverGpsNavigatorGreen from '@/assets/illustrations/driver-gps-navigator-cuate-green.svg'
@@ -606,17 +602,30 @@ function TrackingMockup() {
     </Box>
   )
 }
+=======
+import { isLocalAuthEnabled, signInLocalAdmin } from '../utils/localAuth'
+import loginMapBg from '@/assets/login-map-bg.png'
+import logo from '@/assets/logo.png'
+
+const REGISTER_FLAG = 'borali_admin_register_flow'
+>>>>>>> 12af662 (fix(admin): corrige ajustes visuais e remove botão da área admin)
 
 export function LandingPage() {
+  const theme = useTheme()
   const navigate = useNavigate()
+  const { signIn, isAuthenticated, isLoading } = useLogto()
   const accessToken = useAuthStore((state) => state.accessToken)
+  const [isSigningIn, setIsSigningIn] = useState(false)
+  const isAuthBusy = isLoading || isSigningIn
 
   useEffect(() => {
-    if (accessToken) {
+    if (isLoading) return
+    if (isAuthenticated && accessToken) {
       navigate('/admin', { replace: true })
     }
-  }, [accessToken, navigate])
+  }, [accessToken, isAuthenticated, isLoading, navigate])
 
+<<<<<<< HEAD
   const goToLogin = () => navigate('/login')
   const cardSx = {
     position: 'relative',
@@ -814,75 +823,57 @@ export function LandingPage() {
         transform: 'translate3d(0, -4px, 0)',
       },
     },
+=======
+  function handleSignIn() {
+    sessionStorage.removeItem(REGISTER_FLAG)
+    setIsSigningIn(true)
+    signIn(`${window.location.origin}/callback`)
+>>>>>>> 12af662 (fix(admin): corrige ajustes visuais e remove botão da área admin)
   }
 
-  const fairBannerSx = {
-    ...cardSx,
-    width: 'min(1080px, calc(100% - 32px))',
-    mx: 'auto',
-    py: { xs: 4.5, md: 6 },
-    px: 3,
-    textAlign: 'center' as const,
-    border: isLight ? '1px solid rgba(45,212,160,0.2)' : cardSx.border,
-    background: isLight ? 'linear-gradient(180deg, #ffffff 0%, #f4fff9 100%)' : cardSx.background,
-    boxShadow: isLight ? '0 20px 54px rgba(15,23,42,0.08)' : cardSx.boxShadow,
-    '&:hover': {
-      ...cardSx['&:hover'],
-      borderColor: isLight ? 'rgba(45,212,160,0.32)' : cardSx['&:hover'].borderColor,
-      boxShadow: isLight ? '0 26px 70px rgba(15,23,42,0.1)' : cardSx['&:hover'].boxShadow,
-    },
+  function handleRegister() {
+    sessionStorage.setItem(REGISTER_FLAG, '1')
+    signIn({ redirectUri: `${window.location.origin}/callback`, interactionMode: 'signUp' })
   }
 
-  useEffect(() => {
-    const root = document.documentElement
-    const obs = new MutationObserver(() => {
-      setColorScheme(root.getAttribute('data-toolpad-color-scheme') || 'light')
-    })
-    obs.observe(root, { attributes: true, attributeFilter: ['data-toolpad-color-scheme'] })
-    return () => obs.disconnect()
-  }, [])
-
-  useEffect(() => {
-    // initialize from localStorage if available
-    try {
-      const stored = localStorage.getItem('borali-color-scheme')
-      if (stored) {
-        document.documentElement.setAttribute('data-toolpad-color-scheme', stored)
-        setColorScheme(stored)
-      }
-    } catch (e) {
-      /* ignore */
-    }
-  }, [])
-
-  const toggleColorScheme = () => {
-    try {
-      const next = colorScheme === 'light' ? 'dark' : 'light'
-      document.documentElement.setAttribute('data-toolpad-color-scheme', next)
-      localStorage.setItem('borali-color-scheme', next)
-      setColorScheme(next)
-    } catch (e) {
-      /* ignore */
-    }
+  function handleLocalAccess() {
+    signInLocalAdmin()
+    navigate('/admin', { replace: true })
   }
 
   return (
     <Box
       sx={{
         minHeight: '100vh',
-        color: '#f4f8fb',
-        bgcolor: '#02070d',
+        position: 'relative',
+        display: 'grid',
+        placeItems: 'center',
+        px: 2,
+        py: { xs: 3, md: 5 },
         overflow: 'hidden',
-        background:
-          'radial-gradient(circle at 50% 0%, rgba(0, 200, 255, 0.14), transparent 30%), linear-gradient(180deg, #02070d 0%, #030b13 42%, #02070d 100%)',
-        '@keyframes fadeUp': {
-          from: { opacity: 0, transform: 'translateY(22px)' },
-          to: { opacity: 1, transform: 'translateY(0)' },
+        bgcolor: '#07130f',
+        '&::before': {
+          content: '""',
+          position: 'absolute',
+          inset: 0,
+          backgroundImage: `linear-gradient(110deg, ${alpha('#07130f', 0.94)} 0%, ${alpha(
+            '#07130f',
+            0.78,
+          )} 46%, ${alpha('#0a2f24', 0.64)} 100%), url(${loginMapBg})`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
         },
-        '@keyframes floatSoft': {
-          '0%, 100%': { transform: 'translateY(0)' },
-          '50%': { transform: 'translateY(-12px)' },
+        '&::after': {
+          content: '""',
+          position: 'absolute',
+          inset: 0,
+          background:
+            'linear-gradient(90deg, rgba(45,212,160,0.08) 1px, transparent 1px), linear-gradient(rgba(45,212,160,0.08) 1px, transparent 1px)',
+          backgroundSize: '44px 44px',
+          maskImage: 'linear-gradient(to bottom, transparent, black 18%, black 78%, transparent)',
+          opacity: 0.34,
         },
+<<<<<<< HEAD
         '@keyframes pulseGlow': {
           '0%, 100%': { boxShadow: '0 0 18px var(--accent-glow), inset 0 0 18px var(--accent-soft)' },
           '50%': { boxShadow: '0 0 34px var(--accent-glow), inset 0 0 24px var(--accent-soft)' },
@@ -1223,21 +1214,22 @@ export function LandingPage() {
 
       <Box
         component="main"
+=======
+      }}
+    >
+      <Box
+>>>>>>> 12af662 (fix(admin): corrige ajustes visuais e remove botão da área admin)
         sx={{
           position: 'relative',
-          '& section': { position: 'relative', zIndex: 1 },
-          '&::before': {
-            content: '""',
-            position: 'absolute',
-            inset: 0,
-            backgroundImage: `linear-gradient(180deg, rgba(2,7,13,0.08), #02070d 92%), url(${loginMapBg})`,
-            backgroundSize: 'cover',
-            backgroundPosition: 'top center',
-            opacity: 0.2,
-            pointerEvents: 'none',
-          },
+          zIndex: 1,
+          width: 'min(1080px, 100%)',
+          display: 'grid',
+          gridTemplateColumns: { xs: '1fr', md: '1.05fr 440px' },
+          gap: { xs: 3, md: 6 },
+          alignItems: 'center',
         }}
       >
+<<<<<<< HEAD
         <Box
           component="section"
           sx={{
@@ -1339,24 +1331,23 @@ export function LandingPage() {
                 ))}
               </Stack>
             </Stack>
+=======
+        <Stack spacing={3.2} sx={{ color: '#fff', display: { xs: 'none', md: 'flex' } }}>
+          <Box component="img" src={logo} alt="BorAli" sx={{ width: 190, height: 'auto' }} />
+>>>>>>> 12af662 (fix(admin): corrige ajustes visuais e remove botão da área admin)
 
-            <Box
-              className="float-soft"
+          <Stack spacing={1.6}>
+            <Typography
+              component="h1"
               sx={{
-                ...cardSx,
-                minHeight: { xs: 420, md: 560 },
-                p: { xs: 3, md: 4 },
-                display: { xs: 'none', sm: 'block' },
-                border: isLight ? '1px solid rgba(45, 212, 160, 0.14)' : cardSx.border,
-                background: isLight ? '#fff' : cardSx.background,
-                boxShadow: isLight ? '0 24px 70px rgba(16, 24, 40, 0.1)' : cardSx.boxShadow,
-                '&:hover': {
-                  ...cardSx['&:hover'],
-                  borderColor: isLight ? 'rgba(45, 212, 160, 0.24)' : cardSx['&:hover'].borderColor,
-                  boxShadow: isLight ? '0 30px 86px rgba(16, 24, 40, 0.12)' : cardSx['&:hover'].boxShadow,
-                },
+                maxWidth: 560,
+                fontSize: { md: 46, lg: 56 },
+                lineHeight: 1.02,
+                fontWeight: 950,
+                letterSpacing: 0,
               }}
             >
+<<<<<<< HEAD
               <Box
                 sx={{
                   position: 'absolute',
@@ -1456,19 +1447,26 @@ export function LandingPage() {
             </Box>
             <Typography sx={{ color: colorScheme === 'light' ? 'var(--text-primary)' : '#fff', fontSize: { xs: 24, md: 32 }, fontWeight: 950, maxWidth: 860 }}>
               Mobilidade justa para motoristas e passageiros.
+=======
+              Painel administrativo com acesso seguro Logto
+>>>>>>> 12af662 (fix(admin): corrige ajustes visuais e remove botão da área admin)
             </Typography>
-            <Typography sx={{ color: colorScheme === 'light' ? 'var(--text-secondary)' : 'rgba(230,241,248,0.75)', fontSize: 15, maxWidth: 780, lineHeight: 1.8 }}>
-              Mais que uma plataforma, um novo jeito de se mover.
+            <Typography sx={{ maxWidth: 520, color: alpha('#ffffff', 0.72), fontSize: 17, lineHeight: 1.65 }}>
+              Entre com sua conta autorizada para gerenciar motoristas, passageiros, corridas e operacoes da BorAli.
             </Typography>
           </Stack>
-        </Box>
 
-        <Box component="section" id="passageiros" sx={{ py: { xs: 8, md: 10 }, background: isLight ? 'linear-gradient(180deg, #ffffff 0%, #f7fffb 100%)' : 'transparent' }}>
-            <Box sx={{ width: pageWidth, mx: 'auto' }}>
-            <SectionTitle sx={{ color: colorScheme === 'light' ? 'var(--text-primary)' : undefined }}>{'Soluções para cada necessidade'}</SectionTitle>
-            <Box className="solutions-section" sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', lg: 'repeat(3, 1fr)' }, gap: 2.8 }}>
-              {solutions.map((solution) => (
+          <Stack direction="row" spacing={1.4}>
+            {[
+              { icon: ShieldOutlinedIcon, label: 'OAuth seguro' },
+              { icon: VerifiedUserOutlinedIcon, label: 'Perfil admin' },
+              { icon: LockOutlinedIcon, label: 'Sessao protegida' },
+            ].map((item) => {
+              const Icon = item.icon
+
+              return (
                 <Stack
+<<<<<<< HEAD
                   key={solution.title}
                   sx={{
                     ...(colorScheme === 'light'
@@ -1897,18 +1895,22 @@ export function LandingPage() {
                   key={feature.title}
                   className="fade-up resource-item"
                   style={{ '--resource-index': index } as CSSProperties}
+=======
+                  key={item.label}
+                  direction="row"
+>>>>>>> 12af662 (fix(admin): corrige ajustes visuais e remove botão da área admin)
                   alignItems="center"
-                  textAlign="center"
-                  spacing={1.3}
+                  spacing={1}
                   sx={{
-                    px: 3,
-                    py: 1.5,
-                    borderRight: {
-                      lg: index < featureBlocks.length - 1 ? (isLight ? '1px solid rgba(45,212,160,0.16)' : '1px solid rgba(0,200,255,0.18)') : 'none',
-                    },
-                    bgcolor: isLight ? 'transparent' : undefined,
+                    px: 1.4,
+                    py: 1,
+                    borderRadius: 2,
+                    border: `1px solid ${alpha(theme.palette.secondary.main, 0.22)}`,
+                    bgcolor: alpha('#ffffff', 0.06),
+                    backdropFilter: 'blur(10px)',
                   }}
                 >
+<<<<<<< HEAD
                   <Box className="resource-icon">
                     <GlassIcon icon={feature.icon} />
                   </Box>
@@ -2056,7 +2058,122 @@ export function LandingPage() {
           >
             © 2026 doneThink. All rights reserved.
           </Typography>
+=======
+                  <Icon sx={{ color: theme.palette.secondary.light, fontSize: 19 }} />
+                  <Typography sx={{ color: alpha('#ffffff', 0.82), fontSize: 13, fontWeight: 800 }}>
+                    {item.label}
+                  </Typography>
+                </Stack>
+              )
+            })}
+          </Stack>
+>>>>>>> 12af662 (fix(admin): corrige ajustes visuais e remove botão da área admin)
         </Stack>
+
+        <Box
+          sx={{
+            width: '100%',
+            mx: 'auto',
+            borderRadius: 3,
+            border: `1px solid ${alpha(theme.palette.secondary.main, 0.22)}`,
+            bgcolor: alpha(theme.palette.background.paper, 0.94),
+            boxShadow: `0 28px 90px ${alpha('#000', 0.34)}`,
+            backdropFilter: 'blur(18px)',
+            overflow: 'hidden',
+          }}
+        >
+          <Stack spacing={3} sx={{ p: { xs: 3, sm: 4 } }}>
+            <Stack spacing={1.4} alignItems="center" textAlign="center">
+              <Box
+                sx={{
+                  width: 56,
+                  height: 56,
+                  display: 'grid',
+                  placeItems: 'center',
+                  borderRadius: 2,
+                  bgcolor: alpha(theme.palette.secondary.main, 0.1),
+                  color: 'secondary.main',
+                }}
+              >
+                <LockOutlinedIcon sx={{ fontSize: 30 }} />
+              </Box>
+              <Box component="img" src={logo} alt="BorAli" sx={{ width: 160, height: 'auto', display: { md: 'none' } }} />
+              <Typography component="h2" sx={{ color: 'text.primary', fontSize: 28, lineHeight: 1.15, fontWeight: 950 }}>
+                Entrar no console
+              </Typography>
+              <Typography sx={{ color: 'text.secondary', fontSize: 14.5, lineHeight: 1.55 }}>
+                Autenticacao gerenciada pelo Logto. Apenas administradores aprovados conseguem acessar.
+              </Typography>
+            </Stack>
+
+            <Stack spacing={1.5}>
+              <Button
+                fullWidth
+                size="large"
+                variant="contained"
+                color="secondary"
+                startIcon={isAuthBusy ? <CircularProgress color="inherit" size={18} /> : undefined}
+                endIcon={isAuthBusy ? undefined : <ArrowForwardIcon />}
+                disabled={isAuthBusy}
+                onClick={handleSignIn}
+                sx={{ minHeight: 50, borderRadius: 2, fontWeight: 900, boxShadow: 'none' }}
+              >
+                {isAuthBusy ? 'Entrando com Logto...' : 'Entrar com Logto'}
+              </Button>
+
+              <Divider>
+                <Typography variant="caption" color="text.disabled" sx={{ px: 1 }}>
+                  ou
+                </Typography>
+              </Divider>
+
+              <Button
+                fullWidth
+                size="large"
+                variant="outlined"
+                color="secondary"
+                startIcon={<PersonAddOutlinedIcon />}
+                disabled={isAuthBusy}
+                onClick={handleRegister}
+                sx={{ minHeight: 50, borderRadius: 2, borderStyle: 'dashed', fontWeight: 850 }}
+              >
+                Criar conta admin
+              </Button>
+
+              {isLocalAuthEnabled() ? (
+                <Button
+                  fullWidth
+                  size="large"
+                  variant="text"
+                  color="secondary"
+                  startIcon={<DeveloperModeOutlinedIcon />}
+                  disabled={isAuthBusy}
+                  onClick={handleLocalAccess}
+                  sx={{ minHeight: 46, borderRadius: 2, fontWeight: 850 }}
+                >
+                  Acesso local de desenvolvimento
+                </Button>
+              ) : null}
+            </Stack>
+
+            <Stack
+              direction="row"
+              spacing={1.2}
+              alignItems="center"
+              sx={{
+                p: 1.5,
+                borderRadius: 2,
+                bgcolor: alpha(theme.palette.secondary.main, 0.08),
+                color: 'text.secondary',
+              }}
+            >
+              <ShieldOutlinedIcon sx={{ color: 'secondary.main', fontSize: 22 }} />
+              <Typography sx={{ fontSize: 12.5, lineHeight: 1.45 }}>
+                O Logto valida sua identidade antes da BorAli liberar as permissoes administrativas.
+              </Typography>
+            </Stack>
+          </Stack>
+        </Box>
       </Box>
     </Box>
   )

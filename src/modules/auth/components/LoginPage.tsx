@@ -1,5 +1,6 @@
 import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings'
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward'
+import DeveloperModeOutlinedIcon from '@mui/icons-material/DeveloperModeOutlined'
 import PersonAddOutlinedIcon from '@mui/icons-material/PersonAddOutlined'
 import ShieldOutlinedIcon from '@mui/icons-material/ShieldOutlined'
 import {
@@ -8,6 +9,7 @@ import {
   Card,
   CardContent,
   Chip,
+  CircularProgress,
   Divider,
   Stack,
   Typography,
@@ -16,8 +18,9 @@ import {
 import { alpha } from '@mui/material/styles'
 import { useLogto } from '@logto/react'
 import { useAuthStore } from '@shared/store'
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router'
+import { isLocalAdminSession, isLocalAuthEnabled, signInLocalAdmin } from '../utils/localAuth'
 import loginMapBg from '@/assets/login-map-bg.png'
 import logo from '@/assets/logo.png'
 
@@ -33,12 +36,19 @@ export function LoginPage() {
   const location = useLocation()
   const { signIn, isAuthenticated, isLoading } = useLogto()
   const accessToken = useAuthStore((state) => state.accessToken)
+  const [isSigningIn, setIsSigningIn] = useState(false)
+  const isAuthBusy = isLoading || isSigningIn
   const locationState = location.state as LoginLocationState | null
   const redirectPath = locationState?.from
     ? `${locationState.from.pathname ?? '/admin'}${locationState.from.search ?? ''}${locationState.from.hash ?? ''}`
     : '/admin'
 
   useEffect(() => {
+    if (isLocalAdminSession(accessToken)) {
+      navigate(redirectPath, { replace: true })
+      return
+    }
+
     if (isLoading) return
     if (isAuthenticated && accessToken) {
       navigate(redirectPath, { replace: true })
@@ -47,6 +57,7 @@ export function LoginPage() {
 
   function handleSignIn() {
     sessionStorage.removeItem(REGISTER_FLAG)
+    setIsSigningIn(true)
     signIn(`${window.location.origin}/callback`)
   }
 
@@ -54,6 +65,11 @@ export function LoginPage() {
     sessionStorage.setItem(REGISTER_FLAG, '1')
     // interactionMode 'signUp' direciona para a tela de cadastro do Logto
     signIn(`${window.location.origin}/callback`, 'signUp' as any)
+  }
+
+  function handleLocalAccess() {
+    signInLocalAdmin()
+    navigate(redirectPath, { replace: true })
   }
 
   return (
@@ -132,11 +148,13 @@ export function LoginPage() {
               size="large"
               variant="contained"
               color="secondary"
-              endIcon={<ArrowForwardIcon />}
+              startIcon={isAuthBusy ? <CircularProgress color="inherit" size={18} /> : undefined}
+              endIcon={isAuthBusy ? undefined : <ArrowForwardIcon />}
+              disabled={isAuthBusy}
               onClick={handleSignIn}
               sx={{ minHeight: 48, fontWeight: 800, boxShadow: 'none' }}
             >
-              Entrar
+              {isAuthBusy ? 'Entrando com Logto...' : 'Entrar com Logto'}
             </Button>
 
             <Divider>
@@ -151,11 +169,27 @@ export function LoginPage() {
               variant="outlined"
               color="secondary"
               endIcon={<PersonAddOutlinedIcon />}
+              disabled={isAuthBusy}
               onClick={handleRegister}
               sx={{ minHeight: 48, fontWeight: 700, borderStyle: 'dashed' }}
             >
               Criar conta de administrador
             </Button>
+
+            {isLocalAuthEnabled() ? (
+              <Button
+                fullWidth
+                size="large"
+                variant="text"
+                color="secondary"
+                startIcon={<DeveloperModeOutlinedIcon />}
+                disabled={isAuthBusy}
+                onClick={handleLocalAccess}
+                sx={{ minHeight: 46, fontWeight: 800 }}
+              >
+                Acesso local de desenvolvimento
+              </Button>
+            ) : null}
           </Stack>
         </CardContent>
       </Card>
